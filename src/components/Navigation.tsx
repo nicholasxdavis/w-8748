@@ -59,7 +59,7 @@ const Navigation = () => {
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
-    if (!newOpen && (!searchResults || searchResults.length === 0)) {
+    if (!newOpen) {
       setSearchValue("");
     }
   };

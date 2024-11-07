@@ -24,7 +24,7 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery<WikipediaArticle[]>({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
     queryFn: ({ pageParam }) => getRandomArticles(12),
     initialPageParam: 1,
@@ -48,7 +48,7 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="min-h-screen bg-wikitok-dark text-white pt-16 pb-20">
+    <div className="min-h-screen bg-wikitok-dark text-white pt-16 pb-20 overflow-y-auto">
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex space-x-4 px-4 py-2">
           {categories.map((category) => (
