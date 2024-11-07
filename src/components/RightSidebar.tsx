@@ -1,4 +1,4 @@
-import { UserPlus, Bookmark, Share2, Edit, BookOpen, ExternalLink } from "lucide-react";
+import { UserPlus, Bookmark, Share2, Edit, BookOpen } from "lucide-react";
 
 const RightSidebar = ({ article }) => {
   const handleWikipediaRedirect = () => {
@@ -28,6 +28,22 @@ const RightSidebar = ({ article }) => {
     window.open(`${baseUrl}edit/${articleTitle}`, '_blank');
   };
 
+  const handleBookmark = () => {
+    const bookmarks = JSON.parse(localStorage.getItem('wikitok-bookmarks') || '[]');
+    const isBookmarked = bookmarks.some(bookmark => bookmark.title === article.title);
+    
+    if (isBookmarked) {
+      const newBookmarks = bookmarks.filter(bookmark => bookmark.title !== article.title);
+      localStorage.setItem('wikitok-bookmarks', JSON.stringify(newBookmarks));
+    } else {
+      bookmarks.push({
+        title: article.title,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem('wikitok-bookmarks', JSON.stringify(bookmarks));
+    }
+  };
+
   return (
     <div className="fixed right-4 bottom-20 flex flex-col items-center space-y-4 z-50">
       <div className="flex flex-col items-center">
@@ -38,7 +54,7 @@ const RightSidebar = ({ article }) => {
       </div>
       
       <div className="flex flex-col items-center">
-        <button className="sidebar-icon">
+        <button className="sidebar-icon" onClick={handleBookmark}>
           <Bookmark className="w-7 h-7" />
         </button>
         <span className="text-xs mt-1">Save</span>
@@ -59,17 +75,10 @@ const RightSidebar = ({ article }) => {
       </div>
       
       <div className="flex flex-col items-center">
-        <button className="sidebar-icon">
+        <button className="sidebar-icon" onClick={handleWikipediaRedirect}>
           <BookOpen className="w-7 h-7" />
         </button>
         <span className="text-xs mt-1">{article.citations}</span>
-      </div>
-
-      <div className="flex flex-col items-center">
-        <button className="sidebar-icon" onClick={handleWikipediaRedirect}>
-          <ExternalLink className="w-7 h-7" />
-        </button>
-        <span className="text-xs mt-1">Wiki</span>
       </div>
     </div>
   );
