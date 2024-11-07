@@ -7,8 +7,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { searchArticles } from "../services/wikipediaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +18,15 @@ const Navigation = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Update searchTerm when URL query changes
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      setSearchTerm(decodeURIComponent(query));
+    }
+  }, [searchParams]);
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
