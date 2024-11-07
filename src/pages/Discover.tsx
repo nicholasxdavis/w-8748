@@ -40,10 +40,11 @@ const Discover = () => {
     }
   }, [inView, fetchNextPage, hasNextPage]);
 
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = async (category: string) => {
+    // First, remove the old data
+    queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
+    // Then set the new category
     setSelectedCategory(category);
-    // Invalidate and refetch when category changes
-    queryClient.invalidateQueries({ queryKey: ["discover", category] });
   };
 
   const handleArticleClick = (article: WikipediaArticle) => {
@@ -85,7 +86,7 @@ const Discover = () => {
         ) : (
           articles.map((article: WikipediaArticle) => (
             <div
-              key={`${article.id}-${selectedCategory}`}
+              key={`${article.id}-${article.title}`}
               className="relative aspect-[9/16] group cursor-pointer"
               onClick={() => handleArticleClick(article)}
             >
