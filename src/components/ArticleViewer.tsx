@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
 
-const ArticleViewer = ({ articles }) => {
+const ArticleViewer = ({ articles, onArticleChange }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
@@ -14,7 +14,8 @@ const ArticleViewer = ({ articles }) => {
     setIsVisible(true);
     setDisplayedText("");
     setProgress(0);
-  }, [currentIndex]);
+    onArticleChange(currentArticle);
+  }, [currentIndex, currentArticle, onArticleChange]);
 
   useEffect(() => {
     if (!isVisible || !currentArticle.content) return;

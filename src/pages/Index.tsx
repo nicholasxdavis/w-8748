@@ -6,18 +6,19 @@ import Navigation from "../components/Navigation";
 import { getRandomArticles, searchArticles } from "../services/wikipediaService";
 import { useToast } from "@/components/ui/use-toast";
 import { useSearchParams, useLocation } from "react-router-dom";
+import { useState } from "react";
 
 const Index = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const searchQuery = searchParams.get("q");
+  const [currentArticle, setCurrentArticle] = useState(null);
 
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["articles", searchQuery],
     queryFn: async () => {
       if (searchQuery) {
-        // If we have reordered results in the location state, use those
         if (location.state?.reorderedResults) {
           return location.state.reorderedResults;
         }
@@ -56,9 +57,12 @@ const Index = () => {
     <div className="h-screen w-screen relative overflow-hidden">
       <Navigation />
       <div className="flex h-full">
-        <LeftSidebar article={articles[0]} />
-        <ArticleViewer articles={articles} />
-        <RightSidebar article={articles[0]} />
+        <LeftSidebar article={currentArticle || articles[0]} />
+        <ArticleViewer 
+          articles={articles} 
+          onArticleChange={setCurrentArticle}
+        />
+        <RightSidebar article={currentArticle || articles[0]} />
       </div>
     </div>
   );
