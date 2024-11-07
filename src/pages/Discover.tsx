@@ -72,9 +72,9 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="h-screen overflow-y-auto pt-16 pb-20">
+    <div className="h-screen overflow-y-auto pt-14">
       <div 
-        className={`sticky top-0 z-10 bg-wikitok-dark transition-transform duration-300 ${
+        className={`fixed top-14 left-0 right-0 z-10 bg-wikitok-dark transition-transform duration-300 ${
           !isVisible ? "-translate-y-full" : "translate-y-0"
         }`}
       >
@@ -98,7 +98,7 @@ const Discover = () => {
         </ScrollArea>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 mt-12">
         {isLoading ? (
           Array.from({ length: 12 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[9/16] rounded-lg bg-white/10" />
