@@ -29,18 +29,24 @@ const Discover = () => {
 
   // Handle scroll for category bar visibility
   useEffect(() => {
-    const controlCategoryBar = () => {
+    const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      
+      // Show navbar when scrolling up or at the top
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
       }
+      
       setLastScrollY(currentScrollY);
     };
 
-    window.addEventListener("scroll", controlCategoryBar);
-    return () => window.removeEventListener("scroll", controlCategoryBar);
+    // Add event listener with passive option for better performance
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Cleanup
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
@@ -72,10 +78,10 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="h-screen overflow-y-auto pt-14">
+    <div className="h-screen overflow-y-auto">
       <div 
-        className={`fixed top-14 left-0 right-0 z-10 bg-wikitok-dark transition-transform duration-300 ${
-          !isVisible ? "-translate-y-full" : "translate-y-0"
+        className={`fixed top-14 left-0 right-0 z-10 bg-wikitok-dark transform transition-transform duration-300 ${
+          isVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         <ScrollArea className="w-full whitespace-nowrap">
@@ -98,7 +104,7 @@ const Discover = () => {
         </ScrollArea>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 mt-12">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 mt-16">
         {isLoading ? (
           Array.from({ length: 12 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[9/16] rounded-lg bg-white/10" />
