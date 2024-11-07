@@ -26,19 +26,20 @@ const ArticleViewer = ({ articles }) => {
   }, [api]);
 
   return (
-    <main className="flex-1 h-full">
+    <main className="flex-1 h-screen">
       <Carousel
         orientation="vertical"
-        className="h-screen"
+        className="h-full"
         setApi={setApi}
         opts={{
           dragFree: false,
-          containScroll: "trimSnaps",
+          containScroll: false,
+          align: "start",
         }}
       >
-        <CarouselContent className="-mt-4 h-full">
+        <CarouselContent className="h-full">
           {articles.map((article, index) => (
-            <CarouselItem key={article.id} className="pt-4 h-screen">
+            <CarouselItem key={article.id} className="h-screen pt-0">
               <div className="article-section">
                 <div className="absolute inset-0">
                   <img
