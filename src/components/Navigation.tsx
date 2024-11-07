@@ -28,11 +28,17 @@ const Navigation = () => {
     }
   }, [searchParams]);
 
+  // Key change: Force CommandDialog to re-render when search results change
+  const [key, setKey] = useState(0);
+  
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
     enabled: searchTerm.length > 2,
-    staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    onSuccess: () => {
+      // Increment key to force CommandDialog re-render when results arrive
+      setKey(prev => prev + 1);
+    },
   });
 
   const handleArticleSelect = (title: string) => {
@@ -64,7 +70,7 @@ const Navigation = () => {
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog key={key} open={open} onOpenChange={setOpen}>
         <CommandInput 
           placeholder="Search articles..." 
           value={searchTerm}
