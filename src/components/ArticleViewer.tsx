@@ -1,24 +1,52 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
+import { getRandomArticles } from "../services/wikipediaService";
+import { useToast } from "./ui/use-toast";
 
-const ArticleViewer = ({ articles, onArticleChange }) => {
+const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
+  const [articles, setArticles] = useState(initialArticles);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
   const [progress, setProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const currentArticle = articles[currentIndex];
+  const { toast } = useToast();
+
+  const loadMoreArticles = useCallback(async () => {
+    if (isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      const newArticles = await getRandomArticles(3);
+      setArticles(prev => [...prev, ...newArticles]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load more articles",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, toast]);
 
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
     setProgress(0);
     onArticleChange(currentArticle);
-  }, [currentIndex, currentArticle, onArticleChange]);
+
+    // Load more articles when we're 2 articles away from the end
+    if (currentIndex >= articles.length - 2) {
+      loadMoreArticles();
+    }
+  }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles]);
 
   useEffect(() => {
-    if (!isVisible || !currentArticle.content) return;
+    if (!isVisible || !currentArticle?.content) return;
 
     let currentChar = 0;
     const text = currentArticle.content;
@@ -32,10 +60,10 @@ const ArticleViewer = ({ articles, onArticleChange }) => {
       } else {
         clearInterval(interval);
       }
-    }, 50); // Adjust speed here
+    }, 50);
 
     return () => clearInterval(interval);
-  }, [isVisible, currentArticle.content]);
+  }, [isVisible, currentArticle?.content]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -57,13 +85,13 @@ const ArticleViewer = ({ articles, onArticleChange }) => {
       }
     );
 
-    const articles = container.querySelectorAll(".article-section");
-    articles.forEach((article) => observer.observe(article));
+    const articleElements = container.querySelectorAll(".article-section");
+    articleElements.forEach((article) => observer.observe(article));
 
     return () => {
-      articles.forEach((article) => observer.unobserve(article));
+      articleElements.forEach((article) => observer.unobserve(article));
     };
-  }, []);
+  }, [articles]); // Re-observe when articles array changes
 
   return (
     <main 
@@ -114,6 +142,11 @@ const ArticleViewer = ({ articles, onArticleChange }) => {
           )}
         </div>
       ))}
+      {isLoading && (
+        <div className="h-screen w-screen flex items-center justify-center">
+          <div className="text-white">Loading more articles...</div>
+        </div>
+      )}
     </main>
   );
 };
