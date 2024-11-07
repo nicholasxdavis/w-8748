@@ -23,10 +23,9 @@ const Navigation = () => {
 
   useEffect(() => {
     const query = searchParams.get("q");
-    if (query) {
+    if (query && !searchValue) {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
-      setOpen(true);
     }
   }, [searchParams]);
 
@@ -48,6 +47,7 @@ const Navigation = () => {
     toast({
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
+      duration: 2000, // Toast will disappear after 2 seconds
     });
     
     // Reorder the results to put the selected article first
