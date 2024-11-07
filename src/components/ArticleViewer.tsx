@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
 import { getRandomArticles } from "../services/wikipediaService";
-import { useToast } from "./ui/use-toast";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -13,7 +12,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const currentArticle = articles[currentIndex];
-  const { toast } = useToast();
 
   const loadMoreArticles = useCallback(async () => {
     if (isLoading) return;
@@ -23,15 +21,11 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       const newArticles = await getRandomArticles(3);
       setArticles(prev => [...prev, ...newArticles]);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load more articles",
-        variant: "destructive",
-      });
+      console.error("Failed to load more articles", error);
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, toast]);
+  }, [isLoading]);
 
   useEffect(() => {
     setIsVisible(true);
