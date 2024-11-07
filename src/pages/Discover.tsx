@@ -24,6 +24,24 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
   const queryClient = useQueryClient();
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Handle scroll for category bar visibility
+  useEffect(() => {
+    const controlCategoryBar = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", controlCategoryBar);
+    return () => window.removeEventListener("scroll", controlCategoryBar);
+  }, [lastScrollY]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
@@ -41,9 +59,7 @@ const Discover = () => {
   }, [inView, fetchNextPage, hasNextPage]);
 
   const handleCategoryChange = async (category: string) => {
-    // First, remove the old data
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
-    // Then set the new category
     setSelectedCategory(category);
   };
 
@@ -57,7 +73,11 @@ const Discover = () => {
 
   return (
     <div className="h-screen overflow-y-auto pt-16 pb-20">
-      <div className="sticky top-0 z-10 bg-wikitok-dark">
+      <div 
+        className={`sticky top-0 z-10 bg-wikitok-dark transition-transform duration-300 ${
+          !isVisible ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-4 px-4 py-2">
             {categories.map((category) => (

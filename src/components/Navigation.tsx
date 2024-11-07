@@ -17,6 +17,8 @@ import { useToast } from "@/components/ui/use-toast";
 const Navigation = () => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -24,11 +26,39 @@ const Navigation = () => {
 
   useEffect(() => {
     const query = searchParams.get("q");
-    if (query && !searchValue) {
+    if (query && !searchValue && location.pathname !== "/discover") {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
     }
-  }, [searchParams]);
+  }, [searchParams, location.pathname]);
+
+  // Clear search when navigating to discover
+  useEffect(() => {
+    if (location.pathname === "/discover") {
+      setSearchValue("");
+    }
+  }, [location.pathname]);
+
+  // Handle scroll for navigation visibility
+  useEffect(() => {
+    const controlNavbar = () => {
+      if (location.pathname !== "/discover") {
+        setIsVisible(true);
+        return;
+      }
+      
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < lastScrollY || currentScrollY < 10) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", controlNavbar);
+    return () => window.removeEventListener("scroll", controlNavbar);
+  }, [lastScrollY, location.pathname]);
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchValue],
@@ -82,13 +112,18 @@ const Navigation = () => {
     if (location.pathname === "/discover") {
       navigate("/");
     } else {
+      setSearchValue("");
       navigate("/discover");
     }
   };
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
+      <div 
+        className={`fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent transition-transform duration-300 ${
+          !isVisible ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
         <div 
           className="text-xl font-bold text-wikitok-red cursor-pointer"
           onClick={handleRandomArticle}
