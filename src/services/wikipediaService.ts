@@ -60,15 +60,21 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
   
   // Check if we have search results in the response
   if (!data.query?.search) {
+    console.log("No search results found in response:", data);
     return [];
   }
+
+  console.log("Found search results:", data.query.search.length);
 
   // Transform the API results into WikipediaArticle format
   return data.query.search.map((result: any) => ({
     id: result.pageid,
     title: result.title,
-    // Clean up HTML tags from the snippet
-    content: result.snippet.replace(/<\/?span[^>]*>/g, "").replace(/&quot;/g, '"'),
+    // Clean up HTML tags from the snippet and decode HTML entities
+    content: result.snippet
+      .replace(/<\/?span[^>]*>/g, "")
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'"),
     image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // Placeholder
     citations: Math.floor(Math.random() * 300) + 50,
     readTime: Math.ceil(result.wordcount / 200),

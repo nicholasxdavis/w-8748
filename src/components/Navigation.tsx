@@ -25,6 +25,8 @@ const Navigation = () => {
     enabled: searchTerm.length > 2,
   });
 
+  console.log("Search term:", searchTerm, "Results:", searchResults);
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
@@ -51,10 +53,10 @@ const Navigation = () => {
         <CommandList>
           {isLoading ? (
             <CommandEmpty>Searching...</CommandEmpty>
+          ) : searchTerm.length < 3 ? (
+            <CommandEmpty>Type at least 3 characters to search</CommandEmpty>
           ) : !searchResults || searchResults.length === 0 ? (
-            <CommandEmpty>
-              {searchTerm.length < 3 ? "Type at least 3 characters to search" : "No results found."}
-            </CommandEmpty>
+            <CommandEmpty>No results found.</CommandEmpty>
           ) : (
             <CommandGroup heading="Articles">
               {searchResults.map((result) => (
