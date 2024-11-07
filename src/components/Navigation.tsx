@@ -35,6 +35,14 @@ const Navigation = () => {
     navigate(`/?q=${encodeURIComponent(title)}`);
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      // Reset search term when closing the dialog
+      setSearchTerm("");
+    }
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
@@ -54,7 +62,7 @@ const Navigation = () => {
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={handleOpenChange}>
         <CommandInput 
           placeholder="Search articles..." 
           value={searchTerm}
