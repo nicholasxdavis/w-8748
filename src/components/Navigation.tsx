@@ -15,8 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchInputValue, setSearchInputValue] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -25,43 +24,25 @@ const Navigation = () => {
     const query = searchParams.get("q");
     if (query) {
       const decodedQuery = decodeURIComponent(query);
-      setSearchTerm(decodedQuery);
-      setSearchInputValue(decodedQuery);
+      setSearchValue(decodedQuery);
     }
   }, [searchParams]);
 
-  // Implement debounce using useEffect
-  useEffect(() => {
-    if (searchInputValue.length >= 3) {
-      const timeoutId = setTimeout(() => {
-        setSearchTerm(searchInputValue);
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    } else {
-      setSearchTerm("");
-    }
-  }, [searchInputValue]);
-
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["search", searchTerm],
-    queryFn: () => searchArticles(searchTerm),
-    enabled: searchTerm.length >= 3,
+    queryKey: ["search", searchValue],
+    queryFn: () => searchArticles(searchValue),
+    enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
   });
 
   const handleArticleSelect = (title: string) => {
     setOpen(false);
-    setSearchTerm(title);
-    setSearchInputValue(title);
+    setSearchValue(title);
     toast({
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
     });
     navigate(`/?q=${encodeURIComponent(title)}`);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchInputValue(value);
   };
 
   return (
@@ -74,7 +55,7 @@ const Navigation = () => {
         >
           <Search className="w-4 h-4 text-white/60 mr-2" />
           <span className="text-white/60 text-sm">
-            {searchTerm || "Search articles"}
+            {searchValue || "Search articles"}
           </span>
         </div>
         <div className="flex space-x-6">
@@ -86,18 +67,18 @@ const Navigation = () => {
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput 
           placeholder="Search articles..." 
-          value={searchInputValue}
-          onValueChange={handleSearch}
+          value={searchValue}
+          onValueChange={setSearchValue}
           className="border-none focus:ring-0"
         />
         <CommandList className="max-h-[80vh] overflow-y-auto">
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
-          {!isLoading && searchInputValue.length < 3 && (
-            <CommandEmpty>Type at least 3 characters to search</CommandEmpty>
+          {!isLoading && !searchResults && (
+            <CommandEmpty>Start typing to search articles</CommandEmpty>
           )}
-          {!isLoading && searchInputValue.length >= 3 && (!searchResults || searchResults.length === 0) && (
+          {!isLoading && searchResults && searchResults.length === 0 && (
             <CommandEmpty>No results found.</CommandEmpty>
           )}
           {!isLoading && searchResults && searchResults.length > 0 && (
