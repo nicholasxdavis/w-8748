@@ -36,19 +36,9 @@ const Navigation = () => {
     },
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
+    staleTime: 0, // Ensure fresh data on each search
+    cacheTime: 1000 * 60 * 5,
   });
-
-  // Log state changes
-  useEffect(() => {
-    console.log("📝 Search value changed:", searchValue);
-    console.log("🚪 Dialog open state:", open);
-  }, [searchValue, open]);
-
-  // Log search results and loading state
-  useEffect(() => {
-    console.log("⏳ Loading state:", isLoading);
-    console.log("📊 Search results:", searchResults);
-  }, [searchResults, isLoading]);
 
   const handleArticleSelect = (title: string) => {
     console.log("🎯 Article selected:", title);
@@ -67,10 +57,7 @@ const Navigation = () => {
         <div className="text-xl font-bold text-wikitok-red">WikiTok</div>
         <div 
           className="flex items-center bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 cursor-pointer"
-          onClick={() => {
-            console.log("🔘 Search bar clicked, current open state:", !open);
-            setOpen(true);
-          }}
+          onClick={() => setOpen(true)}
         >
           <Search className="w-4 h-4 text-white/60 mr-2" />
           <span className="text-white/60 text-sm">
@@ -85,25 +72,22 @@ const Navigation = () => {
 
       <CommandDialog 
         open={open} 
-        onOpenChange={(newOpen) => {
-          console.log("🔄 Dialog state changing to:", newOpen);
-          setOpen(newOpen);
-        }}
+        onOpenChange={setOpen}
       >
         <CommandInput 
           placeholder="Search articles..." 
           value={searchValue}
-          onValueChange={(newValue) => {
-            console.log("⌨️ Input value changing to:", newValue);
-            setSearchValue(newValue);
-          }}
+          onValueChange={setSearchValue}
           className="border-none focus:ring-0"
         />
         <CommandList className="max-h-[80vh] overflow-y-auto">
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
-          {!isLoading && !searchResults && (
+          {!isLoading && !searchResults && searchValue.length > 0 && (
+            <CommandEmpty>No results found.</CommandEmpty>
+          )}
+          {!isLoading && !searchValue && (
             <CommandEmpty>Start typing to search articles</CommandEmpty>
           )}
           {!isLoading && searchResults && searchResults.length === 0 && (
