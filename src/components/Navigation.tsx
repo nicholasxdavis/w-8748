@@ -35,10 +35,13 @@ const Navigation = () => {
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
     enabled: searchTerm.length > 2,
-    onSuccess: () => {
-      // Increment key to force CommandDialog re-render when results arrive
-      setKey(prev => prev + 1);
-    },
+    gcTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    meta: {
+      onSuccess: () => {
+        // Increment key to force CommandDialog re-render when results arrive
+        setKey(prev => prev + 1);
+      }
+    }
   });
 
   const handleArticleSelect = (title: string) => {
