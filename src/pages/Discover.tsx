@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRandomArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -24,10 +24,12 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
 
-  const { data: articles = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
-    queryFn: () => getRandomArticles(12),
-    getNextPageParam: (lastPage, pages) => pages.length < 3,
+    queryFn: ({ pageParam = 1 }) => getRandomArticles(12),
+    getNextPageParam: (lastPage, allPages) => {
+      return allPages.length < 3 ? allPages.length + 1 : undefined;
+    },
   });
 
   useEffect(() => {
@@ -41,6 +43,8 @@ const Discover = () => {
       state: { reorderedResults: [article] }
     });
   };
+
+  const articles = data?.pages.flat() ?? [];
 
   return (
     <div className="min-h-screen bg-wikitok-dark text-white pt-16 pb-20">
