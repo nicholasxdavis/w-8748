@@ -2,10 +2,10 @@ import { Hash } from "lucide-react";
 
 const LeftSidebar = ({ article }) => {
   return (
-    <div className="fixed left-4 bottom-24 flex flex-col space-y-4">
+    <div className="fixed left-4 bottom-24 flex flex-col space-y-4 z-50">
       <div className="space-y-2">
         {article.tags.map((tag) => (
-          <div key={tag} className="flex items-center space-x-2 text-sm">
+          <div key={tag} className="flex items-center space-x-2 text-sm bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
             <Hash className="w-4 h-4" />
             <span>{tag}</span>
           </div>
