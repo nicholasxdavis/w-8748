@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRandomArticles } from "@/services/wikipediaService";
+import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,9 +24,10 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery<WikipediaArticle[]>({
     queryKey: ["discover", selectedCategory],
-    queryFn: ({ pageParam = 1 }) => getRandomArticles(12),
+    queryFn: ({ pageParam }) => getRandomArticles(12),
+    initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length < 3 ? allPages.length + 1 : undefined;
     },
@@ -38,7 +39,7 @@ const Discover = () => {
     }
   }, [inView, fetchNextPage, hasNextPage]);
 
-  const handleArticleClick = (article: any) => {
+  const handleArticleClick = (article: WikipediaArticle) => {
     navigate(`/?q=${encodeURIComponent(article.title)}`, {
       state: { reorderedResults: [article] }
     });
@@ -73,7 +74,7 @@ const Discover = () => {
             <Skeleton key={i} className="aspect-[9/16] rounded-lg bg-white/10" />
           ))
         ) : (
-          articles.map((article: any) => (
+          articles.map((article: WikipediaArticle) => (
             <div
               key={article.id}
               className="relative aspect-[9/16] group cursor-pointer"
