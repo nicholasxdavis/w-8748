@@ -48,4 +48,29 @@ const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]>
   }));
 };
 
-export { getRandomArticles };
+const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
+  if (!query || query.length < 3) return [];
+
+  const response = await fetch(
+    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(
+      query
+    )}&srlimit=10`
+  );
+  const data = await response.json();
+  const results = data.query.search;
+
+  // Transform the results into WikipediaArticle format
+  return results.map((result: any) => ({
+    id: result.pageid,
+    title: result.title,
+    content: result.snippet.replace(/<\/?span[^>]*>/g, ""),
+    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // Placeholder
+    citations: Math.floor(Math.random() * 300) + 50,
+    readTime: Math.ceil(result.wordcount / 200),
+    views: Math.floor(Math.random() * 5000) + 1000,
+    tags: ["science", "history"],
+    relatedArticles: [],
+  }));
+};
+
+export { getRandomArticles, searchArticles };
