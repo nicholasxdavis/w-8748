@@ -37,7 +37,6 @@ const Navigation = () => {
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
     staleTime: 0, // Ensure fresh data on each search
-    cacheTime: 1000 * 60 * 5,
   });
 
   const handleArticleSelect = (title: string) => {
