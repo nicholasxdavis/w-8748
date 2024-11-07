@@ -3,7 +3,7 @@ import { Hash } from "lucide-react";
 const LeftSidebar = ({ article }) => {
   return (
     <div className="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col space-y-4 z-50">
-      <div className="space-y-2 ml-4">
+      <div className="space-y-2">
         {article.tags.map((tag) => (
           <div 
             key={tag} 
