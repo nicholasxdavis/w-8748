@@ -14,21 +14,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 
 const Navigation = () => {
-  console.log("Navigation component rendering");
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchInputValue, setSearchInputValue] = useState(""); // New state for input
+  const [searchInputValue, setSearchInputValue] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
-  // Update searchTerm when URL query changes
   useEffect(() => {
     const query = searchParams.get("q");
-    console.log("URL query changed:", query);
     if (query) {
       const decodedQuery = decodeURIComponent(query);
-      console.log("Setting search term from URL:", decodedQuery);
       setSearchTerm(decodedQuery);
       setSearchInputValue(decodedQuery);
     }
@@ -36,26 +32,12 @@ const Navigation = () => {
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
-    queryFn: () => {
-      console.log("Fetching results for:", searchTerm);
-      return searchArticles(searchTerm);
-    },
+    queryFn: () => searchArticles(searchTerm),
     enabled: searchTerm.length > 2,
-    gcTime: 1000 * 60 * 5, // Cache results for 5 minutes
+    gcTime: 1000 * 60 * 5,
   });
 
-  // Log whenever search results update
-  useEffect(() => {
-    console.log("Search results updated:", searchResults);
-  }, [searchResults]);
-
-  // Log dialog open state changes
-  useEffect(() => {
-    console.log("Dialog open state changed:", open);
-  }, [open]);
-
   const handleArticleSelect = (title: string) => {
-    console.log("Article selected:", title);
     setOpen(false);
     setSearchTerm(title);
     setSearchInputValue(title);
@@ -67,17 +49,14 @@ const Navigation = () => {
   };
 
   const handleSearch = (value: string) => {
-    console.log("Search value changed:", value);
-    setSearchInputValue(value); // Update input value immediately
-    // Debounce the actual search term update
+    setSearchInputValue(value);
     const timeoutId = setTimeout(() => {
-      console.log("Setting search term after debounce:", value);
       setSearchTerm(value);
     }, 300);
     return () => clearTimeout(timeoutId);
   };
 
-  // Log current state before rendering
+  // Debug logging
   const debugState = {
     searchTerm,
     searchInputValue,
@@ -86,14 +65,6 @@ const Navigation = () => {
     dialogOpen: open
   };
   console.log("Current search state:", debugState);
-
-  // Log command list state
-  const debugCommandList = {
-    isLoading,
-    searchInputValue,
-    resultsCount: searchResults?.length
-  };
-  console.log("Rendering CommandList with:", debugCommandList);
 
   return (
     <>
@@ -119,8 +90,9 @@ const Navigation = () => {
           placeholder="Search articles..." 
           value={searchInputValue}
           onValueChange={handleSearch}
+          className="border-none focus:ring-0"
         />
-        <CommandList>
+        <CommandList className="max-h-[80vh] overflow-y-auto">
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
@@ -131,32 +103,30 @@ const Navigation = () => {
             <CommandEmpty>No results found.</CommandEmpty>
           )}
           {!isLoading && searchResults && searchResults.length > 0 && (
-            <CommandGroup heading="Articles">
-              {searchResults.map((result) => {
-                console.log("Rendering search result:", result.title);
-                return (
-                  <CommandItem
-                    key={result.id}
-                    onSelect={() => handleArticleSelect(result.title)}
-                  >
-                    <div className="flex items-center">
-                      {result.image && (
-                        <img 
-                          src={result.image} 
-                          alt={result.title}
-                          className="w-8 h-8 object-cover rounded-md mr-3"
-                        />
-                      )}
-                      <div>
-                        <div className="font-medium">{result.title}</div>
-                        <div className="text-sm text-gray-400 truncate max-w-[300px]">
-                          {result.content}
-                        </div>
+            <CommandGroup heading="Articles" className="p-2">
+              {searchResults.map((result) => (
+                <CommandItem
+                  key={result.id}
+                  onSelect={() => handleArticleSelect(result.title)}
+                  className="flex items-center p-2 cursor-pointer hover:bg-accent rounded-lg"
+                >
+                  <div className="flex items-center w-full gap-3">
+                    {result.image && (
+                      <img 
+                        src={result.image} 
+                        alt={result.title}
+                        className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-base">{result.title}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {result.content}
                       </div>
                     </div>
-                  </CommandItem>
-                );
-              })}
+                  </div>
+                </CommandItem>
+              ))}
             </CommandGroup>
           )}
         </CommandList>
