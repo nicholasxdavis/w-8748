@@ -1,5 +1,6 @@
 import { Home, Search, Compass } from "lucide-react";
 import {
+  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -80,55 +81,56 @@ const Navigation = () => {
       <CommandDialog 
         open={open} 
         onOpenChange={handleOpenChange}
-        shouldFilter={false} // Add this to prevent internal filtering
       >
-        <CommandInput 
-          placeholder="Search articles..." 
-          value={searchValue}
-          onValueChange={setSearchValue}
-          className="border-none focus:ring-0"
-        />
-        <CommandList className="max-h-[80vh] overflow-y-auto">
-          {isLoading && (
-            <CommandEmpty>Searching...</CommandEmpty>
-          )}
-          {!isLoading && !searchResults && searchValue.length > 0 && (
-            <CommandEmpty>No results found.</CommandEmpty>
-          )}
-          {!isLoading && !searchValue && (
-            <CommandEmpty>Start typing to search articles</CommandEmpty>
-          )}
-          {!isLoading && searchResults && searchResults.length === 0 && (
-            <CommandEmpty>No results found.</CommandEmpty>
-          )}
-          {!isLoading && searchResults && searchResults.length > 0 && (
-            <CommandGroup heading="Articles">
-              {searchResults.map((result) => (
-                <CommandItem
-                  key={result.id}
-                  onSelect={() => handleArticleSelect(result.title)}
-                  className="flex items-center p-2 cursor-pointer hover:bg-accent rounded-lg"
-                >
-                  <div className="flex items-center w-full gap-3">
-                    {result.image && (
-                      <img 
-                        src={result.image} 
-                        alt={result.title}
-                        className="w-16 h-16 object-cover rounded-md flex-shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-base">{result.title}</div>
-                      <div className="text-sm text-muted-foreground line-clamp-2">
-                        {result.content}
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Search articles..." 
+            value={searchValue}
+            onValueChange={setSearchValue}
+            className="border-none focus:ring-0"
+          />
+          <CommandList className="max-h-[80vh] overflow-y-auto">
+            {isLoading && (
+              <CommandEmpty>Searching...</CommandEmpty>
+            )}
+            {!isLoading && !searchResults && searchValue.length > 0 && (
+              <CommandEmpty>No results found.</CommandEmpty>
+            )}
+            {!isLoading && !searchValue && (
+              <CommandEmpty>Start typing to search articles</CommandEmpty>
+            )}
+            {!isLoading && searchResults && searchResults.length === 0 && (
+              <CommandEmpty>No results found.</CommandEmpty>
+            )}
+            {!isLoading && searchResults && searchResults.length > 0 && (
+              <CommandGroup heading="Articles">
+                {searchResults.map((result) => (
+                  <CommandItem
+                    key={result.id}
+                    onSelect={() => handleArticleSelect(result.title)}
+                    className="flex items-center p-2 cursor-pointer hover:bg-accent rounded-lg"
+                  >
+                    <div className="flex items-center w-full gap-3">
+                      {result.image && (
+                        <img 
+                          src={result.image} 
+                          alt={result.title}
+                          className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-base">{result.title}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-2">
+                          {result.content}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
       </CommandDialog>
     </>
   );
