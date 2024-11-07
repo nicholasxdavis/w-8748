@@ -48,25 +48,27 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="min-h-screen bg-wikitok-dark text-white pt-16 pb-20 overflow-y-auto">
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex space-x-4 px-4 py-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category
-                  ? "bg-wikitok-red text-white"
-                  : "bg-white/10 hover:bg-white/20"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+    <div className="h-screen overflow-y-auto pt-16 pb-20">
+      <div className="sticky top-0 z-10 bg-wikitok-dark">
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex space-x-4 px-4 py-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? "bg-wikitok-red text-white"
+                    : "bg-white/10 hover:bg-white/20"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
         {isLoading ? (
