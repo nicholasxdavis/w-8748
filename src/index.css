@@ -14,14 +14,14 @@
   }
   
   .article-container {
-    @apply snap-y snap-mandatory h-screen w-full overflow-y-scroll;
+    @apply h-screen w-full overflow-hidden;
   }
   
   .article-section {
-    @apply snap-start h-screen w-full relative flex items-center justify-center;
+    @apply h-screen w-full relative flex items-center justify-center;
   }
   
   .text-overlay {
-    @apply absolute bottom-24 left-8 right-24 text-white text-lg animate-fade-up;
+    @apply absolute bottom-24 left-8 right-24 text-white text-lg;
   }
 }
