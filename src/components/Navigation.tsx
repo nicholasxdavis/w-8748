@@ -51,13 +51,16 @@ const Navigation = () => {
           onValueChange={setSearchTerm}
         />
         <CommandList>
-          {isLoading ? (
+          {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
-          ) : searchTerm.length < 3 ? (
+          )}
+          {!isLoading && searchTerm.length < 3 && (
             <CommandEmpty>Type at least 3 characters to search</CommandEmpty>
-          ) : !searchResults || searchResults.length === 0 ? (
+          )}
+          {!isLoading && searchTerm.length >= 3 && (!searchResults || searchResults.length === 0) && (
             <CommandEmpty>No results found.</CommandEmpty>
-          ) : (
+          )}
+          {!isLoading && searchResults && searchResults.length > 0 && (
             <CommandGroup heading="Articles">
               {searchResults.map((result) => (
                 <CommandItem
