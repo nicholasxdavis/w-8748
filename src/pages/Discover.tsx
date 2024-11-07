@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,13 +26,15 @@ const Discover = () => {
   const queryClient = useQueryClient();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll for category bar visibility
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = container.scrollTop;
       
-      // Show navbar when scrolling up or at the top
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
       } else {
@@ -42,11 +44,8 @@ const Discover = () => {
       setLastScrollY(currentScrollY);
     };
 
-    // Add event listener with passive option for better performance
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    // Cleanup
-    return () => window.removeEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
@@ -78,9 +77,9 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div ref={containerRef} className="h-screen overflow-y-auto">
       <div 
-        className={`fixed top-14 left-0 right-0 z-10 bg-wikitok-dark transform transition-transform duration-300 ${
+        className={`sticky top-14 left-0 right-0 z-10 bg-wikitok-dark transform transition-transform duration-300 ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
