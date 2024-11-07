@@ -77,13 +77,23 @@ const Navigation = () => {
     return () => clearTimeout(timeoutId);
   };
 
-  console.log("Current search state:", {
+  // Log current state before rendering
+  const debugState = {
     searchTerm,
     searchInputValue,
     isLoading,
     resultsCount: searchResults?.length,
     dialogOpen: open
-  });
+  };
+  console.log("Current search state:", debugState);
+
+  // Log command list state
+  const debugCommandList = {
+    isLoading,
+    searchInputValue,
+    resultsCount: searchResults?.length
+  };
+  console.log("Rendering CommandList with:", debugCommandList);
 
   return (
     <>
@@ -111,11 +121,6 @@ const Navigation = () => {
           onValueChange={handleSearch}
         />
         <CommandList>
-          {console.log("Rendering CommandList with:", {
-            isLoading,
-            searchInputValue,
-            resultsCount: searchResults?.length
-          })}
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
