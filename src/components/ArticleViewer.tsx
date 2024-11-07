@@ -22,8 +22,8 @@ const ArticleViewer = ({ articles }) => {
           axis: "y",
         }}
         className="h-screen"
-        onSelect={(index) => {
-          setCurrentIndex(index);
+        onSelect={(api) => {
+          setCurrentIndex(api.selectedScrollSnap());
           setIsVisible(false);
         }}
       >
