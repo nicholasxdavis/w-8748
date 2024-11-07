@@ -12,16 +12,15 @@ const Index = () => {
     queryKey: ["articles"],
     queryFn: () => getRandomArticles(3),
     retry: 1,
-    onSettled: (data, error) => {
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load articles. Please try again later.",
-          variant: "destructive",
-        });
-      }
-    },
   });
+
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to load articles. Please try again later.",
+      variant: "destructive",
+    });
+  }
 
   if (isLoading) {
     return (
