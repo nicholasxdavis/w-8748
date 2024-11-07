@@ -25,7 +25,7 @@ const Navigation = () => {
     if (query) {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
-      setOpen(true); // Open dialog when there's a search query
+      setOpen(true);
     }
   }, [searchParams]);
 
@@ -37,7 +37,7 @@ const Navigation = () => {
     },
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
-    staleTime: 0, // Ensure fresh data on each search
+    staleTime: 0,
   });
 
   const handleArticleSelect = (title: string) => {
@@ -53,11 +53,8 @@ const Navigation = () => {
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
-    if (!newOpen) {
-      // Only clear search value if dialog is closed and no article was selected
-      if (!searchResults || searchResults.length === 0) {
-        setSearchValue("");
-      }
+    if (!newOpen && (!searchResults || searchResults.length === 0)) {
+      setSearchValue("");
     }
   };
 
@@ -83,6 +80,7 @@ const Navigation = () => {
       <CommandDialog 
         open={open} 
         onOpenChange={handleOpenChange}
+        shouldFilter={false} // Add this to prevent internal filtering
       >
         <CommandInput 
           placeholder="Search articles..." 
@@ -104,7 +102,7 @@ const Navigation = () => {
             <CommandEmpty>No results found.</CommandEmpty>
           )}
           {!isLoading && searchResults && searchResults.length > 0 && (
-            <CommandGroup heading="Articles" className="p-2">
+            <CommandGroup heading="Articles">
               {searchResults.map((result) => (
                 <CommandItem
                   key={result.id}
