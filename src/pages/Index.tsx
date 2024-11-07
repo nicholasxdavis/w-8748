@@ -11,12 +11,15 @@ const Index = () => {
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["articles"],
     queryFn: () => getRandomArticles(3),
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load articles. Please try again later.",
-        variant: "destructive",
-      });
+    retry: 1,
+    onSettled: (data, error) => {
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load articles. Please try again later.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
