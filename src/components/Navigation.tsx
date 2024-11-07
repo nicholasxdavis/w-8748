@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 
 const Navigation = () => {
+  console.log("Navigation component rendering");
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInputValue, setSearchInputValue] = useState(""); // New state for input
@@ -24,8 +25,10 @@ const Navigation = () => {
   // Update searchTerm when URL query changes
   useEffect(() => {
     const query = searchParams.get("q");
+    console.log("URL query changed:", query);
     if (query) {
       const decodedQuery = decodeURIComponent(query);
+      console.log("Setting search term from URL:", decodedQuery);
       setSearchTerm(decodedQuery);
       setSearchInputValue(decodedQuery);
     }
@@ -46,7 +49,13 @@ const Navigation = () => {
     console.log("Search results updated:", searchResults);
   }, [searchResults]);
 
+  // Log dialog open state changes
+  useEffect(() => {
+    console.log("Dialog open state changed:", open);
+  }, [open]);
+
   const handleArticleSelect = (title: string) => {
+    console.log("Article selected:", title);
     setOpen(false);
     setSearchTerm(title);
     setSearchInputValue(title);
