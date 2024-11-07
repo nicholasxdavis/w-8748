@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -23,6 +23,7 @@ const Discover = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const navigate = useNavigate();
   const { ref, inView } = useInView();
+  const queryClient = useQueryClient();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
@@ -38,6 +39,12 @@ const Discover = () => {
       fetchNextPage();
     }
   }, [inView, fetchNextPage, hasNextPage]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    // Invalidate and refetch when category changes
+    queryClient.invalidateQueries({ queryKey: ["discover", category] });
+  };
 
   const handleArticleClick = (article: WikipediaArticle) => {
     navigate(`/?q=${encodeURIComponent(article.title)}`, {
@@ -55,7 +62,7 @@ const Discover = () => {
             {categories.map((category) => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategoryChange(category)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === category
                     ? "bg-wikitok-red text-white"
@@ -78,7 +85,7 @@ const Discover = () => {
         ) : (
           articles.map((article: WikipediaArticle) => (
             <div
-              key={article.id}
+              key={`${article.id}-${selectedCategory}`}
               className="relative aspect-[9/16] group cursor-pointer"
               onClick={() => handleArticleClick(article)}
             >
