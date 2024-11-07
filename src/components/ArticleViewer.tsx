@@ -107,7 +107,7 @@ const ArticleViewer = ({ articles }) => {
               <Progress 
                 value={progress} 
                 className="h-1 bg-black/20"
-                indicatorClassName="bg-wikitok-red"
+                indicatorClassName="bg-red-500"
               />
             </div>
           )}
