@@ -1,4 +1,4 @@
-import { Home, Search, Compass } from "lucide-react";
+import { Search, Compass, RefreshCw, Calendar } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/command";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { searchArticles } from "../services/wikipediaService";
+import { searchArticles, getRandomArticles } from "../services/wikipediaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -47,10 +47,9 @@ const Navigation = () => {
     toast({
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
-      duration: 2000, // Toast will disappear after 2 seconds
+      duration: 2000,
     });
     
-    // Reorder the results to put the selected article first
     const reorderedResults = [
       selectedArticle,
       ...(searchResults || []).filter(article => article.id !== selectedArticle.id)
@@ -68,10 +67,42 @@ const Navigation = () => {
     }
   };
 
+  const handleRandomArticle = async () => {
+    toast({
+      title: "Loading random article",
+      description: "Finding something interesting for you...",
+      duration: 2000,
+    });
+    const randomArticles = await getRandomArticles(1);
+    if (randomArticles.length > 0) {
+      navigate(`/?q=${encodeURIComponent(randomArticles[0].title)}`, {
+        state: { reorderedResults: randomArticles }
+      });
+    }
+  };
+
+  const handleDailyArticles = () => {
+    toast({
+      title: "Today's Featured Articles",
+      description: "Coming soon: Daily curated articles",
+      duration: 2000,
+    });
+  };
+
+  const resetSearch = () => {
+    setSearchValue("");
+    navigate("/");
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
-        <div className="text-xl font-bold text-wikitok-red">WikTok</div>
+        <div 
+          className="text-xl font-bold text-wikitok-red cursor-pointer"
+          onClick={handleRandomArticle}
+        >
+          WikTok
+        </div>
         <div 
           className="flex items-center bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 cursor-pointer"
           onClick={() => setOpen(true)}
@@ -82,8 +113,14 @@ const Navigation = () => {
           </span>
         </div>
         <div className="flex space-x-6">
-          <Home className="w-5 h-5 text-white" />
-          <Compass className="w-5 h-5 text-white" />
+          <RefreshCw 
+            className="w-5 h-5 text-white cursor-pointer" 
+            onClick={resetSearch}
+          />
+          <Calendar 
+            className="w-5 h-5 text-white cursor-pointer"
+            onClick={handleDailyArticles}
+          />
         </div>
       </div>
 
