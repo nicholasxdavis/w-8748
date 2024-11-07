@@ -3,18 +3,14 @@ import ArticleViewer from "../components/ArticleViewer";
 import RightSidebar from "../components/RightSidebar";
 import LeftSidebar from "../components/LeftSidebar";
 import Navigation from "../components/Navigation";
-import { getRandomArticles, searchArticles } from "../services/wikipediaService";
+import { getRandomArticles } from "../services/wikipediaService";
 import { useToast } from "@/components/ui/use-toast";
-import { useSearchParams } from "react-router-dom";
 
 const Index = () => {
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.get("q");
-
   const { data: articles, isLoading, error } = useQuery({
-    queryKey: ["articles", searchQuery],
-    queryFn: () => searchQuery ? searchArticles(searchQuery) : getRandomArticles(3),
+    queryKey: ["articles"],
+    queryFn: () => getRandomArticles(3),
     retry: 1,
   });
 

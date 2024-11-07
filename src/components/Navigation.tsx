@@ -25,15 +25,7 @@ const Navigation = () => {
     enabled: searchTerm.length > 2,
   });
 
-  const handleArticleSelect = (title: string) => {
-    setOpen(false);
-    setSearchTerm(title);
-    toast({
-      title: "Loading articles",
-      description: `Loading articles about ${title}...`,
-    });
-    navigate(`/?q=${encodeURIComponent(title)}`);
-  };
+  console.log("Search term:", searchTerm, "Results:", searchResults);
 
   return (
     <>
@@ -44,9 +36,7 @@ const Navigation = () => {
           onClick={() => setOpen(true)}
         >
           <Search className="w-4 h-4 text-white/60 mr-2" />
-          <span className="text-white/60 text-sm">
-            {searchTerm || "Search articles"}
-          </span>
+          <span className="text-white/60 text-sm">Search articles</span>
         </div>
         <div className="flex space-x-6">
           <Home className="w-5 h-5 text-white" />
@@ -75,7 +65,14 @@ const Navigation = () => {
               {searchResults.map((result) => (
                 <CommandItem
                   key={result.id}
-                  onSelect={() => handleArticleSelect(result.title)}
+                  onSelect={() => {
+                    setOpen(false);
+                    toast({
+                      title: "Loading article",
+                      description: `Loading ${result.title}...`,
+                    });
+                    console.log("Selected article:", result.title);
+                  }}
                 >
                   <div className="flex items-center">
                     {result.image && (
