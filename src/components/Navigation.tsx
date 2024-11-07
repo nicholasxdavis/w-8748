@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchArticles, getRandomArticles } from "../services/wikipediaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +18,7 @@ const Navigation = () => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
@@ -31,17 +32,13 @@ const Navigation = () => {
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchValue],
-    queryFn: () => {
-      console.log("🔍 Executing search query for:", searchValue);
-      return searchArticles(searchValue);
-    },
+    queryFn: () => searchArticles(searchValue),
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
     staleTime: 0,
   });
 
   const handleArticleSelect = (title: string, selectedArticle: any) => {
-    console.log("🎯 Article selected:", title);
     setOpen(false);
     setSearchValue(title);
     toast({
@@ -73,7 +70,7 @@ const Navigation = () => {
       description: "Finding something interesting for you...",
       duration: 2000,
     });
-    const randomArticles = await getRandomArticles(3); // Fetch 3 articles for continuous scrolling
+    const randomArticles = await getRandomArticles(3);
     if (randomArticles.length > 0) {
       navigate(`/?q=${encodeURIComponent(randomArticles[0].title)}`, {
         state: { reorderedResults: randomArticles }
@@ -81,9 +78,12 @@ const Navigation = () => {
     }
   };
 
-  const resetSearch = () => {
-    setSearchValue("");
-    navigate("/");
+  const handleDiscoverClick = () => {
+    if (location.pathname === "/discover") {
+      navigate("/");
+    } else {
+      navigate("/discover");
+    }
   };
 
   return (
@@ -106,8 +106,10 @@ const Navigation = () => {
         </div>
         <div className="flex space-x-6">
           <Compass 
-            className="w-5 h-5 text-white cursor-pointer" 
-            onClick={resetSearch}
+            className={`w-5 h-5 cursor-pointer transition-colors ${
+              location.pathname === "/discover" ? "text-wikitok-red" : "text-white"
+            }`}
+            onClick={handleDiscoverClick}
           />
         </div>
       </div>
