@@ -32,17 +32,20 @@ const Navigation = () => {
 
   // Implement debounce using useEffect
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setSearchTerm(searchInputValue);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
+    if (searchInputValue.length >= 3) {
+      const timeoutId = setTimeout(() => {
+        setSearchTerm(searchInputValue);
+      }, 300);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setSearchTerm("");
+    }
   }, [searchInputValue]);
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
-    enabled: searchTerm.length > 2,
+    enabled: searchTerm.length >= 3,
     gcTime: 1000 * 60 * 5,
   });
 
