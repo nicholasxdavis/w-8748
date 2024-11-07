@@ -32,7 +32,6 @@ const Navigation = () => {
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
     });
-    // Navigate to the home page with search query parameter
     navigate(`/?q=${encodeURIComponent(title)}`);
   };
 
