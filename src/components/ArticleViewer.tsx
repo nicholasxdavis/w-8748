@@ -35,6 +35,12 @@ const ArticleViewer = ({ articles }) => {
           dragFree: false,
           containScroll: false,
           align: "start",
+          axis: "y",
+          watchDrag: true,
+          skipSnaps: false,
+          inViewThreshold: 0.7,
+          wheelEnabled: true,
+          wheelLock: true,
         }}
       >
         <CarouselContent className="h-full">
