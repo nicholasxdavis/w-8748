@@ -44,6 +44,11 @@ const Navigation = () => {
     navigate(`/?q=${encodeURIComponent(title)}`);
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (!open) setOpen(true);
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
@@ -67,7 +72,7 @@ const Navigation = () => {
         <CommandInput 
           placeholder="Search articles..." 
           value={searchTerm}
-          onValueChange={setSearchTerm}
+          onValueChange={handleSearchChange}
         />
         <CommandList>
           {isLoading && (
