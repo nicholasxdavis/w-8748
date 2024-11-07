@@ -122,7 +122,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
             <div className="flex items-center space-x-2 text-sm text-gray-300">
               <span>{article.readTime} min read</span>
               <span>•</span>
-              <span>{article.views} scholars</span>
+              <span>{article.views.toLocaleString()} views</span> {/* Updated to show views */}
             </div>
           </motion.div>
           {currentIndex === index && (
