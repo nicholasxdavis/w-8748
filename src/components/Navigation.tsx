@@ -25,6 +25,7 @@ const Navigation = () => {
     if (query) {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
+      setOpen(true); // Open dialog when there's a search query
     }
   }, [searchParams]);
 
@@ -50,6 +51,16 @@ const Navigation = () => {
     navigate(`/?q=${encodeURIComponent(title)}`);
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      // Only clear search value if dialog is closed and no article was selected
+      if (!searchResults || searchResults.length === 0) {
+        setSearchValue("");
+      }
+    }
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
@@ -71,7 +82,7 @@ const Navigation = () => {
 
       <CommandDialog 
         open={open} 
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
       >
         <CommandInput 
           placeholder="Search articles..." 
