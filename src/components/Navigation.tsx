@@ -30,12 +30,28 @@ const Navigation = () => {
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchValue],
-    queryFn: () => searchArticles(searchValue),
+    queryFn: () => {
+      console.log("🔍 Executing search query for:", searchValue);
+      return searchArticles(searchValue);
+    },
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
   });
 
+  // Log state changes
+  useEffect(() => {
+    console.log("📝 Search value changed:", searchValue);
+    console.log("🚪 Dialog open state:", open);
+  }, [searchValue, open]);
+
+  // Log search results and loading state
+  useEffect(() => {
+    console.log("⏳ Loading state:", isLoading);
+    console.log("📊 Search results:", searchResults);
+  }, [searchResults, isLoading]);
+
   const handleArticleSelect = (title: string) => {
+    console.log("🎯 Article selected:", title);
     setOpen(false);
     setSearchValue(title);
     toast({
@@ -51,7 +67,10 @@ const Navigation = () => {
         <div className="text-xl font-bold text-wikitok-red">WikiTok</div>
         <div 
           className="flex items-center bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 cursor-pointer"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            console.log("🔘 Search bar clicked, current open state:", !open);
+            setOpen(true);
+          }}
         >
           <Search className="w-4 h-4 text-white/60 mr-2" />
           <span className="text-white/60 text-sm">
@@ -64,11 +83,20 @@ const Navigation = () => {
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog 
+        open={open} 
+        onOpenChange={(newOpen) => {
+          console.log("🔄 Dialog state changing to:", newOpen);
+          setOpen(newOpen);
+        }}
+      >
         <CommandInput 
           placeholder="Search articles..." 
           value={searchValue}
-          onValueChange={setSearchValue}
+          onValueChange={(newValue) => {
+            console.log("⌨️ Input value changing to:", newValue);
+            setSearchValue(newValue);
+          }}
           className="border-none focus:ring-0"
         />
         <CommandList className="max-h-[80vh] overflow-y-auto">
