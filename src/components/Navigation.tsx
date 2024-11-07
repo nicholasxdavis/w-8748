@@ -71,10 +71,19 @@ const Navigation = () => {
     setSearchInputValue(value); // Update input value immediately
     // Debounce the actual search term update
     const timeoutId = setTimeout(() => {
+      console.log("Setting search term after debounce:", value);
       setSearchTerm(value);
     }, 300);
     return () => clearTimeout(timeoutId);
   };
+
+  console.log("Current search state:", {
+    searchTerm,
+    searchInputValue,
+    isLoading,
+    resultsCount: searchResults?.length,
+    dialogOpen: open
+  });
 
   return (
     <>
@@ -102,6 +111,11 @@ const Navigation = () => {
           onValueChange={handleSearch}
         />
         <CommandList>
+          {console.log("Rendering CommandList with:", {
+            isLoading,
+            searchInputValue,
+            resultsCount: searchResults?.length
+          })}
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
@@ -113,28 +127,31 @@ const Navigation = () => {
           )}
           {!isLoading && searchResults && searchResults.length > 0 && (
             <CommandGroup heading="Articles">
-              {searchResults.map((result) => (
-                <CommandItem
-                  key={result.id}
-                  onSelect={() => handleArticleSelect(result.title)}
-                >
-                  <div className="flex items-center">
-                    {result.image && (
-                      <img 
-                        src={result.image} 
-                        alt={result.title}
-                        className="w-8 h-8 object-cover rounded-md mr-3"
-                      />
-                    )}
-                    <div>
-                      <div className="font-medium">{result.title}</div>
-                      <div className="text-sm text-gray-400 truncate max-w-[300px]">
-                        {result.content}
+              {searchResults.map((result) => {
+                console.log("Rendering search result:", result.title);
+                return (
+                  <CommandItem
+                    key={result.id}
+                    onSelect={() => handleArticleSelect(result.title)}
+                  >
+                    <div className="flex items-center">
+                      {result.image && (
+                        <img 
+                          src={result.image} 
+                          alt={result.title}
+                          className="w-8 h-8 object-cover rounded-md mr-3"
+                        />
+                      )}
+                      <div>
+                        <div className="font-medium">{result.title}</div>
+                        <div className="text-sm text-gray-400 truncate max-w-[300px]">
+                          {result.content}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CommandItem>
-              ))}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
         </CommandList>
