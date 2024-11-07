@@ -30,6 +30,15 @@ const Navigation = () => {
     }
   }, [searchParams]);
 
+  // Implement debounce using useEffect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearchTerm(searchInputValue);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInputValue]);
+
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
@@ -50,21 +59,7 @@ const Navigation = () => {
 
   const handleSearch = (value: string) => {
     setSearchInputValue(value);
-    const timeoutId = setTimeout(() => {
-      setSearchTerm(value);
-    }, 300);
-    return () => clearTimeout(timeoutId);
   };
-
-  // Debug logging
-  const debugState = {
-    searchTerm,
-    searchInputValue,
-    isLoading,
-    resultsCount: searchResults?.length,
-    dialogOpen: open
-  };
-  console.log("Current search state:", debugState);
 
   return (
     <>
