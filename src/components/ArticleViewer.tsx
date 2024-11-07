@@ -28,10 +28,7 @@ const ArticleViewer = ({ articles }) => {
   return (
     <main className="flex-1 h-full">
       <Carousel
-        opts={{
-          align: "start",
-          axis: "y",
-        }}
+        orientation="vertical"
         className="h-screen"
         setApi={setApi}
       >
