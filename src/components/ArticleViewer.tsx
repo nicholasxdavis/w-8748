@@ -31,6 +31,10 @@ const ArticleViewer = ({ articles }) => {
         orientation="vertical"
         className="h-screen"
         setApi={setApi}
+        opts={{
+          dragFree: false,
+          containScroll: "trimSnaps",
+        }}
       >
         <CarouselContent className="-mt-4 h-full">
           {articles.map((article, index) => (
@@ -42,7 +46,7 @@ const ArticleViewer = ({ articles }) => {
                     alt={article.title}
                     className="w-full h-full object-cover animate-ken-burns"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/60" />
                 </div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -51,10 +55,10 @@ const ArticleViewer = ({ articles }) => {
                     y: isVisible && currentIndex === index ? 0 : 20,
                   }}
                   transition={{ duration: 0.5 }}
-                  className="text-overlay"
+                  className="text-overlay z-10"
                 >
                   <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
-                  <p className="text-lg leading-relaxed">{article.content}</p>
+                  <p className="text-lg leading-relaxed max-w-[90%]">{article.content}</p>
                   <div className="mt-4 flex items-center space-x-2 text-sm text-gray-300">
                     <span>{article.readTime} min read</span>
                     <span>•</span>

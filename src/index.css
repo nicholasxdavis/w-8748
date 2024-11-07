@@ -22,6 +22,6 @@
   }
   
   .text-overlay {
-    @apply absolute bottom-24 left-8 right-24 text-white text-lg;
+    @apply absolute bottom-32 left-8 right-8 text-white z-10;
   }
 }
