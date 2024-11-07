@@ -35,19 +35,32 @@ const getPageViews = async (title: string): Promise<number> => {
     return data.items.reduce((sum: number, item: any) => sum + item.views, 0);
   } catch (error) {
     console.error("Failed to fetch pageviews", error);
-    return 0; // Return 0 instead of random number when API fails
+    return 0;
   }
 };
 
-export const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
-  const randomResponse = await fetch(
-    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=random&rnnamespace=0&rnlimit=${count}`
-  );
-  const randomData = await randomResponse.json();
-  const titles = randomData.query.random.map((article: any) => article.title).join("|");
+export const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
+  let titles: string[];
+  
+  if (category && category !== "All") {
+    // Get articles from specific category
+    const categoryResponse = await fetch(
+      `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=categorymembers&cmtitle=Category:${category}&cmlimit=${count}&cmtype=page`
+    );
+    const categoryData = await categoryResponse.json();
+    titles = categoryData.query.categorymembers.map((article: any) => article.title);
+  } else {
+    // Get random articles if no category specified or category is "All"
+    const randomResponse = await fetch(
+      `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=random&rnnamespace=0&rnlimit=${count}`
+    );
+    const randomData = await randomResponse.json();
+    titles = randomData.query.random.map((article: any) => article.title);
+  }
 
+  const titlesString = titles.join("|");
   const response = await fetch(
-    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&prop=extracts|pageimages|categories|links|images|info&titles=${titles}&exintro=1&explaintext=1&pithumbsize=1000&imlimit=5&inprop=protection`
+    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&prop=extracts|pageimages|categories|links|images|info&titles=${titlesString}&exintro=1&explaintext=1&pithumbsize=1000&imlimit=5&inprop=protection`
   );
   const data = await response.json();
   const pages = Object.values(data.query.pages);

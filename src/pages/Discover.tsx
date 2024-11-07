@@ -26,7 +26,7 @@ const Discover = () => {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
-    queryFn: ({ pageParam }) => getRandomArticles(12),
+    queryFn: ({ pageParam }) => getRandomArticles(12, selectedCategory),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length < 3 ? allPages.length + 1 : undefined;
