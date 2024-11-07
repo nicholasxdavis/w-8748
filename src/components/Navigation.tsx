@@ -28,21 +28,20 @@ const Navigation = () => {
     }
   }, [searchParams]);
 
-  // Key change: Force CommandDialog to re-render when search results change
-  const [key, setKey] = useState(0);
-  
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
-    queryFn: () => searchArticles(searchTerm),
+    queryFn: () => {
+      console.log("Fetching results for:", searchTerm);
+      return searchArticles(searchTerm);
+    },
     enabled: searchTerm.length > 2,
     gcTime: 1000 * 60 * 5, // Cache results for 5 minutes
-    meta: {
-      onSuccess: () => {
-        // Increment key to force CommandDialog re-render when results arrive
-        setKey(prev => prev + 1);
-      }
-    }
   });
+
+  // Log whenever search results update
+  useEffect(() => {
+    console.log("Search results updated:", searchResults);
+  }, [searchResults]);
 
   const handleArticleSelect = (title: string) => {
     setOpen(false);
@@ -52,6 +51,11 @@ const Navigation = () => {
       description: `Loading articles about ${title}...`,
     });
     navigate(`/?q=${encodeURIComponent(title)}`);
+  };
+
+  const handleSearch = (value: string) => {
+    console.log("Search value changed:", value);
+    setSearchTerm(value);
   };
 
   return (
@@ -73,11 +77,11 @@ const Navigation = () => {
         </div>
       </div>
 
-      <CommandDialog key={key} open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput 
           placeholder="Search articles..." 
           value={searchTerm}
-          onValueChange={setSearchTerm}
+          onValueChange={handleSearch}
         />
         <CommandList>
           {isLoading && (
