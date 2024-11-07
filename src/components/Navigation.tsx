@@ -32,6 +32,7 @@ const Navigation = () => {
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
     enabled: searchTerm.length > 2,
+    staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
   });
 
   const handleArticleSelect = (title: string) => {
@@ -42,11 +43,6 @@ const Navigation = () => {
       description: `Loading articles about ${title}...`,
     });
     navigate(`/?q=${encodeURIComponent(title)}`);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    if (!open) setOpen(true);
   };
 
   return (
@@ -72,7 +68,7 @@ const Navigation = () => {
         <CommandInput 
           placeholder="Search articles..." 
           value={searchTerm}
-          onValueChange={handleSearchChange}
+          onValueChange={setSearchTerm}
         />
         <CommandList>
           {isLoading && (
