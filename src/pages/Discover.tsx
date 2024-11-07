@@ -91,7 +91,7 @@ const Discover = () => {
               <div className="absolute bottom-0 p-3 w-full">
                 <h3 className="text-sm font-semibold line-clamp-2">{article.title}</h3>
                 <p className="text-xs text-gray-300 mt-1">
-                  {article.views.toLocaleString()} scholars
+                  {article.views.toLocaleString()} views
                 </p>
               </div>
             </div>

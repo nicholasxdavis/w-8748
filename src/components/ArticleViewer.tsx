@@ -33,7 +33,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     setProgress(0);
     onArticleChange(currentArticle);
 
-    // Load more articles when we're 2 articles away from the end
     if (currentIndex >= articles.length - 2) {
       loadMoreArticles();
     }
@@ -85,7 +84,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     return () => {
       articleElements.forEach((article) => observer.unobserve(article));
     };
-  }, [articles]); // Re-observe when articles array changes
+  }, [articles]);
 
   return (
     <main 
@@ -122,7 +121,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
             <div className="flex items-center space-x-2 text-sm text-gray-300">
               <span>{article.readTime} min read</span>
               <span>•</span>
-              <span>{article.views} scholars</span>
+              <span>{article.views.toLocaleString()} views</span>
             </div>
           </motion.div>
           {currentIndex === index && (

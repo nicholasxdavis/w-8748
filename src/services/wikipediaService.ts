@@ -19,7 +19,6 @@ export interface WikipediaArticle {
 
 const getPageViews = async (title: string): Promise<number> => {
   try {
-    // Get views for the last 30 days
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
@@ -33,31 +32,26 @@ const getPageViews = async (title: string): Promise<number> => {
     );
     const data = await response.json();
     
-    // Sum up all daily views
-    const totalViews = data.items.reduce((sum: number, item: any) => sum + item.views, 0);
-    return totalViews;
+    return data.items.reduce((sum: number, item: any) => sum + item.views, 0);
   } catch (error) {
     console.error("Failed to fetch pageviews", error);
-    return Math.floor(Math.random() * 5000) + 1000; // Fallback to random number
+    return 0; // Return 0 instead of random number when API fails
   }
 };
 
-const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
-  // Get random articles
+export const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
   const randomResponse = await fetch(
     `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=random&rnnamespace=0&rnlimit=${count}`
   );
   const randomData = await randomResponse.json();
   const titles = randomData.query.random.map((article: any) => article.title).join("|");
 
-  // Get content, images, and other properties for these articles
   const response = await fetch(
     `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&prop=extracts|pageimages|categories|links|images|info&titles=${titles}&exintro=1&explaintext=1&pithumbsize=1000&imlimit=5&inprop=protection`
   );
   const data = await response.json();
   const pages = Object.values(data.query.pages);
 
-  // For each article, fetch additional images and pageviews
   const articlesWithImages = await Promise.all(pages.map(async (page: any) => {
     let images = [];
     if (page.images) {
@@ -85,7 +79,7 @@ const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]>
       title: page.title,
       content: page.extract,
       image: page.thumbnail?.source || images[0] || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-      citations: Math.floor(Math.random() * 300) + 50, // TODO: Could be replaced with real citation count
+      citations: Math.floor(Math.random() * 300) + 50,
       readTime: Math.ceil(page.extract.split(" ").length / 200),
       views,
       tags: page.categories?.slice(0, 4).map((cat: any) => cat.title.replace("Category:", "")) || ["science", "history"],
@@ -100,7 +94,7 @@ const getRandomArticles = async (count: number = 3): Promise<WikipediaArticle[]>
   return articlesWithImages;
 };
 
-const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
+export const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
   if (!query || query.length < 3) return [];
 
   const searchResponse = await fetch(
@@ -140,5 +134,3 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
 
   return articles;
 };
-
-export { getRandomArticles, searchArticles };
