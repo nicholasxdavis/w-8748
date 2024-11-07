@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 const Navigation = () => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState(""); // New state for input
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -24,7 +25,9 @@ const Navigation = () => {
   useEffect(() => {
     const query = searchParams.get("q");
     if (query) {
-      setSearchTerm(decodeURIComponent(query));
+      const decodedQuery = decodeURIComponent(query);
+      setSearchTerm(decodedQuery);
+      setSearchInputValue(decodedQuery);
     }
   }, [searchParams]);
 
@@ -46,6 +49,7 @@ const Navigation = () => {
   const handleArticleSelect = (title: string) => {
     setOpen(false);
     setSearchTerm(title);
+    setSearchInputValue(title);
     toast({
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
@@ -55,7 +59,12 @@ const Navigation = () => {
 
   const handleSearch = (value: string) => {
     console.log("Search value changed:", value);
-    setSearchTerm(value);
+    setSearchInputValue(value); // Update input value immediately
+    // Debounce the actual search term update
+    const timeoutId = setTimeout(() => {
+      setSearchTerm(value);
+    }, 300);
+    return () => clearTimeout(timeoutId);
   };
 
   return (
@@ -80,17 +89,17 @@ const Navigation = () => {
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput 
           placeholder="Search articles..." 
-          value={searchTerm}
+          value={searchInputValue}
           onValueChange={handleSearch}
         />
         <CommandList>
           {isLoading && (
             <CommandEmpty>Searching...</CommandEmpty>
           )}
-          {!isLoading && searchTerm.length < 3 && (
+          {!isLoading && searchInputValue.length < 3 && (
             <CommandEmpty>Type at least 3 characters to search</CommandEmpty>
           )}
-          {!isLoading && searchTerm.length >= 3 && (!searchResults || searchResults.length === 0) && (
+          {!isLoading && searchInputValue.length >= 3 && (!searchResults || searchResults.length === 0) && (
             <CommandEmpty>No results found.</CommandEmpty>
           )}
           {!isLoading && searchResults && searchResults.length > 0 && (
