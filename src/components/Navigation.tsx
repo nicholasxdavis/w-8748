@@ -19,7 +19,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: searchResults } = useQuery({
+  const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchTerm],
     queryFn: () => searchArticles(searchTerm),
     enabled: searchTerm.length > 2,
@@ -49,39 +49,45 @@ const Navigation = () => {
           onValueChange={setSearchTerm}
         />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Articles">
-            {searchResults?.map((result) => (
-              <CommandItem
-                key={result.id}
-                onSelect={() => {
-                  setOpen(false);
-                  toast({
-                    title: "Loading article",
-                    description: `Loading ${result.title}...`,
-                  });
-                  // In a real app, you would navigate to the article
-                  console.log("Selected article:", result.title);
-                }}
-              >
-                <div className="flex items-center">
-                  {result.image && (
-                    <img 
-                      src={result.image} 
-                      alt={result.title}
-                      className="w-8 h-8 object-cover rounded-md mr-3"
-                    />
-                  )}
-                  <div>
-                    <div className="font-medium">{result.title}</div>
-                    <div className="text-sm text-gray-400 truncate max-w-[300px]">
-                      {result.content}
+          {isLoading ? (
+            <CommandEmpty>Searching...</CommandEmpty>
+          ) : !searchResults || searchResults.length === 0 ? (
+            <CommandEmpty>
+              {searchTerm.length < 3 ? "Type at least 3 characters to search" : "No results found."}
+            </CommandEmpty>
+          ) : (
+            <CommandGroup heading="Articles">
+              {searchResults.map((result) => (
+                <CommandItem
+                  key={result.id}
+                  onSelect={() => {
+                    setOpen(false);
+                    toast({
+                      title: "Loading article",
+                      description: `Loading ${result.title}...`,
+                    });
+                    console.log("Selected article:", result.title);
+                  }}
+                >
+                  <div className="flex items-center">
+                    {result.image && (
+                      <img 
+                        src={result.image} 
+                        alt={result.title}
+                        className="w-8 h-8 object-cover rounded-md mr-3"
+                      />
+                    )}
+                    <div>
+                      <div className="font-medium">{result.title}</div>
+                      <div className="text-sm text-gray-400 truncate max-w-[300px]">
+                        {result.content}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
