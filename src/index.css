@@ -10,7 +10,7 @@
 
 @layer components {
   .sidebar-icon {
-    @apply w-12 h-12 flex items-center justify-center text-white hover:text-wikitok-red transition-colors duration-300;
+    @apply w-10 h-10 flex items-center justify-center text-white hover:text-wikitok-red transition-colors duration-300;
   }
   
   .article-container {
@@ -22,6 +22,6 @@
   }
   
   .text-overlay {
-    @apply absolute bottom-32 left-8 right-8 text-white z-10;
+    @apply absolute bottom-24 left-4 right-4 text-white z-10;
   }
 }
