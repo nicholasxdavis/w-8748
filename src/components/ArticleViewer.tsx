@@ -4,15 +4,26 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 
 const ArticleViewer = ({ articles }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     setIsVisible(true);
   }, [currentIndex]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    api.on("select", () => {
+      setCurrentIndex(api.selectedScrollSnap());
+      setIsVisible(false);
+    });
+  }, [api]);
 
   return (
     <main className="flex-1 h-full">
@@ -22,10 +33,7 @@ const ArticleViewer = ({ articles }) => {
           axis: "y",
         }}
         className="h-screen"
-        onSelect={(api) => {
-          setCurrentIndex(api.selectedScrollSnap());
-          setIsVisible(false);
-        }}
+        setApi={setApi}
       >
         <CarouselContent className="-mt-4 h-full">
           {articles.map((article, index) => (
