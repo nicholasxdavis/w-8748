@@ -1,4 +1,4 @@
-import { Search, Compass, RefreshCw, Calendar } from "lucide-react";
+import { Search, Compass } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -73,20 +73,12 @@ const Navigation = () => {
       description: "Finding something interesting for you...",
       duration: 2000,
     });
-    const randomArticles = await getRandomArticles(1);
+    const randomArticles = await getRandomArticles(3); // Fetch 3 articles for continuous scrolling
     if (randomArticles.length > 0) {
       navigate(`/?q=${encodeURIComponent(randomArticles[0].title)}`, {
         state: { reorderedResults: randomArticles }
       });
     }
-  };
-
-  const handleDailyArticles = () => {
-    toast({
-      title: "Today's Featured Articles",
-      description: "Coming soon: Daily curated articles",
-      duration: 2000,
-    });
   };
 
   const resetSearch = () => {
@@ -113,13 +105,9 @@ const Navigation = () => {
           </span>
         </div>
         <div className="flex space-x-6">
-          <RefreshCw 
+          <Compass 
             className="w-5 h-5 text-white cursor-pointer" 
             onClick={resetSearch}
-          />
-          <Calendar 
-            className="w-5 h-5 text-white cursor-pointer"
-            onClick={handleDailyArticles}
           />
         </div>
       </div>
