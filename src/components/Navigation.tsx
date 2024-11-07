@@ -41,7 +41,7 @@ const Navigation = () => {
     staleTime: 0,
   });
 
-  const handleArticleSelect = (title: string) => {
+  const handleArticleSelect = (title: string, selectedArticle: any) => {
     console.log("🎯 Article selected:", title);
     setOpen(false);
     setSearchValue(title);
@@ -49,7 +49,16 @@ const Navigation = () => {
       title: "Loading articles",
       description: `Loading articles about ${title}...`,
     });
-    navigate(`/?q=${encodeURIComponent(title)}`);
+    
+    // Reorder the results to put the selected article first
+    const reorderedResults = [
+      selectedArticle,
+      ...(searchResults || []).filter(article => article.id !== selectedArticle.id)
+    ];
+    
+    navigate(`/?q=${encodeURIComponent(title)}`, {
+      state: { reorderedResults }
+    });
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -107,7 +116,7 @@ const Navigation = () => {
                 {searchResults.map((result) => (
                   <CommandItem
                     key={result.id}
-                    onSelect={() => handleArticleSelect(result.title)}
+                    onSelect={() => handleArticleSelect(result.title, result)}
                     className="flex items-center p-2 cursor-pointer hover:bg-accent rounded-lg"
                   >
                     <div className="flex items-center w-full gap-3">

@@ -5,16 +5,26 @@ import LeftSidebar from "../components/LeftSidebar";
 import Navigation from "../components/Navigation";
 import { getRandomArticles, searchArticles } from "../services/wikipediaService";
 import { useToast } from "@/components/ui/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 
 const Index = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const searchQuery = searchParams.get("q");
 
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["articles", searchQuery],
-    queryFn: () => searchQuery ? searchArticles(searchQuery) : getRandomArticles(3),
+    queryFn: async () => {
+      if (searchQuery) {
+        // If we have reordered results in the location state, use those
+        if (location.state?.reorderedResults) {
+          return location.state.reorderedResults;
+        }
+        return searchArticles(searchQuery);
+      }
+      return getRandomArticles(3);
+    },
     retry: 1,
   });
 
