@@ -8,15 +8,20 @@ const RightSidebar = ({ article }) => {
   };
 
   const handleShare = () => {
-    const currentUrl = window.location.href;
+    const baseUrl = window.location.origin;
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', article.title);
+    searchParams.set('id', article.id);
+    const shareUrl = `${baseUrl}/?${searchParams.toString()}`;
+
     if (navigator.share) {
       navigator.share({
         title: article.title,
         text: `Check out this article about ${article.title} on WikiTok!`,
-        url: currentUrl,
+        url: shareUrl,
       }).catch(console.error);
     } else {
-      navigator.clipboard.writeText(currentUrl).then(() => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
         console.log('URL copied to clipboard');
       }).catch(console.error);
     }
