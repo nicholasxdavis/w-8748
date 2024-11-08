@@ -5,6 +5,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import Navigation from "@/components/Navigation";
 
 const categories = [
   "All",
@@ -83,7 +84,7 @@ const Discover = () => {
           isVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        <div className="h-14" /> {/* Spacer for the Navigation bar */}
+        <Navigation />
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-4 px-4 py-2">
             {categories.map((category) => (
@@ -104,7 +105,7 @@ const Discover = () => {
         </ScrollArea>
       </div>
 
-      <div className="pt-24"> {/* Add padding to account for the fixed header */}
+      <div className="pt-24">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
           {isLoading ? (
             Array.from({ length: 12 }).map((_, i) => (
