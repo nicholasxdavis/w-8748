@@ -14,11 +14,11 @@ export interface WikipediaArticle {
   }[];
 }
 
-interface WikipediaImageInfo {
+export interface WikipediaImageInfo {
   url?: string;
 }
 
-interface WikipediaPage {
+export interface WikipediaPage {
   pageid: number;
   title: string;
   extract?: string;
