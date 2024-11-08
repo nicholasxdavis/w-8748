@@ -6,6 +6,11 @@ export const transformToArticle = async (page: WikipediaPage): Promise<Wikipedia
   const views = await getPageViews(page.title);
   const image = await getArticleImage(page);
   
+  // Skip articles with placeholder images or no images
+  if (!image || image.includes('data:image/svg') || image.includes('placeholder')) {
+    return null;
+  }
+  
   return {
     id: page.pageid,
     title: page.title,

@@ -11,7 +11,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
       origin: '*',
       list: 'categorymembers',
       cmtitle: categoryTitles,
-      cmlimit: '5',
+      cmlimit: '10', // Increased from 5 to ensure we get enough valid articles
       cmtype: 'page'
     });
 
@@ -22,7 +22,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
     const relatedTitles = categoryData.query?.categorymembers
       ?.filter(article => article.title !== article.title)
       ?.map(article => article.title)
-      ?.slice(0, 5) || [];
+      ?.slice(0, 10) || [];
 
     if (relatedTitles.length === 0) {
       return getRandomArticles(3);
@@ -31,7 +31,8 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
     const data = await fetchWikipediaContent(relatedTitles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
     
-    return Promise.all(pages.map(transformToArticle));
+    const articles = await Promise.all(pages.map(transformToArticle));
+    return articles.filter(article => article !== null) as WikipediaArticle[];
   } catch (error) {
     console.error('Error fetching related articles:', error);
     return getRandomArticles(3);
@@ -41,6 +42,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
 const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
     let titles: string[];
+    const multiplier = 3; // Request more articles to ensure we get enough valid ones
     
     if (category && category !== "All") {
       const params = new URLSearchParams({
@@ -49,7 +51,7 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
         origin: '*',
         list: 'categorymembers',
         cmtitle: `Category:${category}`,
-        cmlimit: count.toString(),
+        cmlimit: (count * multiplier).toString(),
         cmtype: 'page'
       });
 
@@ -65,7 +67,7 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
         origin: '*',
         list: 'random',
         rnnamespace: '0',
-        rnlimit: count.toString()
+        rnlimit: (count * multiplier).toString()
       });
 
       const randomResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
@@ -80,7 +82,16 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const data = await fetchWikipediaContent(titles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
     
-    return Promise.all(pages.map(transformToArticle));
+    const articles = await Promise.all(pages.map(transformToArticle));
+    const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
+    
+    // If we don't have enough articles, fetch more
+    if (validArticles.length < count) {
+      const moreArticles = await getRandomArticles(count - validArticles.length, category);
+      return [...validArticles, ...moreArticles].slice(0, count);
+    }
+    
+    return validArticles.slice(0, count);
   } catch (error) {
     console.error('Error fetching articles:', error);
     throw error;
@@ -97,7 +108,7 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
       origin: '*',
       list: 'search',
       srsearch: query,
-      srlimit: '10'
+      srlimit: '20' // Increased from 10 to ensure we get enough valid articles
     });
 
     const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
@@ -110,7 +121,8 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
     const data = await fetchWikipediaContent(titles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
     
-    return Promise.all(pages.map(transformToArticle));
+    const articles = await Promise.all(pages.map(transformToArticle));
+    return articles.filter(article => article !== null) as WikipediaArticle[];
   } catch (error) {
     console.error('Error searching articles:', error);
     throw error;
