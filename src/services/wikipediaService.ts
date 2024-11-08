@@ -1,6 +1,30 @@
 const WIKIPEDIA_API_BASE = "https://en.wikipedia.org/w/api.php";
 const PAGEVIEWS_API_BASE = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/all-agents";
 
+// Array of gradient backgrounds to use as placeholders
+const placeholderBackgrounds = [
+  "linear-gradient(45deg, #121212 0%, #1f1f1f 100%)",
+  "linear-gradient(135deg, #121212 0%, #2a2a2a 100%)",
+  "linear-gradient(to right, #1a1a1a 0%, #2d2d2d 100%)",
+  "linear-gradient(to bottom right, #232323 0%, #1a1a1a 100%)",
+  "linear-gradient(to bottom, #202020 0%, #161616 100%)",
+];
+
+const getRandomPlaceholder = () => {
+  const randomIndex = Math.floor(Math.random() * placeholderBackgrounds.length);
+  return `data:image/svg+xml,${encodeURIComponent(
+    `<svg width="1000" height="1000" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#121212;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grad)"/>
+    </svg>`
+  )}`;
+};
+
 export interface WikipediaArticle {
   id: number;
   title: string;
@@ -91,7 +115,7 @@ export const getRandomArticles = async (count: number = 3, category?: string): P
       id: page.pageid,
       title: page.title,
       content: page.extract,
-      image: page.thumbnail?.source || images[0] || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+      image: page.thumbnail?.source || images[0] || getRandomPlaceholder(),
       citations: Math.floor(Math.random() * 300) + 50,
       readTime: Math.ceil(page.extract.split(" ").length / 200),
       views,
@@ -99,7 +123,7 @@ export const getRandomArticles = async (count: number = 3, category?: string): P
       relatedArticles: images.slice(1).map((img, index) => ({
         id: index + 1,
         title: `Related ${index + 1}`,
-        image: img || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+        image: img || getRandomPlaceholder(),
       })),
     };
   }));
@@ -136,7 +160,7 @@ export const searchArticles = async (query: string): Promise<WikipediaArticle[]>
       id: page.pageid,
       title: page.title,
       content: page.extract || "No description available",
-      image: page.thumbnail?.source || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+      image: page.thumbnail?.source || getRandomPlaceholder(),
       citations: Math.floor(Math.random() * 300) + 50,
       readTime: Math.ceil((page.extract?.split(" ").length || 100) / 200),
       views,
