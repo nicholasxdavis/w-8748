@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
-import { getRandomArticles } from "../services/wikipediaService";
+import { getRandomArticles, getRelatedArticles } from "../services/wikipediaService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -18,14 +18,17 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     
     try {
       setIsLoading(true);
-      const newArticles = await getRandomArticles(3);
+      // Get related articles based on the current article
+      const newArticles = currentArticle 
+        ? await getRelatedArticles(currentArticle)
+        : await getRandomArticles(3);
       setArticles(prev => [...prev, ...newArticles]);
     } catch (error) {
       console.error("Failed to load more articles", error);
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, currentArticle]);
 
   useEffect(() => {
     setIsVisible(true);
