@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
 import RightSidebar from "../components/RightSidebar";
 import LeftSidebar from "../components/LeftSidebar";
-import Navigation from "../components/Navigation";
 import { getRandomArticles, searchArticles } from "../services/wikipediaService";
 import { useToast } from "@/components/ui/use-toast";
 import { useSearchParams, useLocation } from "react-router-dom";
@@ -55,7 +54,6 @@ const Index = () => {
 
   return (
     <div className="h-screen w-screen relative overflow-hidden">
-      <Navigation />
       <div className="flex h-full">
         <LeftSidebar article={currentArticle || articles[0]} />
         <ArticleViewer 
