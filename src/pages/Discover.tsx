@@ -56,8 +56,8 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div className="h-screen overflow-y-auto pt-16 pb-20">
-      <div className="sticky top-0 z-10 bg-wikitok-dark">
+    <div className="h-screen overflow-y-auto pt-14 pb-20">
+      <div className="sticky top-0 z-10 bg-black">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-4 px-4 py-2">
             {categories.map((category) => (
