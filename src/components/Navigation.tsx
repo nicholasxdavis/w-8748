@@ -86,9 +86,15 @@ const Navigation = () => {
     }
   };
 
+  const isDiscoverPage = location.pathname === "/discover";
+
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-14 bg-transparent z-50 flex items-center justify-between px-4 bg-gradient-to-b from-black/50 to-transparent">
+      <div className={`fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-4 ${
+        isDiscoverPage 
+          ? "bg-wikitok-dark" 
+          : "bg-gradient-to-b from-black/50 to-transparent"
+      }`}>
         <div 
           className="text-xl font-bold text-wikitok-red cursor-pointer"
           onClick={handleRandomArticle}
