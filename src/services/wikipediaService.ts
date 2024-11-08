@@ -3,11 +3,11 @@ const PAGEVIEWS_API_BASE = "https://wikimedia.org/api/rest_v1/metrics/pageviews/
 
 // Array of gradient backgrounds to use as placeholders
 const placeholderBackgrounds = [
-  "linear-gradient(45deg, #121212 0%, #1f1f1f 100%)",
-  "linear-gradient(135deg, #121212 0%, #2a2a2a 100%)",
-  "linear-gradient(to right, #1a1a1a 0%, #2d2d2d 100%)",
-  "linear-gradient(to bottom right, #232323 0%, #1a1a1a 100%)",
-  "linear-gradient(to bottom, #202020 0%, #161616 100%)",
+  "linear-gradient(45deg, #121212 0%, #FE2C55 10%, #121212 100%)",
+  "linear-gradient(135deg, #121212 0%, #20D5EC 15%, #121212 100%)",
+  "linear-gradient(to right, #1a1a1a 0%, #69C9D0 10%, #1a1a1a 100%)",
+  "linear-gradient(to bottom right, #232323 0%, #EE1D52 15%, #121212 100%)",
+  "linear-gradient(to bottom, #202020 0%, #69C9D0 10%, #161616 100%)",
 ];
 
 const getRandomPlaceholder = () => {
@@ -17,7 +17,8 @@ const getRandomPlaceholder = () => {
       <defs>
         <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style="stop-color:#121212;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#2a2a2a;stop-opacity:1" />
+          <stop offset="15%" style="stop-color:#FE2C55;stop-opacity:0.5" />
+          <stop offset="100%" style="stop-color:#121212;stop-opacity:1" />
         </linearGradient>
       </defs>
       <rect width="100%" height="100%" fill="url(#grad)"/>
