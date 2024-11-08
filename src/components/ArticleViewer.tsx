@@ -53,7 +53,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       } else {
         clearInterval(interval);
       }
-    }, 50);
+    }, 20); // Changed from 50ms to 20ms for faster streaming
 
     return () => clearInterval(interval);
   }, [isVisible, currentArticle?.content]);
