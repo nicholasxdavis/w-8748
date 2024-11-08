@@ -24,11 +24,11 @@ const Navigation = () => {
 
   useEffect(() => {
     const query = searchParams.get("q");
-    if (query && !searchValue) {
+    if (query && !searchValue && location.pathname !== "/discover") {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
     }
-  }, [searchParams]);
+  }, [searchParams, location.pathname]);
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchValue],
@@ -79,6 +79,7 @@ const Navigation = () => {
   };
 
   const handleDiscoverClick = () => {
+    setSearchValue(""); // Clear search value when navigating to Discover
     if (location.pathname === "/discover") {
       navigate("/");
     } else {
