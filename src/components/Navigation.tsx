@@ -65,6 +65,7 @@ const Navigation = () => {
   };
 
   const handleRandomArticle = async () => {
+    setSearchValue(""); // Clear search value when getting random article
     toast({
       title: "Loading random article",
       description: "Finding something interesting for you...",
@@ -79,7 +80,7 @@ const Navigation = () => {
   };
 
   const handleDiscoverClick = () => {
-    setSearchValue(""); // Clear search value when navigating to Discover
+    setSearchValue("");
     if (location.pathname === "/discover") {
       navigate("/");
     } else {
