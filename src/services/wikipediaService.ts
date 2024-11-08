@@ -48,127 +48,182 @@ const getPageViews = async (title: string): Promise<number> => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    const formatDate = (date: Date) => {
-      return date.toISOString().slice(0, 10).replace(/-/g, '');
-    };
+    const formatDate = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
 
     const response = await fetch(
       `${PAGEVIEWS_API_BASE}/${encodeURIComponent(title)}/daily/${formatDate(startDate)}/${formatDate(endDate)}`
     );
-    const data = await response.json();
     
-    return data.items.reduce((sum: number, item: any) => sum + item.views, 0);
+    if (!response.ok) {
+      console.warn(`Failed to fetch pageviews for ${title}`);
+      return 0;
+    }
+
+    const data = await response.json();
+    return data.items?.reduce((sum: number, item: any) => sum + item.views, 0) || 0;
   } catch (error) {
-    console.error("Failed to fetch pageviews", error);
+    console.warn(`Failed to fetch pageviews for ${title}:`, error);
     return 0;
   }
 };
 
-export const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
-  let titles: string[];
-  
-  if (category && category !== "All") {
-    // Get articles from specific category
-    const categoryResponse = await fetch(
-      `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=categorymembers&cmtitle=Category:${category}&cmlimit=${count}&cmtype=page`
-    );
-    const categoryData = await categoryResponse.json();
-    titles = categoryData.query.categorymembers.map((article: any) => article.title);
-  } else {
-    // Get random articles if no category specified or category is "All"
-    const randomResponse = await fetch(
-      `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=random&rnnamespace=0&rnlimit=${count}`
-    );
-    const randomData = await randomResponse.json();
-    titles = randomData.query.random.map((article: any) => article.title);
-  }
-
+const fetchWikipediaContent = async (titles: string[]) => {
   const titlesString = titles.join("|");
-  const response = await fetch(
-    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&prop=extracts|pageimages|categories|links|images|info&titles=${titlesString}&exintro=1&explaintext=1&pithumbsize=1000&imlimit=5&inprop=protection`
-  );
-  const data = await response.json();
-  const pages = Object.values(data.query.pages);
+  const params = new URLSearchParams({
+    action: 'query',
+    format: 'json',
+    origin: '*',
+    prop: 'extracts|pageimages|categories|links|images|info',
+    titles: titlesString,
+    exintro: '1',
+    explaintext: '1',
+    pithumbsize: '1000',
+    imlimit: '5',
+    inprop: 'protection'
+  });
 
-  const articlesWithImages = await Promise.all(pages.map(async (page: any) => {
-    let images = [];
-    if (page.images) {
-      const imageQuery = page.images
-        .filter((img: any) => !img.title.toLowerCase().includes('icon') && !img.title.toLowerCase().includes('logo'))
-        .slice(0, 3)
-        .map((img: any) => img.title)
-        .join('|');
+  const response = await fetch(`${WIKIPEDIA_API_BASE}?${params}`);
+  if (!response.ok) throw new Error('Failed to fetch Wikipedia content');
+  
+  return response.json();
+};
 
-      if (imageQuery) {
-        const imageResponse = await fetch(
-          `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&titles=${imageQuery}&prop=imageinfo&iiprop=url&iiurlwidth=1000`
-        );
-        const imageData = await imageResponse.json();
-        images = Object.values(imageData.query?.pages || {})
-          .map((img: any) => img?.imageinfo?.[0]?.url)
-          .filter(Boolean);
-      }
+export const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
+  try {
+    let titles: string[];
+    
+    if (category && category !== "All") {
+      const params = new URLSearchParams({
+        action: 'query',
+        format: 'json',
+        origin: '*',
+        list: 'categorymembers',
+        cmtitle: `Category:${category}`,
+        cmlimit: count.toString(),
+        cmtype: 'page'
+      });
+
+      const categoryResponse = await fetch(`${WIKIPEDIA_API_BASE}?${params}`);
+      if (!categoryResponse.ok) throw new Error('Failed to fetch category articles');
+      
+      const categoryData = await categoryResponse.json();
+      titles = categoryData.query?.categorymembers?.map((article: any) => article.title) || [];
+    } else {
+      const params = new URLSearchParams({
+        action: 'query',
+        format: 'json',
+        origin: '*',
+        list: 'random',
+        rnnamespace: '0',
+        rnlimit: count.toString()
+      });
+
+      const randomResponse = await fetch(`${WIKIPEDIA_API_BASE}?${params}`);
+      if (!randomResponse.ok) throw new Error('Failed to fetch random articles');
+      
+      const randomData = await randomResponse.json();
+      titles = randomData.query?.random?.map((article: any) => article.title) || [];
     }
 
-    const views = await getPageViews(page.title);
+    if (!titles.length) throw new Error('No articles found');
 
-    return {
-      id: page.pageid,
-      title: page.title,
-      content: page.extract,
-      image: page.thumbnail?.source || images[0] || getRandomPlaceholder(),
-      citations: Math.floor(Math.random() * 300) + 50,
-      readTime: Math.ceil(page.extract.split(" ").length / 200),
-      views,
-      tags: page.categories?.slice(0, 4).map((cat: any) => cat.title.replace("Category:", "")) || ["science", "history"],
-      relatedArticles: images.slice(1).map((img, index) => ({
-        id: index + 1,
-        title: `Related ${index + 1}`,
-        image: img || getRandomPlaceholder(),
-      })),
-    };
-  }));
+    const data = await fetchWikipediaContent(titles);
+    const pages = Object.values(data.query?.pages || {});
 
-  return articlesWithImages;
+    const articlesWithImages = await Promise.all(
+      pages.map(async (page: any) => {
+        const views = await getPageViews(page.title);
+        
+        let mainImage = page.thumbnail?.source;
+        if (!mainImage && page.images?.length) {
+          const imageQuery = page.images
+            .filter((img: any) => !img.title.toLowerCase().includes('icon') && !img.title.toLowerCase().includes('logo'))
+            .slice(0, 1)
+            .map((img: any) => img.title)
+            .join('|');
+
+          if (imageQuery) {
+            const imageParams = new URLSearchParams({
+              action: 'query',
+              format: 'json',
+              origin: '*',
+              titles: imageQuery,
+              prop: 'imageinfo',
+              iiprop: 'url',
+              iiurlwidth: '1000'
+            });
+
+            const imageResponse = await fetch(`${WIKIPEDIA_API_BASE}?${imageParams}`);
+            if (imageResponse.ok) {
+              const imageData = await imageResponse.json();
+              mainImage = Object.values(imageData.query?.pages || {})[0]?.imageinfo?.[0]?.url;
+            }
+          }
+        }
+
+        return {
+          id: page.pageid,
+          title: page.title,
+          content: page.extract || "No content available",
+          image: mainImage || getRandomPlaceholder(),
+          citations: Math.floor(Math.random() * 300) + 50,
+          readTime: Math.ceil((page.extract?.split(" ").length || 100) / 200),
+          views,
+          tags: page.categories?.slice(0, 4).map((cat: any) => cat.title.replace("Category:", "")) || [],
+          relatedArticles: [],
+        };
+      })
+    );
+
+    return articlesWithImages;
+  } catch (error) {
+    console.error('Error fetching articles:', error);
+    throw error;
+  }
 };
 
 export const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
   if (!query || query.length < 3) return [];
 
-  const searchResponse = await fetch(
-    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(
-      query
-    )}&srlimit=10`
-  );
-  const searchData = await searchResponse.json();
-  
-  if (!searchData.query?.search) {
-    console.log("No search results found in response:", searchData);
-    return [];
-  }
+  try {
+    const params = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      origin: '*',
+      list: 'search',
+      srsearch: query,
+      srlimit: '10'
+    });
 
-  const titles = searchData.query.search.map((result: any) => result.title).join('|');
-  const detailsResponse = await fetch(
-    `${WIKIPEDIA_API_BASE}?action=query&format=json&origin=*&prop=extracts|pageimages|categories&titles=${titles}&exintro=1&explaintext=1&pithumbsize=1000`
-  );
-  const detailsData = await detailsResponse.json();
-  const pages = Object.values(detailsData.query.pages);
-
-  const articles = await Promise.all(pages.map(async (page: any) => {
-    const views = await getPageViews(page.title);
+    const searchResponse = await fetch(`${WIKIPEDIA_API_BASE}?${params}`);
+    if (!searchResponse.ok) throw new Error('Search request failed');
     
-    return {
-      id: page.pageid,
-      title: page.title,
-      content: page.extract || "No description available",
-      image: page.thumbnail?.source || getRandomPlaceholder(),
-      citations: Math.floor(Math.random() * 300) + 50,
-      readTime: Math.ceil((page.extract?.split(" ").length || 100) / 200),
-      views,
-      tags: page.categories?.slice(0, 4).map((cat: any) => cat.title.replace("Category:", "")) || ["science", "history"],
-      relatedArticles: [],
-    };
-  }));
+    const searchData = await searchResponse.json();
+    if (!searchData.query?.search?.length) return [];
 
-  return articles;
+    const titles = searchData.query.search.map((result: any) => result.title);
+    const data = await fetchWikipediaContent(titles);
+    const pages = Object.values(data.query?.pages || {});
+
+    return Promise.all(
+      pages.map(async (page: any) => {
+        const views = await getPageViews(page.title);
+        
+        return {
+          id: page.pageid,
+          title: page.title,
+          content: page.extract || "No description available",
+          image: page.thumbnail?.source || getRandomPlaceholder(),
+          citations: Math.floor(Math.random() * 300) + 50,
+          readTime: Math.ceil((page.extract?.split(" ").length || 100) / 200),
+          views,
+          tags: page.categories?.slice(0, 4).map((cat: any) => cat.title.replace("Category:", "")) || [],
+          relatedArticles: [],
+        };
+      })
+    );
+  } catch (error) {
+    console.error('Error searching articles:', error);
+    throw error;
+  }
 };
