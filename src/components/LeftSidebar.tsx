@@ -1,11 +1,12 @@
 import { Hash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const LeftSidebar = ({ article }) => {
+const LeftSidebar = ({ article, onTagClick }) => {
   const navigate = useNavigate();
 
   const handleTagClick = (tag: string) => {
     navigate(`/?q=${encodeURIComponent(tag)}`);
+    onTagClick(tag);
   };
 
   return (

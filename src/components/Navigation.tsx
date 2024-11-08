@@ -24,7 +24,7 @@ const Navigation = () => {
 
   useEffect(() => {
     const query = searchParams.get("q");
-    if (query && !searchValue && location.pathname !== "/discover") {
+    if (query && location.pathname !== "/discover") {
       const decodedQuery = decodeURIComponent(query);
       setSearchValue(decodedQuery);
     }

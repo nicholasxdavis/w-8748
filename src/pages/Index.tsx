@@ -4,13 +4,14 @@ import RightSidebar from "../components/RightSidebar";
 import LeftSidebar from "../components/LeftSidebar";
 import { getRandomArticles, searchArticles } from "../services/wikipediaService";
 import { useToast } from "@/components/ui/use-toast";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 const Index = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const searchQuery = searchParams.get("q");
   const [currentArticle, setCurrentArticle] = useState(null);
 
@@ -27,6 +28,10 @@ const Index = () => {
     },
     retry: 1,
   });
+
+  const handleTagClick = (tag: string) => {
+    navigate(`/?q=${encodeURIComponent(tag)}`);
+  };
 
   if (error) {
     toast({
@@ -55,7 +60,7 @@ const Index = () => {
   return (
     <div className="h-screen w-screen relative overflow-hidden">
       <div className="flex h-full">
-        <LeftSidebar article={currentArticle || articles[0]} />
+        <LeftSidebar article={currentArticle || articles[0]} onTagClick={handleTagClick} />
         <ArticleViewer 
           articles={articles} 
           onArticleChange={setCurrentArticle}
