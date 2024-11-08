@@ -76,7 +76,7 @@ const RightSidebar = ({ article }) => {
         <button className="sidebar-icon" onClick={handleWikipediaRedirect}>
           <BookOpen className="w-7 h-7" />
         </button>
-        <span className="text-xs mt-1">{article.citations}</span>
+        <span className="text-xs mt-1">View</span> {/* Updated text here */}
       </div>
     </div>
   );
