@@ -2,8 +2,6 @@ import { WikipediaArticle, WikipediaResponse } from './types';
 import { getRandomPlaceholder } from './placeholders';
 import { getPageViews, fetchWikipediaContent } from './wikipediaApi';
 
-export type { WikipediaArticle };
-
 const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaArticle[]> => {
   try {
     // First try to get articles from the same categories
@@ -57,7 +55,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
   }
 };
 
-export const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
+const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
     let titles: string[];
     
@@ -150,7 +148,7 @@ export const getRandomArticles = async (count: number = 3, category?: string): P
   }
 };
 
-export const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
+const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
   if (!query || query.length < 3) return [];
 
   try {
@@ -196,4 +194,9 @@ export const searchArticles = async (query: string): Promise<WikipediaArticle[]>
   }
 };
 
-export { getRandomArticles, searchArticles, getRelatedArticles };
+export { 
+  getRandomArticles,
+  searchArticles,
+  getRelatedArticles,
+  type WikipediaArticle 
+};
