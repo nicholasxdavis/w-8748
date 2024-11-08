@@ -40,9 +40,11 @@ const Discover = () => {
     }
   }, [inView, fetchNextPage, hasNextPage]);
 
-  const handleCategoryChange = async (category: string) => {
-    // First, remove the old data
+  const handleCategoryChange = (category: string) => {
+    // First, invalidate and remove the current query data
+    queryClient.invalidateQueries({ queryKey: ["discover", selectedCategory] });
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
+    
     // Then set the new category
     setSelectedCategory(category);
   };
