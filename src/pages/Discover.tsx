@@ -5,6 +5,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
 
 const categories = [
   "All",
@@ -24,6 +25,23 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Preload next page of data
+  const preloadNextPage = async (category: string) => {
+    try {
+      const nextData = await getRandomArticles(12, category);
+      // Prefetch images
+      nextData.forEach(article => {
+        const img = new Image();
+        img.src = article.image;
+      });
+      return nextData;
+    } catch (error) {
+      console.error('Error preloading data:', error);
+      return [];
+    }
+  };
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
@@ -34,6 +52,13 @@ const Discover = () => {
     },
   });
 
+  // Preload next category data when hovering over category buttons
+  const handleCategoryHover = async (category: string) => {
+    if (category !== selectedCategory) {
+      await preloadNextPage(category);
+    }
+  };
+
   useEffect(() => {
     if (inView && hasNextPage) {
       fetchNextPage();
@@ -41,12 +66,14 @@ const Discover = () => {
   }, [inView, fetchNextPage, hasNextPage]);
 
   const handleCategoryChange = (category: string) => {
-    // First, invalidate and remove the current query data
     queryClient.invalidateQueries({ queryKey: ["discover", selectedCategory] });
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
-    
-    // Then set the new category
     setSelectedCategory(category);
+    toast({
+      title: `Loading ${category} articles`,
+      description: "Please wait while we fetch the content...",
+      duration: 2000,
+    });
   };
 
   const handleArticleClick = (article: WikipediaArticle) => {
@@ -66,6 +93,7 @@ const Discover = () => {
               <button
                 key={category}
                 onClick={() => handleCategoryChange(category)}
+                onMouseEnter={() => handleCategoryHover(category)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   selectedCategory === category
                     ? "bg-wikitok-red text-white"
@@ -95,6 +123,7 @@ const Discover = () => {
               <img
                 src={article.image}
                 alt={article.title}
+                loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover rounded-lg"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80 rounded-lg" />
