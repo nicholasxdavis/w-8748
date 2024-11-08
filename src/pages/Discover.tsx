@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,29 +24,6 @@ const Discover = () => {
   const navigate = useNavigate();
   const { ref, inView } = useInView();
   const queryClient = useQueryClient();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const currentScrollY = container.scrollTop;
-      
-      if (currentScrollY < lastScrollY || currentScrollY < 10) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
@@ -64,7 +41,9 @@ const Discover = () => {
   }, [inView, fetchNextPage, hasNextPage]);
 
   const handleCategoryChange = async (category: string) => {
+    // First, remove the old data
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
+    // Then set the new category
     setSelectedCategory(category);
   };
 
@@ -77,12 +56,8 @@ const Discover = () => {
   const articles = data?.pages.flat() ?? [];
 
   return (
-    <div ref={containerRef} className="h-screen overflow-y-auto">
-      <div 
-        className={`sticky top-14 left-0 right-0 z-10 bg-wikitok-dark transform transition-transform duration-300 ${
-          isVisible ? "translate-y-0" : "-translate-y-full"
-        }`}
-      >
+    <div className="h-screen overflow-y-auto pt-16 pb-20">
+      <div className="sticky top-0 z-10 bg-wikitok-dark">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-4 px-4 py-2">
             {categories.map((category) => (
@@ -103,7 +78,7 @@ const Discover = () => {
         </ScrollArea>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2 mt-16">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
         {isLoading ? (
           Array.from({ length: 12 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[9/16] rounded-lg bg-white/10" />
