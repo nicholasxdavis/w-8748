@@ -27,7 +27,6 @@ const Discover = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Preload next page of data
   const preloadNextPage = async (category: string) => {
     try {
       const nextData = await getRandomArticles(12, category);
@@ -43,7 +42,7 @@ const Discover = () => {
     }
   };
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
     queryFn: ({ pageParam }) => getRandomArticles(12, selectedCategory),
     initialPageParam: 1,
@@ -52,7 +51,6 @@ const Discover = () => {
     },
   });
 
-  // Preload next category data when hovering over category buttons
   const handleCategoryHover = async (category: string) => {
     if (category !== selectedCategory) {
       await preloadNextPage(category);
@@ -65,15 +63,25 @@ const Discover = () => {
     }
   }, [inView, fetchNextPage, hasNextPage]);
 
-  const handleCategoryChange = (category: string) => {
-    queryClient.invalidateQueries({ queryKey: ["discover", selectedCategory] });
+  const handleCategoryChange = async (category: string) => {
+    // Reset the query cache for both old and new categories
+    await queryClient.cancelQueries({ queryKey: ["discover", selectedCategory] });
+    await queryClient.cancelQueries({ queryKey: ["discover", category] });
+    
+    // Clear the cache for both categories
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
+    queryClient.removeQueries({ queryKey: ["discover", category] });
+    
     setSelectedCategory(category);
+    
     toast({
       title: `Loading ${category} articles`,
       description: "Please wait while we fetch the content...",
       duration: 2000,
     });
+
+    // Force a refetch with the new category
+    await refetch();
   };
 
   const handleArticleClick = (article: WikipediaArticle) => {
