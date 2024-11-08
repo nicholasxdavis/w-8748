@@ -30,12 +30,13 @@ const Discover = () => {
   const preloadNextPage = async (category: string) => {
     try {
       const nextData = await getRandomArticles(12, category);
-      // Prefetch images
-      nextData.forEach(article => {
+      // Filter out articles without images and prefetch remaining images
+      const articlesWithImages = nextData.filter(article => article.image);
+      articlesWithImages.forEach(article => {
         const img = new Image();
         img.src = article.image;
       });
-      return nextData;
+      return articlesWithImages;
     } catch (error) {
       console.error('Error preloading data:', error);
       return [];
@@ -44,7 +45,10 @@ const Discover = () => {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
-    queryFn: ({ pageParam }) => getRandomArticles(12, selectedCategory),
+    queryFn: async ({ pageParam }) => {
+      const articles = await getRandomArticles(12, selectedCategory);
+      return articles.filter(article => article.image);
+    },
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length < 3 ? allPages.length + 1 : undefined;
@@ -64,11 +68,9 @@ const Discover = () => {
   }, [inView, fetchNextPage, hasNextPage]);
 
   const handleCategoryChange = async (category: string) => {
-    // Reset the query cache for both old and new categories
     await queryClient.cancelQueries({ queryKey: ["discover", selectedCategory] });
     await queryClient.cancelQueries({ queryKey: ["discover", category] });
     
-    // Clear the cache for both categories
     queryClient.removeQueries({ queryKey: ["discover", selectedCategory] });
     queryClient.removeQueries({ queryKey: ["discover", category] });
     
@@ -80,7 +82,6 @@ const Discover = () => {
       duration: 2000,
     });
 
-    // Force a refetch with the new category
     await refetch();
   };
 
