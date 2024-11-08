@@ -18,13 +18,18 @@ const Index = () => {
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["articles", searchQuery],
     queryFn: async () => {
+      let fetchedArticles;
       if (searchQuery) {
         if (location.state?.reorderedResults) {
-          return location.state.reorderedResults;
+          fetchedArticles = location.state.reorderedResults;
+        } else {
+          fetchedArticles = await searchArticles(searchQuery);
         }
-        return searchArticles(searchQuery);
+      } else {
+        fetchedArticles = await getRandomArticles(3);
       }
-      return getRandomArticles(3);
+      // Filter out articles without images
+      return fetchedArticles.filter(article => article.image);
     },
     retry: 1,
   });
@@ -49,7 +54,7 @@ const Index = () => {
     );
   }
 
-  if (error || !articles) {
+  if (error || !articles || articles.length === 0) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-wikitok-dark">
         <div className="text-white">Something went wrong. Please try again.</div>
