@@ -1,12 +1,13 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { elevenLabsService } from '../services/elevenLabsService';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useTextToSpeech = () => {
   const [isReading, setIsReading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [showAuthLabel, setShowAuthLabel] = useState(false);
+  const { user } = useAuth();
   const currentTextRef = useRef<string>('');
 
   useEffect(() => {
@@ -23,25 +24,21 @@ export const useTextToSpeech = () => {
     elevenLabsService.onError((error) => {
       setIsReading(false);
       setIsLoading(false);
-      toast({
-        title: "Speech Error",
-        description: "Failed to play audio. Please try again.",
-        variant: "destructive",
-      });
     });
 
     return () => {
       elevenLabsService.stop();
     };
-  }, [toast]);
+  }, []);
 
   const speak = useCallback(async (text: string) => {
+    if (!user) {
+      setShowAuthLabel(true);
+      setTimeout(() => setShowAuthLabel(false), 2000);
+      return;
+    }
+
     if (!text?.trim()) {
-      toast({
-        title: "No content available",
-        description: "This article doesn't have content to read aloud.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -55,21 +52,11 @@ export const useTextToSpeech = () => {
       setIsLoading(true);
       currentTextRef.current = text;
       await elevenLabsService.speak(text);
-      
-      toast({
-        title: "Reading aloud",
-        description: "Article is being read with ElevenLabs voice.",
-      });
     } catch (error) {
       console.error('Text-to-speech error:', error);
       setIsLoading(false);
-      toast({
-        title: "Speech error",
-        description: "Failed to generate speech. Please try again.",
-        variant: "destructive",
-      });
     }
-  }, [isReading, toast]);
+  }, [isReading, user]);
 
   const stop = useCallback(() => {
     elevenLabsService.stop();
@@ -80,6 +67,7 @@ export const useTextToSpeech = () => {
     speak,
     stop,
     isReading,
-    isLoading
+    isLoading,
+    showAuthLabel
   };
 };
