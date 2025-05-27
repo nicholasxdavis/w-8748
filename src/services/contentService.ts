@@ -1,12 +1,20 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
 import { getUserInterests } from './userInterestsService';
+import { getDidYouKnowFacts, getHistoricQuotes, DidYouKnowFact, HistoricQuote } from './factsService';
 
-export type ContentItem = WikipediaArticle | NewsArticle;
+export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | HistoricQuote;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
+};
+
+export const isDidYouKnowFact = (item: ContentItem): item is DidYouKnowFact => {
+  return 'fact' in item;
+};
+
+export const isHistoricQuote = (item: ContentItem): item is HistoricQuote => {
+  return 'quote' in item && 'author' in item;
 };
 
 // Cache for personalized content to reduce API calls
@@ -58,9 +66,11 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  const personalizedCount = Math.ceil(count * 0.5); // 50% personalized content
-  const randomWikiCount = Math.ceil(count * 0.3); // 30% random wiki content  
-  const newsCount = Math.ceil(count * 0.2); // 20% news content
+  const personalizedCount = Math.ceil(count * 0.4); // 40% personalized content
+  const randomWikiCount = Math.ceil(count * 0.25); // 25% random wiki content  
+  const newsCount = Math.ceil(count * 0.15); // 15% news content
+  const factsCount = Math.ceil(count * 0.1); // 10% facts
+  const quotesCount = Math.ceil(count * 0.1); // 10% quotes
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -85,13 +95,21 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const remainingWikiCount = Math.max(0, randomWikiCount + (personalizedCount - personalizedArticles.length));
 
   // Fetch all content types in parallel for better performance
-  const [randomWikiArticles, newsArticles] = await Promise.all([
+  const [randomWikiArticles, newsArticles, facts, quotes] = await Promise.all([
     getWikiArticles(remainingWikiCount).catch(error => {
       console.error('Error fetching random wiki articles:', error);
       return [];
     }),
     getBreakingNews(newsCount).catch(error => {
       console.error('Error fetching news:', error);
+      return [];
+    }),
+    getDidYouKnowFacts(factsCount).catch(error => {
+      console.error('Error fetching facts:', error);
+      return [];
+    }),
+    getHistoricQuotes(quotesCount).catch(error => {
+      console.error('Error fetching quotes:', error);
       return [];
     })
   ]);
@@ -103,20 +121,30 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const mixedContent: ContentItem[] = [];
   const contentPools = {
     wiki: [...allWikiArticles],
-    news: [...newsArticles]
+    news: [...newsArticles],
+    facts: [...facts],
+    quotes: [...quotes]
   };
 
   // Interleave content types for better variety
-  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
-    let contentType: 'wiki' | 'news';
+  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0 || contentPools.facts.length > 0 || contentPools.quotes.length > 0); i++) {
+    let contentType: 'wiki' | 'news' | 'facts' | 'quotes';
     
-    // Every 4th item should be news if available
-    if (i % 4 === 0 && contentPools.news.length > 0) {
+    // Every 6th item should be a fact or quote if available
+    if (i % 6 === 0 && contentPools.facts.length > 0) {
+      contentType = 'facts';
+    } else if (i % 8 === 0 && contentPools.quotes.length > 0) {
+      contentType = 'quotes';
+    } else if (i % 4 === 0 && contentPools.news.length > 0) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
     } else if (contentPools.news.length > 0) {
       contentType = 'news';
+    } else if (contentPools.facts.length > 0) {
+      contentType = 'facts';
+    } else if (contentPools.quotes.length > 0) {
+      contentType = 'quotes';
     } else {
       break;
     }
@@ -127,9 +155,15 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  const finalContent = mixedContent.filter(item => item.image && !item.image.includes('placeholder'));
+  // For facts and quotes, we don't need to filter by images
+  const finalContent = mixedContent.filter(item => {
+    if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
+      return true;
+    }
+    return item.image && !item.image.includes('placeholder');
+  });
 
-  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news)`);
+  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news, ${facts.filter(fact => finalContent.includes(fact)).length} facts, ${quotes.filter(quote => finalContent.includes(quote)).length} quotes)`);
   
   return finalContent;
 };

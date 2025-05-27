@@ -1,9 +1,8 @@
-
 import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
 import WelcomePopup from "../components/WelcomePopup";
 import InterestSelectionPopup from "../components/InterestSelectionPopup";
-import { getMixedContent, searchMixedContent } from "../services/contentService";
+import { getMixedContent, searchMixedContent, isDidYouKnowFact, isHistoricQuote } from "../services/contentService";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -43,8 +42,13 @@ const Index = () => {
         fetchedContent = await getMixedContent(8, user?.id);
       }
       
-      // Filter out articles without images
-      const validContent = fetchedContent.filter(item => item.image && !item.image.includes('placeholder'));
+      // Filter out articles without images (but keep facts and quotes)
+      const validContent = fetchedContent.filter(item => {
+        if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
+          return true;
+        }
+        return item.image && !item.image.includes('placeholder');
+      });
       
       if (validContent.length === 0) {
         throw new Error('No valid content found');

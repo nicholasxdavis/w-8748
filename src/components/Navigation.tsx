@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchMixedContent, getMixedContent } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
+import { Compass } from "lucide-react";
 import SavedArticlesFullPage from "./SavedArticlesFullPage";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
@@ -59,7 +60,7 @@ const Navigation = () => {
             Lore
           </div>
           
-          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)] ml-[26px]">
+          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)] ml-[31px]">
             <SearchButton 
               searchQuery={searchQuery}
               onClick={() => setSearchOpen(true)}
@@ -98,6 +99,12 @@ const Navigation = () => {
           
           <div className="flex items-center space-x-2 flex-shrink-0 ml-auto">
             <button
+              onClick={() => navigate('/discover')}
+              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+            >
+              <Compass className="w-4 h-4" />
+            </button>
+            <button
               onClick={() => setSavedArticlesOpen(true)}
               className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
@@ -108,6 +115,16 @@ const Navigation = () => {
             <UserMenu />
           </div>
         </div>
+      </div>
+
+      {/* Mobile Discover Button - Bottom Left */}
+      <div className="sm:hidden fixed bottom-4 left-4 z-50">
+        <button
+          onClick={() => navigate('/discover')}
+          className="p-3 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105"
+        >
+          <Compass className="w-5 h-5" />
+        </button>
       </div>
 
       <SearchInterface
