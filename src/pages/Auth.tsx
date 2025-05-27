@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
+import { X } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -94,56 +95,64 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Lore</h1>
-          <p className="text-gray-400">Discover knowledge in a new way</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4 relative">
+      {/* Close Button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 p-2 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 transition-colors border border-gray-700"
+      >
+        <X className="w-5 h-5 text-white" />
+      </button>
+
+      <div className="w-full max-w-md mx-auto">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-blue-600 mb-2">Lore</h1>
+          <p className="text-gray-400 text-sm sm:text-base">Discover knowledge in a new way</p>
         </div>
 
-        <Card className="bg-black/40 backdrop-blur-sm border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-white">Welcome</CardTitle>
-            <CardDescription className="text-gray-400">
+        <Card className="bg-gray-900/90 backdrop-blur-sm border-gray-800">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-white text-lg sm:text-xl">Welcome</CardTitle>
+            <CardDescription className="text-gray-400 text-sm">
               Sign in to your account or create a new one
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                <TabsTrigger value="signin" className="text-white">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" className="text-white">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-gray-800 mb-6">
+                <TabsTrigger value="signin" className="text-white text-sm">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="text-white text-sm">Sign Up</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">Email</Label>
+                    <Label htmlFor="email" className="text-white text-sm">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-white">Password</Label>
+                    <Label htmlFor="password" className="text-white text-sm">Password</Label>
                     <Input
                       id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-red-600 hover:bg-red-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
                     disabled={loading}
                   >
                     {loading ? 'Signing in...' : 'Sign In'}
@@ -153,57 +162,57 @@ const Auth = () => {
               
               <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-white">First Name</Label>
+                      <Label htmlFor="firstName" className="text-white text-sm">First Name</Label>
                       <Input
                         id="firstName"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="First name"
-                        className="bg-gray-800 border-gray-700 text-white"
+                        className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-white">Last Name</Label>
+                      <Label htmlFor="lastName" className="text-white text-sm">Last Name</Label>
                       <Input
                         id="lastName"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Last name"
-                        className="bg-gray-800 border-gray-700 text-white"
+                        className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                         required
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupEmail" className="text-white">Email</Label>
+                    <Label htmlFor="signupEmail" className="text-white text-sm">Email</Label>
                     <Input
                       id="signupEmail"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupPassword" className="text-white">Password</Label>
+                    <Label htmlFor="signupPassword" className="text-white text-sm">Password</Label>
                     <Input
                       id="signupPassword"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Create a password"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-red-600 hover:bg-red-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
                     disabled={loading}
                   >
                     {loading ? 'Creating account...' : 'Create Account'}

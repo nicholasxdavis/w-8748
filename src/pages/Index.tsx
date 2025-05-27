@@ -45,7 +45,7 @@ const Index = () => {
   if (isLoading || authLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="text-white text-lg">Loading amazing articles...</div>
+        <div className="text-white text-sm sm:text-lg px-4 text-center">Loading amazing articles...</div>
       </div>
     );
   }
@@ -53,7 +53,7 @@ const Index = () => {
   if (error || !articles || articles.length === 0) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="text-white">Something went wrong. Please try again.</div>
+        <div className="text-white text-sm sm:text-base px-4 text-center">Something went wrong. Please try again.</div>
       </div>
     );
   }
