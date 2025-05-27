@@ -1,4 +1,3 @@
-
 import { Search, User, LogOut, Bell, Heart } from "lucide-react";
 import {
   Command,
@@ -169,7 +168,7 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0 outline-none ring-0">
           <div className="p-4 border-b border-gray-700/50">
             <div className="flex items-center space-x-3">
               <Search className="w-5 h-5 text-gray-400" />
@@ -177,7 +176,7 @@ const Navigation = () => {
                 placeholder="Search articles and breaking news..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white border-0"
+                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white border-0 ring-0 focus:ring-0 focus:outline-none"
                 autoFocus
               />
             </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -212,7 +211,7 @@ const Auth = () => {
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl transition-all duration-200 hover:scale-105"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl transition-all duration-200"
                     disabled={loading}
                   >
                     {loading ? 'Creating account...' : 'Create Account'}
