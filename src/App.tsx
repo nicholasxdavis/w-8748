@@ -1,13 +1,13 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
 import Navigation from "./components/Navigation";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Discover from "./pages/Discover";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +28,7 @@ function App() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/*" element={
               <>
                 <Navigation />
@@ -38,7 +39,6 @@ function App() {
               </>
             } />
           </Routes>
-          <Toaster />
         </div>
       </Router>
     </QueryClientProvider>

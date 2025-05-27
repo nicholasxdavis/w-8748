@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchMixedContent, getMixedContent } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
-import SavedArticlesPopup from "./SavedArticlesPopup";
+import SavedArticlesFullPage from "./SavedArticlesFullPage";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
 import UserMenu from "./navigation/UserMenu";
@@ -11,7 +11,7 @@ import UserMenu from "./navigation/UserMenu";
 const Navigation = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [saveAnimation, setSaveAnimation] = useState(false);
+  const [savedArticlesOpen, setSavedArticlesOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -47,11 +47,6 @@ const Navigation = () => {
     }
   };
 
-  const triggerSaveAnimation = () => {
-    setSaveAnimation(true);
-    setTimeout(() => setSaveAnimation(false), 1000);
-  };
-
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center backdrop-blur-lg">
@@ -64,7 +59,7 @@ const Navigation = () => {
             Lore
           </div>
           
-          <div className="mx-4 flex-1">
+          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)]">
             <SearchButton 
               searchQuery={searchQuery}
               onClick={() => setSearchOpen(true)}
@@ -73,7 +68,14 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <SavedArticlesPopup onSaveAnimation={saveAnimation} />
+            <button
+              onClick={() => setSavedArticlesOpen(true)}
+              className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
             <UserMenu />
           </div>
         </div>
@@ -93,7 +95,14 @@ const Navigation = () => {
           />
           
           <div className="flex items-center space-x-2 flex-shrink-0">
-            <SavedArticlesPopup onSaveAnimation={saveAnimation} />
+            <button
+              onClick={() => setSavedArticlesOpen(true)}
+              className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
             <UserMenu />
           </div>
         </div>
@@ -106,7 +115,12 @@ const Navigation = () => {
         setSearchQuery={setSearchQuery}
         results={searchResults || []}
         isSearching={isLoading}
-        onSaveArticle={triggerSaveAnimation}
+        onSaveArticle={() => {}}
+      />
+
+      <SavedArticlesFullPage 
+        isOpen={savedArticlesOpen}
+        onClose={() => setSavedArticlesOpen(false)}
       />
     </>
   );

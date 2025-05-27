@@ -1,13 +1,11 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
 export const useSaveArticle = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const checkIfSaved = useCallback(async (articleId: string) => {
@@ -48,11 +46,6 @@ export const useSaveArticle = () => {
     image?: string;
   }) => {
     if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to save articles.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -76,11 +69,6 @@ export const useSaveArticle = () => {
           updated.delete(article.id);
           return updated;
         });
-
-        toast({
-          title: "Article unsaved",
-          description: "Removed from your saved articles.",
-        });
       } else {
         // Add to saved
         const { error } = await supabase
@@ -95,33 +83,19 @@ export const useSaveArticle = () => {
 
         if (error) {
           if (error.code === '23505') { // Unique constraint violation
-            toast({
-              title: "Already saved",
-              description: "This article is already in your saved list.",
-            });
             return;
           }
           throw error;
         }
 
         setSavedArticles(prev => new Set(prev).add(article.id));
-
-        toast({
-          title: "Article saved!",
-          description: "Added to your saved articles.",
-        });
       }
     } catch (error) {
       console.error('Error toggling save:', error);
-      toast({
-        title: "Save error",
-        description: "Failed to save article. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
-  }, [user, savedArticles, toast]);
+  }, [user, savedArticles]);
 
   const isSaved = useCallback((articleId: string) => {
     return savedArticles.has(articleId);
