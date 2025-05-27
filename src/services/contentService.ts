@@ -1,6 +1,7 @@
 
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
+import { getUserInterests } from './userInterestsService';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
 
@@ -8,10 +9,23 @@ export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
 };
 
-export const getMixedContent = async (count: number = 6): Promise<ContentItem[]> => {
+export const getMixedContent = async (count: number = 6, userId?: string): Promise<ContentItem[]> => {
   const wikiCount = Math.ceil(count * 0.7); // 70% wiki content
   const newsCount = Math.floor(count * 0.3); // 30% news content
   
+  // For future enhancement: use user interests to personalize content
+  let userTopics: string[] = [];
+  if (userId) {
+    try {
+      const interests = await getUserInterests(userId);
+      userTopics = interests.map(interest => interest.topic?.name || '').filter(Boolean);
+      console.log('User topics for content personalization:', userTopics);
+    } catch (error) {
+      console.error('Error fetching user interests for content:', error);
+      // Continue without personalization
+    }
+  }
+
   const [wikiArticles, newsArticles] = await Promise.all([
     getWikiArticles(wikiCount),
     getBreakingNews(newsCount)

@@ -11,6 +11,7 @@ interface Topic {
   name: string;
   description: string;
   icon: string;
+  created_at?: string;
 }
 
 const InterestSelectionPopup = () => {
@@ -18,6 +19,7 @@ const InterestSelectionPopup = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [isCheckingInterests, setIsCheckingInterests] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -31,38 +33,64 @@ const InterestSelectionPopup = () => {
   const checkIfShouldShow = async () => {
     if (!user) return;
 
+    setIsCheckingInterests(true);
     try {
-      // Use type assertion for the new table that doesn't exist in types yet
-      const { data } = await (supabase as any)
+      console.log('Checking if user has interests...', user.id);
+      
+      const { data, error } = await supabase
         .from('user_interests')
         .select('id')
         .eq('user_id', user.id)
         .limit(1);
 
+      if (error) {
+        console.error('Error checking user interests:', error);
+        setIsCheckingInterests(false);
+        return;
+      }
+
+      console.log('User interests check result:', data);
+      
       // Show popup if user has no interests selected yet
       if (!data || data.length === 0) {
+        console.log('No interests found, showing popup');
         setIsVisible(true);
+      } else {
+        console.log('User already has interests, not showing popup');
       }
     } catch (error) {
       console.error('Error checking user interests:', error);
+      toast({
+        title: "Error checking interests",
+        description: "Failed to check your interests. Please refresh the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingInterests(false);
     }
   };
 
   const fetchTopics = async () => {
     try {
-      // Use type assertion for the new table that doesn't exist in types yet
-      const { data, error } = await (supabase as any)
+      console.log('Fetching topics...');
+      
+      const { data, error } = await supabase
         .from('topics')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching topics:', error);
+        throw error;
+      }
+
+      console.log('Topics fetched successfully:', data);
       setTopics(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching topics:', error);
       toast({
         title: "Error loading topics",
-        description: "Failed to load interest topics. Please try again.",
+        description: error.message || "Failed to load interest topics. Please try again.",
         variant: "destructive",
       });
     }
@@ -76,6 +104,7 @@ const InterestSelectionPopup = () => {
       newSelected.add(topicId);
     }
     setSelectedTopics(newSelected);
+    console.log('Selected topics:', Array.from(newSelected));
   };
 
   const handleSaveInterests = async () => {
@@ -89,6 +118,7 @@ const InterestSelectionPopup = () => {
     }
 
     setLoading(true);
+    console.log('Saving interests for user:', user.id, 'Topics:', Array.from(selectedTopics));
 
     try {
       const interests = Array.from(selectedTopics).map(topicId => ({
@@ -96,13 +126,19 @@ const InterestSelectionPopup = () => {
         topic_id: topicId,
       }));
 
-      // Use type assertion for the new table that doesn't exist in types yet
-      const { error } = await (supabase as any)
+      console.log('Inserting interests:', interests);
+
+      const { error } = await supabase
         .from('user_interests')
         .insert(interests);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving interests:', error);
+        throw error;
+      }
 
+      console.log('Interests saved successfully');
+      
       toast({
         title: "Interests saved!",
         description: "We'll personalize your content based on your interests",
@@ -113,7 +149,7 @@ const InterestSelectionPopup = () => {
       console.error('Error saving interests:', error);
       toast({
         title: "Error saving interests",
-        description: error.message,
+        description: error.message || "Failed to save your interests. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -122,10 +158,15 @@ const InterestSelectionPopup = () => {
   };
 
   const handleSkip = () => {
+    console.log('User skipped interest selection');
     setIsVisible(false);
   };
 
-  if (!isVisible || !user) return null;
+  // Don't render anything while checking or if no user
+  if (!user || isCheckingInterests) return null;
+  
+  // Don't render if not visible
+  if (!isVisible) return null;
 
   return (
     <AnimatePresence>
@@ -149,28 +190,34 @@ const InterestSelectionPopup = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
-            {topics.map((topic) => (
-              <button
-                key={topic.id}
-                onClick={() => toggleTopic(topic.id)}
-                className={`p-2 sm:p-3 rounded-xl text-left transition-all duration-200 border-2 ${
-                  selectedTopics.has(topic.id)
-                    ? 'bg-blue-600/20 border-blue-500 text-white'
-                    : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base sm:text-lg">{topic.icon}</span>
-                  <span className="text-xs sm:text-sm font-medium">{topic.name}</span>
-                  {selectedTopics.has(topic.id) && (
-                    <Check className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 ml-auto" />
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 leading-tight">{topic.description}</p>
-              </button>
-            ))}
-          </div>
+          {topics.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-4">Loading topics...</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
+              {topics.map((topic) => (
+                <button
+                  key={topic.id}
+                  onClick={() => toggleTopic(topic.id)}
+                  className={`p-2 sm:p-3 rounded-xl text-left transition-all duration-200 border-2 ${
+                    selectedTopics.has(topic.id)
+                      ? 'bg-blue-600/20 border-blue-500 text-white'
+                      : 'bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base sm:text-lg">{topic.icon}</span>
+                    <span className="text-xs sm:text-sm font-medium">{topic.name}</span>
+                    {selectedTopics.has(topic.id) && (
+                      <Check className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 ml-auto" />
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 leading-tight">{topic.description}</p>
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-2 sm:gap-3">
             <button
@@ -181,7 +228,7 @@ const InterestSelectionPopup = () => {
             </button>
             <button
               onClick={handleSaveInterests}
-              disabled={loading || selectedTopics.size === 0}
+              disabled={loading || selectedTopics.size === 0 || topics.length === 0}
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 sm:py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {loading ? 'Saving...' : `Save (${selectedTopics.size})`}
