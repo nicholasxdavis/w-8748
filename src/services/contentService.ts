@@ -1,6 +1,7 @@
 
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
+import { contentCache } from './contentCache';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
 
@@ -8,14 +9,30 @@ export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
 };
 
-export const getMixedContent = async (count: number = 6): Promise<ContentItem[]> => {
-  const wikiCount = Math.ceil(count * 0.7); // 70% wiki content
-  const newsCount = Math.floor(count * 0.3); // 30% news content
+export const getMixedContent = async (count: number = 10): Promise<ContentItem[]> => {
+  const targetWikiCount = Math.ceil(count * 0.7); // 70% wiki content
+  const targetNewsCount = Math.floor(count * 0.3); // 30% news content
+  
+  // Fetch more content than needed to filter out cached items
+  const fetchMultiplier = 3;
   
   const [wikiArticles, newsArticles] = await Promise.all([
-    getWikiArticles(wikiCount),
-    getBreakingNews(newsCount)
+    getWikiArticles(targetWikiCount * fetchMultiplier),
+    getBreakingNews(targetNewsCount * fetchMultiplier)
   ]);
+
+  // Filter out cached content
+  const freshWikiArticles = contentCache.filterUncached(wikiArticles);
+  const freshNewsArticles = contentCache.filterUncached(newsArticles);
+
+  // Add successful fetches to cache
+  freshWikiArticles.slice(0, targetWikiCount).forEach(article => {
+    contentCache.addToCache(String(article.id), 'wiki');
+  });
+  
+  freshNewsArticles.slice(0, targetNewsCount).forEach(article => {
+    contentCache.addToCache(String(article.id), 'news');
+  });
 
   // Mix the content randomly
   const mixedContent: ContentItem[] = [];
@@ -23,12 +40,14 @@ export const getMixedContent = async (count: number = 6): Promise<ContentItem[]>
   let newsIndex = 0;
 
   for (let i = 0; i < count; i++) {
-    if (Math.random() < 0.3 && newsIndex < newsArticles.length) {
-      mixedContent.push(newsArticles[newsIndex++]);
-    } else if (wikiIndex < wikiArticles.length) {
-      mixedContent.push(wikiArticles[wikiIndex++]);
-    } else if (newsIndex < newsArticles.length) {
-      mixedContent.push(newsArticles[newsIndex++]);
+    const shouldAddNews = Math.random() < 0.3 && newsIndex < freshNewsArticles.length;
+    
+    if (shouldAddNews) {
+      mixedContent.push(freshNewsArticles[newsIndex++]);
+    } else if (wikiIndex < freshWikiArticles.length) {
+      mixedContent.push(freshWikiArticles[wikiIndex++]);
+    } else if (newsIndex < freshNewsArticles.length) {
+      mixedContent.push(freshNewsArticles[newsIndex++]);
     }
   }
 
@@ -43,7 +62,7 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
     searchNews(query)
   ]);
 
-  // Mix search results
+  // Mix search results (don't filter search results by cache)
   const mixedResults: ContentItem[] = [];
   const maxResults = Math.max(wikiResults.length, newsResults.length);
 

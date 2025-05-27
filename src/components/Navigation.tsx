@@ -170,8 +170,8 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/95 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
-          <div className="p-3 sm:p-4 border-b border-gray-700/50">
+        <div className="bg-gray-900/85 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0">
+          <div className="p-3 sm:p-4 border-b border-gray-700/30">
             <div className="flex items-center space-x-3">
               <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
@@ -216,7 +216,7 @@ const Navigation = () => {
                   <div
                     key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
                     onClick={() => handleItemSelect(result.title, result)}
-                    className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group"
+                    className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800/40 transition-all duration-200 group"
                   >
                     <div className="flex items-center w-full space-x-3 sm:space-x-4">
                       {result.image ? (

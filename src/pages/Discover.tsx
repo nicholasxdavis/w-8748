@@ -35,8 +35,8 @@ const Discover = () => {
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === 12 ? allPages.length : undefined;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -74,9 +74,9 @@ const Discover = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-16 pb-20">
-      {/* Fixed Header */}
-      <div className="fixed top-16 left-0 right-0 z-20 bg-gradient-to-br from-gray-900 via-black to-gray-900 border-b border-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Fixed Header - positioned at top and fixed */}
+      <div className="fixed top-0 left-0 right-0 z-30 bg-gradient-to-br from-gray-900 via-black to-gray-900 border-b border-gray-800 pt-16">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
@@ -97,8 +97,8 @@ const Discover = () => {
         </div>
       </div>
 
-      {/* Content Grid with proper top margin to account for fixed header */}
-      <div className="px-2 mt-32 sm:mt-36">
+      {/* Content Grid with proper top margin */}
+      <div className="px-2 pt-40">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -110,48 +110,51 @@ const Discover = () => {
             {articles.map((article, index) => (
               <div
                 key={`${article.id}-${index}`}
-                className={`group relative cursor-pointer rounded-lg overflow-hidden bg-gray-800 ${getGridItemClass(index)}`}
+                className={`group relative cursor-pointer rounded-lg overflow-hidden bg-gray-800 ${getGridItemClass(index)} transform hover:scale-105 transition-all duration-300`}
                 onClick={() => handleArticleClick(article)}
               >
                 <img
                   src={article.image}
                   alt={article.title}
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/70 opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+                
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 group-hover:animate-pulse" />
                 
                 {/* Content */}
-                <div className="absolute inset-0 p-2 sm:p-3 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 p-2 sm:p-3 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                   <div className="flex justify-between items-start">
-                    <div className="bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                    <div className="bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
                       <span className="text-white text-xs font-medium">
-                        {article.readTime}m
+                        {article.readTime}m read
                       </span>
                     </div>
                     {article.views > 50000 && (
-                      <div className="bg-red-500 rounded-full p-1.5">
+                      <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-full p-1.5 animate-pulse">
                         <TrendingUp className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </div>
                   
-                  <div>
-                    <h3 className="text-white font-semibold text-xs sm:text-sm line-clamp-2 mb-2">
+                  <div className="space-y-2">
+                    <h3 className="text-white font-semibold text-xs sm:text-sm line-clamp-2 drop-shadow-lg">
                       {article.title}
                     </h3>
-                    <div className="flex items-center gap-3 sm:gap-4 text-white">
+                    <div className="flex items-center gap-3 sm:gap-4 text-white/90">
                       <div className="flex items-center gap-1">
-                        <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="text-xs">{Math.floor(Math.random() * 1000)}</span>
+                        <Heart className="w-3 h-3 sm:w-4 sm:h-4 hover:text-red-400 transition-colors" />
+                        <span className="text-xs">{Math.floor(Math.random() * 1000) + 100}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="text-xs">{Math.floor(Math.random() * 100)}</span>
+                        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 hover:text-blue-400 transition-colors" />
+                        <span className="text-xs">{Math.floor(Math.random() * 100) + 10}</span>
                       </div>
-                      <Bookmark className="w-3 h-3 sm:w-4 sm:h-4 ml-auto" />
+                      <Bookmark className="w-3 h-3 sm:w-4 sm:h-4 ml-auto hover:text-yellow-400 transition-colors" />
                     </div>
                   </div>
                 </div>

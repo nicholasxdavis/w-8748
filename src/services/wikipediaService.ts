@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 import { transformToArticle } from './articleTransformer';
@@ -41,24 +40,51 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
 };
 
 const getPopularArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
-  // Use well-known popular Wikipedia articles that tend to have high traffic
-  const popularTitles = [
-    'World War II', 'Albert Einstein', 'Leonardo da Vinci', 'United States',
-    'Adolf Hitler', 'Jesus', 'India', 'China', 'France', 'Germany',
-    'The Beatles', 'Michael Jackson', 'Shakespeare', 'Napoleon',
-    'Isaac Newton', 'Charles Darwin', 'Artificial intelligence',
-    'Climate change', 'COVID-19 pandemic', 'Ancient Egypt',
-    'Roman Empire', 'Greek mythology', 'Space exploration',
-    'Quantum mechanics', 'DNA', 'Black hole', 'Solar System',
-    'Philosophy', 'Psychology', 'Medicine', 'Renaissance',
-    'Industrial Revolution', 'American Civil War', 'Cold War'
-  ];
+  // Expanded list of high-quality, popular Wikipedia articles
+  const popularCategories = {
+    science: [
+      'Albert Einstein', 'Isaac Newton', 'Charles Darwin', 'Marie Curie',
+      'Stephen Hawking', 'Nikola Tesla', 'Artificial intelligence',
+      'Quantum mechanics', 'DNA', 'Black hole', 'Solar System',
+      'Climate change', 'Evolution', 'Space exploration', 'Physics',
+      'Chemistry', 'Biology', 'Astronomy', 'Genetics', 'Mathematics'
+    ],
+    history: [
+      'World War II', 'Ancient Egypt', 'Roman Empire', 'World War I',
+      'Renaissance', 'Industrial Revolution', 'American Civil War',
+      'French Revolution', 'Cold War', 'Napoleon', 'Adolf Hitler',
+      'Ancient Greece', 'Medieval period', 'Byzantine Empire',
+      'Ottoman Empire', 'Mongol Empire', 'British Empire'
+    ],
+    people: [
+      'Leonardo da Vinci', 'Shakespeare', 'Alexander the Great',
+      'Julius Caesar', 'Cleopatra', 'George Washington', 'Abraham Lincoln',
+      'Winston Churchill', 'Gandhi', 'Martin Luther King Jr.',
+      'The Beatles', 'Michael Jackson', 'Pablo Picasso', 'Van Gogh'
+    ],
+    geography: [
+      'United States', 'India', 'China', 'France', 'Germany', 'Japan',
+      'Brazil', 'Russia', 'Australia', 'Egypt', 'Italy', 'United Kingdom',
+      'Canada', 'Mexico', 'Spain', 'Greece', 'Turkey', 'South Africa'
+    ],
+    culture: [
+      'Greek mythology', 'Philosophy', 'Psychology', 'Religion',
+      'Art', 'Music', 'Literature', 'Cinema', 'Architecture',
+      'Photography', 'Dance', 'Theater', 'Sculpture', 'Painting'
+    ],
+    technology: [
+      'Internet', 'Computer', 'Smartphone', 'Automobile', 'Airplane',
+      'Television', 'Radio', 'Electricity', 'Steam engine', 'Printing press',
+      'Photography', 'Medicine', 'Vaccines', 'Antibiotics'
+    ]
+  };
 
   try {
-    // Randomly select from popular titles
-    const selectedTitles = popularTitles
+    // Randomly select from different categories for variety
+    const allTitles = Object.values(popularCategories).flat();
+    const selectedTitles = allTitles
       .sort(() => 0.5 - Math.random())
-      .slice(0, count * 2);
+      .slice(0, count * 3); // Get more to ensure we have enough valid articles
 
     const data = await fetchWikipediaContent(selectedTitles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
@@ -142,24 +168,25 @@ const getPopularTopicArticles = async (count: number = 3): Promise<WikipediaArti
   }
 };
 
-const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
+const getRandomArticles = async (count: number = 10, category?: string): Promise<WikipediaArticle[]> => {
   try {
-    // First try to get popular articles
+    // First try to get popular articles for better quality
     if (!category || category === "All") {
       const popularArticles = await getPopularArticles(count);
       if (popularArticles.length >= count) {
-        return popularArticles;
+        return popularArticles.sort(() => 0.5 - Math.random()); // Shuffle for variety
       }
       
       // If we don't have enough popular articles, supplement with featured articles
       const additionalCount = count - popularArticles.length;
       const featuredArticles = await getFeaturedArticles(additionalCount);
-      return [...popularArticles, ...featuredArticles].slice(0, count);
+      const combined = [...popularArticles, ...featuredArticles];
+      return combined.sort(() => 0.5 - Math.random()).slice(0, count);
     }
 
     // Category-specific articles
     let titles: string[];
-    const multiplier = 3;
+    const multiplier = 4; // Increased multiplier for more variety
     
     const params = new URLSearchParams({
       action: 'query',
@@ -168,7 +195,9 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
       list: 'categorymembers',
       cmtitle: `Category:${category}`,
       cmlimit: (count * multiplier).toString(),
-      cmtype: 'page'
+      cmtype: 'page',
+      cmsort: 'timestamp',
+      cmdir: 'desc'
     });
 
     const categoryResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
@@ -179,6 +208,9 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
 
     if (!titles.length) throw new Error('No articles found');
 
+    // Shuffle titles for variety
+    titles = titles.sort(() => 0.5 - Math.random());
+
     const data = await fetchWikipediaContent(titles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
     
@@ -186,14 +218,14 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
     if (validArticles.length < count) {
-      const moreArticles = await getRandomArticles(count - validArticles.length, category);
+      const moreArticles = await getPopularArticles(count - validArticles.length);
       return [...validArticles, ...moreArticles].slice(0, count);
     }
     
     return validArticles.slice(0, count);
   } catch (error) {
     console.error('Error fetching articles:', error);
-    throw error;
+    return getPopularArticles(count);
   }
 };
 
