@@ -104,9 +104,9 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <h3 className="font-bold text-white text-lg flex items-center gap-2">
             <Settings className="w-5 h-5 text-blue-400" />
             Settings
@@ -119,7 +119,7 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
           </button>
         </div>
 
-        <div className="flex border-b border-gray-700/30">
+        <div className="flex border-b border-gray-700">
           <button
             onClick={() => setActiveTab("profile")}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
@@ -144,7 +144,7 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
           </button>
         </div>
 
-        <div className="p-4 max-h-96 overflow-y-auto">
+        <div className="p-4 max-h-[60vh] overflow-y-auto">
           {activeTab === "profile" && (
             <div className="space-y-4">
               <div>
