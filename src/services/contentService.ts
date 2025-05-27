@@ -24,6 +24,12 @@ export const getMixedContent = async (count: number = 10): Promise<ContentItem[]
   // Filter out cached content
   const freshWikiArticles = contentCache.filterUncached(wikiArticles);
   const freshNewsArticles = contentCache.filterUncached(newsArticles);
+  
+  // If we have very few fresh articles, clear part of the cache
+  if (freshWikiArticles.length < targetWikiCount * 0.5 || freshNewsArticles.length < targetNewsCount * 0.5) {
+    console.log("Very few fresh articles available, clearing cache");
+    contentCache.clearCache();
+  }
 
   // Add successful fetches to cache
   freshWikiArticles.slice(0, targetWikiCount).forEach(article => {

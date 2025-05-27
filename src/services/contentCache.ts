@@ -4,7 +4,8 @@ interface CachedContent {
   type: 'wiki' | 'news';
 }
 
-const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
+// Reduced cache duration to prevent content staleness
+const CACHE_DURATION = 1 * 60 * 60 * 1000; // 1 hour instead of 3
 const CACHE_KEY = 'lore_content_cache';
 
 class ContentCacheService {
@@ -54,9 +55,10 @@ class ContentCacheService {
       type
     });
 
-    // Keep only recent 200 items to prevent unlimited growth
-    if (this.cache.length > 200) {
-      this.cache = this.cache.slice(-200);
+    // Keep only recent 100 items to prevent unlimited growth (was 200)
+    // This encourages more content cycling
+    if (this.cache.length > 100) {
+      this.cache = this.cache.slice(-100);
     }
 
     this.saveCache();
