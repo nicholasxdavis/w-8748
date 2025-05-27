@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -23,6 +22,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [showShare, setShowShare] = useState(false);
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
   const [showActionButtons, setShowActionButtons] = useState(false);
+  const [isHoveringContent, setIsHoveringContent] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const clickCountRef = useRef(0);
@@ -231,7 +231,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && !isHoveringContent) {
             const index = parseInt(entry.target.getAttribute("data-index") || "0");
             setCurrentIndex(index);
             setIsVisible(true);
@@ -250,7 +250,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     return () => {
       articleElements.forEach((article) => observer.unobserve(article));
     };
-  }, [articles]);
+  }, [articles, isHoveringContent]);
 
   useEffect(() => {
     return () => {
@@ -265,6 +265,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       <main 
         ref={containerRef} 
         className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory"
+        style={{ scrollSnapType: isHoveringContent ? 'none' : 'y mandatory' }}
       >
         {articles.map((article, index) => (
           <div 
@@ -292,8 +293,8 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             )}
 
-            {/* Action Buttons Toggle */}
-            <div className="absolute top-20 right-4 z-30">
+            {/* Action Buttons Toggle - moved to bottom right */}
+            <div className="absolute bottom-20 right-4 z-30">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -307,12 +308,12 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
             {/* Action Buttons Sidebar */}
             {showActionButtons && (
-              <div className="absolute right-4 top-32 bg-black/40 backdrop-blur-lg rounded-2xl p-3 border border-white/20 z-30">
+              <div className="absolute right-4 bottom-32 bg-black/40 backdrop-blur-lg rounded-2xl p-3 border border-white/20 z-30">
                 <ActionButtons isMobile={true} />
               </div>
             )}
 
-            {/* Content with black overlay */}
+            {/* Content with hover detection */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{
@@ -321,6 +322,8 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               }}
               transition={{ duration: 0.5 }}
               className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center"
+              onMouseEnter={() => setIsHoveringContent(true)}
+              onMouseLeave={() => setIsHoveringContent(false)}
             >
               <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10 space-y-3 sm:space-y-4 max-w-2xl">
                 <div className="flex items-start justify-between">

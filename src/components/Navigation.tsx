@@ -122,7 +122,21 @@ const Navigation = () => {
           Lore
         </div>
         
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+        {/* Mobile Search Bar */}
+        <div className="sm:hidden flex-1 mx-3">
+          <div 
+            className="w-full flex items-center bg-gray-800/40 backdrop-blur-xl rounded-xl px-3 py-1.5 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
+            onClick={() => setOpen(true)}
+          >
+            <Search className="w-3 h-3 text-gray-400 mr-2 flex-shrink-0" />
+            <span className="text-gray-400 text-xs font-medium truncate">
+              {searchValue || "Search..."}
+            </span>
+          </div>
+        </div>
+
+        {/* Desktop Search Bar */}
+        <div className="hidden sm:block absolute left-1/2 transform -translate-x-1/2">
           <div 
             className="w-64 sm:w-80 flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-2 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
             onClick={() => setOpen(true)}
@@ -139,31 +153,30 @@ const Navigation = () => {
           <LikedArticlesPopover />
           
           {user ? (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
-                <span className="text-white text-sm font-bold">
-                  {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
-                </span>
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
+                <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-400 hover:text-red-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105"
+                className="text-gray-400 hover:text-red-400 transition-all p-1.5 sm:p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
             </div>
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:scale-105"
+              className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:scale-105"
             >
-              <User className="w-4 h-4" />
-              <span className="text-sm hidden sm:inline">Sign In</span>
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm hidden sm:inline">Sign In</span>
             </button>
           )}
         </div>
       </div>
 
+      {/* Command Dialog - keeping existing implementation */}
       <CommandDialog 
         open={open} 
         onOpenChange={handleOpenChange}
