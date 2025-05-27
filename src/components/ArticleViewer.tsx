@@ -5,8 +5,6 @@ import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loade
 import { getMixedContent, isNewsArticle, isDidYouKnowFact, isHistoricQuote } from "../services/contentService";
 import SaveButton from "./SaveButton";
 import ShareModal from "./ShareModal";
-import DidYouKnowCard from "./cards/DidYouKnowCard";
-import HistoricQuoteCard from "./cards/HistoricQuoteCard";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useSaveArticle } from "@/hooks/useSaveArticle";
@@ -44,7 +42,6 @@ const ArticleViewer = ({
     toggleSave
   } = useSaveArticle();
 
-  // Hide double-tap hint after 3 seconds on first load
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowDoubleTapHint(false);
@@ -65,13 +62,10 @@ const ArticleViewer = ({
   }, [isLoading]);
   const showFullText = useCallback(() => {
     if (currentArticle?.content && !isTextFullyLoaded) {
-      // Clear any ongoing typing animation
       if (typingIntervalRef.current) {
         clearInterval(typingIntervalRef.current);
         typingIntervalRef.current = null;
       }
-
-      // Show complete text immediately
       setDisplayedText(currentArticle.content);
       setProgress(100);
       setIsTextFullyLoaded(true);
@@ -85,12 +79,10 @@ const ArticleViewer = ({
     }
     if (clickCountRef.current === 1) {
       doubleClickTimeoutRef.current = setTimeout(() => {
-        // Single click - show full text if not loaded
         showFullText();
         clickCountRef.current = 0;
       }, 300);
     } else if (clickCountRef.current === 2) {
-      // Double click - save article
       if (currentArticle) {
         toggleSave({
           id: String(currentArticle.id),
@@ -127,7 +119,6 @@ const ArticleViewer = ({
     window.open(`${baseUrl}${articleTitle}`, '_blank');
   }, [currentArticle?.title]);
 
-  // Memoized action buttons to prevent unnecessary re-renders
   const ActionButtons = useMemo(() => ({
     isMobile = false
   }) => <motion.div className={`flex ${isMobile ? 'flex-row justify-around' : 'flex-col'} space-y-0 ${isMobile ? 'space-x-3' : 'space-y-2'} z-20`} initial={{
@@ -169,7 +160,6 @@ const ArticleViewer = ({
         </div>}
     </motion.div>, [currentArticle, handleTextToSpeech, isReading, speechLoading]);
 
-  // Reset states when article changes
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
@@ -180,7 +170,6 @@ const ArticleViewer = ({
     setShowActionButtons(false);
     onArticleChange(currentArticle);
 
-    // Clear any existing typing interval
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
@@ -193,7 +182,6 @@ const ArticleViewer = ({
     }
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop]);
 
-  // Optimized typing animation with better state management
   useEffect(() => {
     if (!isVisible || !currentArticle?.content || isTextFullyLoaded || isTypingPaused) return;
     let currentChar = 0;
@@ -220,7 +208,6 @@ const ArticleViewer = ({
     };
   }, [isVisible, currentArticle?.content, isTextFullyLoaded, isTypingPaused]);
 
-  // Optimized intersection observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -246,7 +233,6 @@ const ArticleViewer = ({
     };
   }, [articles, currentIndex]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stop();
@@ -258,36 +244,15 @@ const ArticleViewer = ({
       }
     };
   }, [stop]);
+
   return (
     <>
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
         <AnimatePresence>
           {articles.map((article, index) => {
-            // Handle different content types
-            if (isDidYouKnowFact(article)) {
-              return (
-                <DidYouKnowCard
-                  key={`fact-${article.id}`}
-                  fact={article}
-                  onShare={() => setShowShare(true)}
-                />
-              );
-            }
-
-            if (isHistoricQuote(article)) {
-              return (
-                <HistoricQuoteCard
-                  key={`quote-${article.id}`}
-                  quote={article}
-                  onShare={() => setShowShare(true)}
-                />
-              );
-            }
-
-            // Regular article rendering
             return (
               <motion.div 
-                key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} 
+                key={isNewsArticle(article) ? article.id : `content-${article.id}`} 
                 data-index={index} 
                 className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden" 
                 onClick={handleContentClick} 
@@ -301,7 +266,6 @@ const ArticleViewer = ({
                   <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
                 </div>
 
-                {/* Breaking News Badge */}
                 {isNewsArticle(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
               x: -50,
               opacity: 0
@@ -318,7 +282,38 @@ const ArticleViewer = ({
                     </div>
                   </motion.div>}
 
-                {/* Double-click hint - only show briefly on first load */}
+                {isDidYouKnowFact(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
+              x: -50,
+              opacity: 0
+            }} animate={{
+              x: 0,
+              opacity: 1
+            }} transition={{
+              delay: 0.2,
+              duration: 0.4
+            }}>
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-blue-400/30">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                      DID YOU KNOW
+                    </div>
+                  </motion.div>}
+
+                {isHistoricQuote(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
+              x: -50,
+              opacity: 0
+            }} animate={{
+              x: 0,
+              opacity: 1
+            }} transition={{
+              delay: 0.2,
+              duration: 0.4
+            }}>
+                    <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                      HISTORIC QUOTE
+                    </div>
+                  </motion.div>}
+
                 <AnimatePresence>
                   {showDoubleTapHint && <motion.div className="absolute top-20 right-4 z-20" initial={{
                 x: 50,
@@ -338,7 +333,6 @@ const ArticleViewer = ({
                   </motion.div>}
                 </AnimatePresence>
 
-                {/* Action Buttons Toggle */}
                 <motion.div className="absolute bottom-20 right-4 z-30" initial={{
               scale: 0
             }} animate={{
@@ -383,7 +377,6 @@ const ArticleViewer = ({
                   </button>
                 </motion.div>
 
-                {/* Action Buttons Sidebar */}
                 <AnimatePresence>
                   {showActionButtons && <motion.div className="absolute right-4 bottom-36 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/20 z-30" initial={{
                 opacity: 0,
@@ -404,7 +397,6 @@ const ArticleViewer = ({
                   </motion.div>}
                 </AnimatePresence>
 
-                {/* Content with increased max height */}
                 <motion.div initial={{
               opacity: 0,
               y: 30
@@ -435,6 +427,14 @@ const ArticleViewer = ({
                             <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                             <span>{formatNewsDate(article.publishedAt)}</span>
                           </div>
+                        </> : isDidYouKnowFact(article) ? <>
+                          <span>{article.category}</span>
+                          <span>•</span>
+                          <span>{article.source}</span>
+                        </> : isHistoricQuote(article) ? <>
+                          <span>by {article.author}</span>
+                          <span>•</span>
+                          <span>{article.category}</span>
                         </> : <>
                           <span>{article.readTime} min read</span>
                           <span>•</span>
@@ -452,7 +452,6 @@ const ArticleViewer = ({
                   </div>
                 </motion.div>
 
-                {/* Progress Bar */}
                 {currentIndex === index && <div className="absolute bottom-0 left-0 right-0 z-20">
                     <Progress value={progress} className="h-1 bg-black/30" indicatorClassName="bg-blue-500 transition-all duration-200" />
                   </div>}
