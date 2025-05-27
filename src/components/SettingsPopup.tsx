@@ -126,8 +126,8 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden mx-auto">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
         <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
           <h3 className="font-bold text-white text-lg flex items-center gap-2">
             <Settings className="w-5 h-5 text-blue-400" />
