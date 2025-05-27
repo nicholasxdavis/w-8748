@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -6,6 +7,8 @@ import { getRandomArticles, getRelatedArticles } from "../services/wikipediaServ
 import LikeButton from "./LikeButton";
 import CommentButton from "./CommentButton";
 import CommentsModal from "./CommentsModal";
+import ShareModal from "./ShareModal";
+import { useToast } from "@/components/ui/use-toast";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -16,9 +19,11 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const currentArticle = articles[currentIndex];
+  const { toast } = useToast();
 
   const loadMoreArticles = useCallback(async () => {
     if (isLoading) return;
@@ -37,46 +42,68 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   }, [isLoading, currentArticle]);
 
   const handleTextToSpeech = () => {
-    if (!currentArticle?.content) return;
+    if (!currentArticle?.content) {
+      toast({
+        title: "No content available",
+        description: "This article doesn't have content to read aloud.",
+        variant: "warning",
+      });
+      return;
+    }
 
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
       speechRef.current = null;
+      toast({
+        title: "Speech stopped",
+        description: "Text-to-speech has been stopped.",
+        variant: "info",
+      });
     } else {
       const utterance = new SpeechSynthesisUtterance(currentArticle.content);
       utterance.rate = 0.9;
       utterance.pitch = 1;
       utterance.volume = 1;
       
-      utterance.onstart = () => setIsReading(true);
-      utterance.onend = () => setIsReading(false);
-      utterance.onerror = () => setIsReading(false);
+      utterance.onstart = () => {
+        setIsReading(true);
+        toast({
+          title: "Reading aloud",
+          description: "Article is being read to you.",
+          variant: "success",
+        });
+      };
+      
+      utterance.onend = () => {
+        setIsReading(false);
+        toast({
+          title: "Reading complete",
+          description: "Finished reading the article.",
+          variant: "info",
+        });
+      };
+      
+      utterance.onerror = () => {
+        setIsReading(false);
+        toast({
+          title: "Speech error",
+          description: "There was an error with text-to-speech.",
+          variant: "destructive",
+        });
+      };
       
       speechRef.current = utterance;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/?q=${encodeURIComponent(currentArticle.title)}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: currentArticle.title,
-          text: `Check out this article about ${currentArticle.title} on Lore!`,
-          url: shareUrl,
+      
+      // Check if speech synthesis is available
+      if (window.speechSynthesis) {
+        window.speechSynthesis.speak(utterance);
+      } else {
+        toast({
+          title: "Not supported",
+          description: "Text-to-speech is not supported in your browser.",
+          variant: "warning",
         });
-      } catch (error) {
-        console.log('Share cancelled');
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        // Could add a toast here
-      } catch (error) {
-        console.error('Failed to copy link');
       }
     }
   };
@@ -226,7 +253,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 </div>
                 <div className="flex flex-col items-center">
                   <button
-                    onClick={handleShare}
+                    onClick={() => setShowShare(true)}
                     className="p-3 rounded-full bg-black/20 text-white hover:bg-black/40 transition-all duration-200"
                   >
                     <Share2 className="w-6 h-6" />
@@ -260,6 +287,13 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
         articleTitle={currentArticle?.title || ''}
         isOpen={showComments}
         onClose={() => setShowComments(false)}
+      />
+
+      <ShareModal
+        isOpen={showShare}
+        onClose={() => setShowShare(false)}
+        title={currentArticle?.title || ''}
+        articleId={currentArticle?.id || ''}
       />
     </>
   );
