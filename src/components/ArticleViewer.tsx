@@ -1,9 +1,11 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Share2, Bookmark } from "lucide-react";
 import { getRandomArticles, getRelatedArticles } from "../services/wikipediaService";
+import LikeButton from "./LikeButton";
+import CommentButton from "./CommentButton";
+import CommentsModal from "./CommentsModal";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -13,6 +15,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isReading, setIsReading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const currentArticle = articles[currentIndex];
@@ -22,7 +25,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     
     try {
       setIsLoading(true);
-      // Get related articles based on the current article
       const newArticles = currentArticle 
         ? await getRelatedArticles(currentArticle)
         : await getRandomArticles(3);
@@ -38,12 +40,10 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     if (!currentArticle?.content) return;
 
     if (isReading) {
-      // Stop reading
       window.speechSynthesis.cancel();
       setIsReading(false);
       speechRef.current = null;
     } else {
-      // Start reading
       const utterance = new SpeechSynthesisUtterance(currentArticle.content);
       utterance.rate = 0.9;
       utterance.pitch = 1;
@@ -58,13 +58,35 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/?q=${encodeURIComponent(currentArticle.title)}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: currentArticle.title,
+          text: `Check out this article about ${currentArticle.title} on Lore!`,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.log('Share cancelled');
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        // Could add a toast here
+      } catch (error) {
+        console.error('Failed to copy link');
+      }
+    }
+  };
+
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
     setProgress(0);
     onArticleChange(currentArticle);
 
-    // Stop any ongoing speech when article changes
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
@@ -90,7 +112,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       } else {
         clearInterval(interval);
       }
-    }, 20); // Changed from 50ms to 20ms for faster streaming
+    }, 20);
 
     return () => clearInterval(interval);
   }, [isVisible, currentArticle?.content]);
@@ -123,7 +145,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     };
   }, [articles]);
 
-  // Cleanup speech on unmount
   useEffect(() => {
     return () => {
       if (speechRef.current) {
@@ -133,75 +154,114 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   }, []);
 
   return (
-    <main 
-      ref={containerRef} 
-      className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory"
-    >
-      {articles.map((article, index) => (
-        <div 
-          key={article.id} 
-          data-index={index}
-          className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center"
-        >
-          <div className="absolute inset-0 w-screen h-screen">
-            <img
-              src={article.image}
-              alt={article.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/60" />
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{
-              opacity: isVisible && currentIndex === index ? 1 : 0,
-              y: isVisible && currentIndex === index ? 0 : 20,
-            }}
-            transition={{ duration: 0.5 }}
-            className="relative z-10 text-white p-8 max-w-3xl mx-auto"
+    <>
+      <main 
+        ref={containerRef} 
+        className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory"
+      >
+        {articles.map((article, index) => (
+          <div 
+            key={article.id} 
+            data-index={index}
+            className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-4xl font-bold">{article.title}</h1>
-              {currentIndex === index && (
-                <button
-                  onClick={handleTextToSpeech}
-                  className="ml-4 p-2 bg-black/20 backdrop-blur-sm rounded-full hover:bg-black/40 transition-colors"
-                  aria-label={isReading ? "Stop reading" : "Read article aloud"}
-                >
-                  {isReading ? (
-                    <VolumeX className="w-6 h-6 text-white" />
-                  ) : (
-                    <Volume2 className="w-6 h-6 text-white" />
-                  )}
-                </button>
-              )}
-            </div>
-            <p className="text-lg leading-relaxed mb-12">
-              {currentIndex === index ? displayedText : article.content}
-            </p>
-            <div className="flex items-center space-x-2 text-sm text-gray-300">
-              <span>{article.readTime} min read</span>
-              <span>•</span>
-              <span>{article.views.toLocaleString()} views</span>
-            </div>
-          </motion.div>
-          {currentIndex === index && (
-            <div className="absolute bottom-0 left-0 right-0 z-20">
-              <Progress 
-                value={progress} 
-                className="h-1 bg-black/20"
-                indicatorClassName="bg-red-500"
+            <div className="absolute inset-0 w-screen h-screen">
+              <img
+                src={article.image}
+                alt={article.title}
+                className="w-full h-full object-cover"
               />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
             </div>
-          )}
-        </div>
-      ))}
-      {isLoading && (
-        <div className="h-screen w-screen flex items-center justify-center">
-          <div className="text-white">Loading more articles...</div>
-        </div>
-      )}
-    </main>
+
+            {/* Content */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{
+                opacity: isVisible && currentIndex === index ? 1 : 0,
+                y: isVisible && currentIndex === index ? 0 : 20,
+              }}
+              transition={{ duration: 0.5 }}
+              className="relative z-10 text-white p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
+            >
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <h1 className="text-3xl font-bold leading-tight">{article.title}</h1>
+                </div>
+                <p className="text-lg leading-relaxed opacity-90">
+                  {currentIndex === index ? displayedText : article.content}
+                </p>
+                <div className="flex items-center space-x-4 text-sm text-white/70">
+                  <span>{article.readTime} min read</span>
+                  <span>•</span>
+                  <span>{article.views.toLocaleString()} views</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Action Buttons - Right Side */}
+            {currentIndex === index && (
+              <div className="absolute right-4 bottom-32 flex flex-col space-y-4 z-20">
+                <LikeButton articleId={article.id} articleTitle={article.title} />
+                <CommentButton 
+                  articleId={article.id} 
+                  onClick={() => setShowComments(true)}
+                />
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={handleTextToSpeech}
+                    className={`p-3 rounded-full transition-all duration-200 ${
+                      isReading 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-black/20 text-white hover:bg-black/40'
+                    }`}
+                  >
+                    {isReading ? (
+                      <VolumeX className="w-6 h-6" />
+                    ) : (
+                      <Volume2 className="w-6 h-6" />
+                    )}
+                  </button>
+                  <span className="text-white text-xs mt-1">Listen</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={handleShare}
+                    className="p-3 rounded-full bg-black/20 text-white hover:bg-black/40 transition-all duration-200"
+                  >
+                    <Share2 className="w-6 h-6" />
+                  </button>
+                  <span className="text-white text-xs mt-1">Share</span>
+                </div>
+              </div>
+            )}
+
+            {/* Progress Bar */}
+            {currentIndex === index && (
+              <div className="absolute bottom-0 left-0 right-0 z-20">
+                <Progress 
+                  value={progress} 
+                  className="h-1 bg-black/20"
+                  indicatorClassName="bg-red-500"
+                />
+              </div>
+            )}
+          </div>
+        ))}
+        {isLoading && (
+          <div className="h-screen w-screen flex items-center justify-center bg-black">
+            <div className="text-white">Loading more articles...</div>
+          </div>
+        )}
+      </main>
+
+      <CommentsModal
+        articleId={currentArticle?.id || ''}
+        articleTitle={currentArticle?.title || ''}
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+      />
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 
-import { Search, Compass } from "lucide-react";
+import { Search, User, LogOut } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -14,6 +14,8 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchArticles, getRandomArticles } from "../services/wikipediaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -22,6 +24,7 @@ const Navigation = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
 
   useEffect(() => {
     const query = searchParams.get("q");
@@ -66,7 +69,7 @@ const Navigation = () => {
   };
 
   const handleRandomArticle = async () => {
-    setSearchValue(""); // Clear search value when getting random article
+    setSearchValue("");
     toast({
       title: "Loading random article",
       description: "Finding something interesting for you...",
@@ -80,46 +83,67 @@ const Navigation = () => {
     }
   };
 
-  const handleDiscoverClick = () => {
-    setSearchValue("");
-    if (location.pathname === "/discover") {
-      navigate("/");
-    } else {
-      navigate("/discover");
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out.",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
-  const isDiscoverPage = location.pathname === "/discover";
-
   return (
     <>
-      <div className={`fixed top-0 left-0 right-0 h-14 z-50 flex items-center justify-between px-4 ${
-        isDiscoverPage 
-          ? "bg-black" 
-          : "bg-gradient-to-b from-black/50 to-transparent"
-      }`}>
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
         <div 
-          className="text-xl font-bold text-wikitok-red cursor-pointer"
+          className="text-2xl font-bold text-white cursor-pointer tracking-tight"
           onClick={handleRandomArticle}
         >
           Lore
         </div>
+        
         <div 
-          className="flex items-center bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 cursor-pointer"
+          className="flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 cursor-pointer border border-white/20"
           onClick={() => setOpen(true)}
         >
-          <Search className="w-4 h-4 text-white/60 mr-2" />
-          <span className="text-white/60 text-sm">
+          <Search className="w-4 h-4 text-white/80 mr-2" />
+          <span className="text-white/80 text-sm">
             {searchValue || "Search articles"}
           </span>
         </div>
-        <div className="flex space-x-6">
-          <Compass 
-            className={`w-5 h-5 cursor-pointer transition-colors ${
-              location.pathname === "/discover" ? "text-wikitok-red" : "text-white"
-            }`}
-            onClick={handleDiscoverClick}
-          />
+        
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">
+                  {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
+                </span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/auth')}
+              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm">Sign In</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -153,14 +177,14 @@ const Navigation = () => {
                   <CommandItem
                     key={result.id}
                     onSelect={() => handleArticleSelect(result.title, result)}
-                    className="flex items-center p-2 cursor-pointer hover:bg-accent rounded-lg"
+                    className="flex items-center p-3 cursor-pointer hover:bg-accent rounded-lg"
                   >
                     <div className="flex items-center w-full gap-3">
                       {result.image && (
                         <img 
                           src={result.image} 
                           alt={result.title}
-                          className="w-16 h-16 object-cover rounded-md flex-shrink-0"
+                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">

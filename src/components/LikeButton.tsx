@@ -1,0 +1,120 @@
+
+import { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/components/ui/use-toast';
+
+interface LikeButtonProps {
+  articleId: string;
+  articleTitle: string;
+}
+
+const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchLikeStatus();
+    fetchLikeCount();
+  }, [articleId, user]);
+
+  const fetchLikeStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('article_id', articleId)
+        .eq('user_id', user.id)
+        .single();
+
+      setIsLiked(!!data);
+    } catch (error) {
+      // User hasn't liked this article
+      setIsLiked(false);
+    }
+  };
+
+  const fetchLikeCount = async () => {
+    try {
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('article_id', articleId);
+
+      setLikeCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching like count:', error);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like articles",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isLiked) {
+        // Unlike
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('article_id', articleId)
+          .eq('user_id', user.id);
+
+        setIsLiked(false);
+        setLikeCount(prev => prev - 1);
+      } else {
+        // Like
+        await supabase
+          .from('likes')
+          .insert({
+            article_id: articleId,
+            user_id: user.id,
+          });
+
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <button
+        onClick={handleLike}
+        disabled={loading}
+        className={`p-3 rounded-full transition-all duration-200 ${
+          isLiked 
+            ? 'bg-red-500 text-white' 
+            : 'bg-black/20 text-white hover:bg-black/40'
+        }`}
+      >
+        <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
+      </button>
+      <span className="text-white text-sm mt-1">{likeCount}</span>
+    </div>
+  );
+};
+
+export default LikeButton;
