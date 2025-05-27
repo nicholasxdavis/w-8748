@@ -82,9 +82,9 @@ const SavedArticlesPopover = () => {
         variant="ghost"
         size="sm"
         onClick={() => navigate('/auth')}
-        className="text-gray-400 hover:text-blue-400 transition-all p-1 sm:p-1.5 hover:bg-gray-800/50 rounded-xl hover:scale-105"
+        className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-8 h-8"
       >
-        <Bookmark className="w-3 h-3 sm:w-4 sm:h-4" />
+        <Bookmark className="w-4 h-4" />
       </Button>
     );
   }
@@ -95,54 +95,51 @@ const SavedArticlesPopover = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="text-gray-400 hover:text-blue-400 transition-all p-1 sm:p-1.5 hover:bg-gray-800/50 rounded-xl hover:scale-105 relative"
+          className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-8 h-8"
         >
-          <Bookmark className="w-3 h-3 sm:w-4 sm:h-4" />
-          {savedArticles.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full text-xs flex items-center justify-center text-white">
-              {savedArticles.length > 9 ? '9+' : savedArticles.length}
-            </span>
-          )}
+          <Bookmark className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 sm:w-96 p-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl"
+        className="w-72 sm:w-96 p-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl"
         align="end"
+        side="bottom"
+        sideOffset={10}
       >
-        <div className="p-4 border-b border-gray-700/30">
-          <h3 className="font-bold text-white text-lg flex items-center gap-2">
-            <Bookmark className="w-5 h-5 text-blue-400" />
+        <div className="p-3 sm:p-4 border-b border-gray-700/30">
+          <h3 className="font-bold text-white text-base sm:text-lg flex items-center gap-2">
+            <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             Saved Articles
           </h3>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">
             {savedArticles.length} article{savedArticles.length !== 1 ? 's' : ''} saved
           </p>
         </div>
         
-        <div className="max-h-80 overflow-y-auto scrollbar-hide">
+        <div className="max-h-64 sm:max-h-80 overflow-y-auto scrollbar-hide">
           {isLoading ? (
-            <div className="p-6 text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-3"></div>
-              <p className="text-gray-400 text-sm">Loading saved articles...</p>
+            <div className="p-4 sm:p-6 text-center">
+              <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-3"></div>
+              <p className="text-gray-400 text-xs sm:text-sm">Loading saved articles...</p>
             </div>
           ) : savedArticles.length === 0 ? (
-            <div className="p-6 text-center">
-              <Bookmark className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <h4 className="font-medium text-white mb-2">No saved articles yet</h4>
-              <p className="text-gray-400 text-sm">
+            <div className="p-4 sm:p-6 text-center">
+              <Bookmark className="w-8 h-8 sm:w-12 sm:h-12 text-gray-600 mx-auto mb-3" />
+              <h4 className="font-medium text-white mb-2 text-sm sm:text-base">No saved articles yet</h4>
+              <p className="text-gray-400 text-xs sm:text-sm">
                 Articles you save will appear here for easy access
               </p>
             </div>
           ) : (
-            <div className="p-2">
+            <div className="p-1 sm:p-2">
               {savedArticles.map((article) => (
                 <div
                   key={article.id}
                   onClick={() => handleArticleClick(article)}
-                  className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-800/60 transition-all duration-200 group"
+                  className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl cursor-pointer hover:bg-gray-800/60 transition-all duration-200 group"
                 >
                   {article.article_image ? (
-                    <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
                       <img 
                         src={article.article_image} 
                         alt={article.article_title}
@@ -150,15 +147,15 @@ const SavedArticlesPopover = () => {
                       />
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0">
-                      <span className="text-gray-300 font-bold text-sm">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0">
+                      <span className="text-gray-300 font-bold text-xs sm:text-sm">
                         {article.article_title[0]}
                       </span>
                     </div>
                   )}
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                    <h4 className="font-medium text-white text-xs sm:text-sm group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
                       {article.article_title}
                     </h4>
                     <p className="text-xs text-gray-500 mt-1">

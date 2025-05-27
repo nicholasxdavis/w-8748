@@ -260,14 +260,14 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     <>
       <main 
         ref={containerRef} 
-        className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth"
+        className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden"
       >
         <AnimatePresence>
           {articles.map((article, index) => (
             <motion.div 
               key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} 
               data-index={index}
-              className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center"
+              className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden"
               onClick={handleContentClick}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -385,7 +385,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                   <div className="flex items-start justify-between">
                     <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                   </div>
-                  <div className="max-h-40 sm:max-h-48 overflow-y-auto scrollbar-hide">
+                  <div className="max-h-48 sm:max-h-78 overflow-y-auto scrollbar-hide">
                     <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
                       {currentIndex === index ? displayedText : article.content}
                     </p>
@@ -431,7 +431,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                   <Progress 
                     value={progress} 
                     className="h-1 bg-black/30"
-                    indicatorClassName="bg-gradient-to-r from-blue-400 to-purple-600 transition-all duration-200"
+                    indicatorClassName="bg-blue-500 transition-all duration-200"
                   />
                 </div>
               )}

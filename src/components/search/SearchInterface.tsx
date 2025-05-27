@@ -59,8 +59,8 @@ const SearchInterface = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center pt-4 sm:pt-16">
-      <div className="bg-gray-900 w-[95vw] sm:w-[90vw] max-w-2xl mx-auto rounded-xl overflow-hidden shadow-2xl max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
         {/* Header */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center space-x-3">
