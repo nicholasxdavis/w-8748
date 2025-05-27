@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -6,8 +5,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 3
-const TOAST_REMOVE_DELAY = 5000
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -159,6 +158,13 @@ function toast({ ...props }: Toast) {
       },
     },
   })
+
+  // Auto-dismiss after 3 seconds unless it's an error toast
+  if (props.variant !== "destructive") {
+    setTimeout(() => {
+      dismiss()
+    }, 3000)
+  }
 
   return {
     id: id,

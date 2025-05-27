@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
-import { getRandomArticles, searchArticles } from "../services/wikipediaService";
+import { getMixedContent, searchMixedContent } from "../services/contentService";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -17,19 +17,19 @@ const Index = () => {
   const { user, loading: authLoading } = useAuth();
 
   const { data: articles, isLoading, error } = useQuery({
-    queryKey: ["articles", searchQuery],
+    queryKey: ["mixed-content", searchQuery],
     queryFn: async () => {
-      let fetchedArticles;
+      let fetchedContent;
       if (searchQuery) {
         if (location.state?.reorderedResults) {
-          fetchedArticles = location.state.reorderedResults;
+          fetchedContent = location.state.reorderedResults;
         } else {
-          fetchedArticles = await searchArticles(searchQuery);
+          fetchedContent = await searchMixedContent(searchQuery);
         }
       } else {
-        fetchedArticles = await getRandomArticles(3);
+        fetchedContent = await getMixedContent(6);
       }
-      return fetchedArticles.filter(article => article.image);
+      return fetchedContent.filter(item => item.image);
     },
     retry: 1,
   });
@@ -37,29 +37,29 @@ const Index = () => {
   if (error) {
     toast({
       title: "Error",
-      description: "Failed to load articles. Please try again later.",
+      description: "Failed to load content. Please try again later.",
       variant: "destructive",
     });
   }
 
   if (isLoading || authLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <div className="text-white text-sm sm:text-lg px-4 text-center">Loading amazing articles...</div>
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-900">
+        <div className="text-white text-sm sm:text-lg px-4 text-center">Loading amazing content...</div>
       </div>
     );
   }
 
   if (error || !articles || articles.length === 0) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-900">
         <div className="text-white text-sm sm:text-base px-4 text-center">Something went wrong. Please try again.</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div className="h-screen w-screen relative overflow-hidden bg-gray-900">
       <ArticleViewer 
         articles={articles} 
         onArticleChange={setCurrentArticle}

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/command";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { searchArticles, getRandomArticles } from "../services/wikipediaService";
+import { searchMixedContent, getMixedContent, isNewsArticle } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +28,9 @@ const Navigation = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
+  // Determine if we're on the discover page
+  const isDiscoverPage = location.pathname === "/discover";
+
   useEffect(() => {
     const query = searchParams.get("q");
     if (query && location.pathname !== "/discover") {
@@ -38,23 +41,23 @@ const Navigation = () => {
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", searchValue],
-    queryFn: () => searchArticles(searchValue),
+    queryFn: () => searchMixedContent(searchValue),
     enabled: searchValue.length > 0,
     gcTime: 1000 * 60 * 5,
     staleTime: 0,
   });
 
-  const handleArticleSelect = (title: string, selectedArticle: any) => {
+  const handleItemSelect = (title: string, selectedItem: any) => {
     setOpen(false);
     setSearchValue(title);
     toast({
-      title: "Opening article",
+      title: isNewsArticle(selectedItem) ? "Opening breaking news" : "Opening article",
       description: `Loading ${title}...`,
     });
     
     const reorderedResults = [
-      selectedArticle,
-      ...(searchResults || []).filter(article => article.id !== selectedArticle.id)
+      selectedItem,
+      ...(searchResults || []).filter(item => item.id !== selectedItem.id)
     ];
     
     navigate(`/?q=${encodeURIComponent(title)}`, {
@@ -69,15 +72,15 @@ const Navigation = () => {
     }
   };
 
-  const handleRandomArticle = async () => {
+  const handleRandomContent = async () => {
     setSearchValue("");
     toast({
       title: "Finding something interesting...",
     });
-    const randomArticles = await getRandomArticles(3);
-    if (randomArticles.length > 0) {
-      navigate(`/?q=${encodeURIComponent(randomArticles[0].title)}`, {
-        state: { reorderedResults: randomArticles }
+    const randomContent = await getMixedContent(6);
+    if (randomContent.length > 0) {
+      navigate(`/?q=${encodeURIComponent(randomContent[0].title)}`, {
+        state: { reorderedResults: randomContent }
       });
     }
   };
@@ -98,18 +101,33 @@ const Navigation = () => {
     }
   };
 
+  const formatItemDate = (item: any) => {
+    if (isNewsArticle(item)) {
+      const date = new Date(item.publishedAt);
+      const now = new Date();
+      const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+      
+      if (diffInHours < 1) return "Just now";
+      if (diffInHours < 24) return `${diffInHours}h ago`;
+      return date.toLocaleDateString();
+    }
+    return `${item.readTime} min read`;
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6">
         <div 
-          className="text-lg sm:text-2xl font-bold text-blue-600 cursor-pointer flex-shrink-0"
-          onClick={handleRandomArticle}
+          className={`text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 ${
+            isDiscoverPage ? 'text-blue-500' : 'text-white'
+          }`}
+          onClick={handleRandomContent}
         >
           Lore
         </div>
         
         <div 
-          className="flex-1 max-w-xs sm:max-w-md mx-2 sm:mx-8 flex items-center bg-gray-800/80 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 cursor-pointer hover:bg-gray-700/80 transition-all duration-200 border border-gray-700"
+          className="flex-1 max-w-xs sm:max-w-sm mx-2 sm:mx-8 flex items-center bg-gray-800/60 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-200 border border-gray-700/50"
           onClick={() => setOpen(true)}
         >
           <Search className="w-4 h-4 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
@@ -131,7 +149,7 @@ const Navigation = () => {
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-400 hover:text-red-400 transition-colors p-1.5 sm:p-2 hover:bg-gray-800 rounded-full"
+                className="text-gray-400 hover:text-red-400 transition-colors p-1.5 sm:p-2 hover:bg-gray-800/50 rounded-full"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -139,7 +157,7 @@ const Navigation = () => {
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-1 sm:space-x-2 bg-gray-800 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-gray-700 transition-all duration-200 font-medium border border-gray-600"
+              className="flex items-center space-x-1 sm:space-x-2 bg-gray-800/60 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-gray-700/60 transition-all duration-200 font-medium border border-gray-600/50"
             >
               <User className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm hidden sm:inline">Sign In</span>
@@ -157,7 +175,7 @@ const Navigation = () => {
             <div className="flex items-center space-x-3">
               <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
-                placeholder="Search articles..."
+                placeholder="Search articles and news..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 className="flex-1 bg-transparent text-sm sm:text-base outline-none placeholder-gray-500 text-white"
@@ -170,8 +188,8 @@ const Navigation = () => {
             {!searchValue && (
               <div className="p-4 sm:p-6 text-center">
                 <Search className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 mx-auto mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Discover Knowledge</h3>
-                <p className="text-gray-400 text-sm">Search for any topic to explore articles</p>
+                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Discover Knowledge & News</h3>
+                <p className="text-gray-400 text-sm">Search for articles and breaking news</p>
               </div>
             )}
 
@@ -196,18 +214,21 @@ const Navigation = () => {
               <div className="p-1 sm:p-2">
                 {searchResults.map((result, index) => (
                   <div
-                    key={result.id}
-                    onClick={() => handleArticleSelect(result.title, result)}
+                    key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
+                    onClick={() => handleItemSelect(result.title, result)}
                     className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800 transition-all duration-200 group"
                   >
                     <div className="flex items-center w-full space-x-3 sm:space-x-4">
                       {result.image ? (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 relative">
                           <img 
                             src={result.image} 
                             alt={result.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                           />
+                          {isNewsArticle(result) && (
+                            <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
+                          )}
                         </div>
                       ) : (
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
@@ -218,12 +239,22 @@ const Navigation = () => {
                       )}
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white text-sm sm:text-base mb-1 group-hover:text-blue-400 transition-colors line-clamp-1">
-                          {result.title}
-                        </h4>
-                        <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-white text-sm sm:text-base group-hover:text-blue-400 transition-colors line-clamp-1">
+                            {result.title}
+                          </h4>
+                          {isNewsArticle(result) && (
+                            <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                              NEWS
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 leading-relaxed mb-1">
                           {result.content}
                         </p>
+                        <span className="text-xs text-gray-500">
+                          {formatItemDate(result)}
+                        </span>
                       </div>
                     </div>
                   </div>
