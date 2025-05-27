@@ -115,7 +115,7 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg border-b border-gray-800/30">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg">
         <div 
           className="text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
           onClick={handleRandomContent}
@@ -123,9 +123,9 @@ const Navigation = () => {
           Lore
         </div>
         
-        <div className="flex-1 flex justify-center px-4">
+        <div className="absolute left-1/2 transform -translate-x-1/2">
           <div 
-            className="w-full max-w-xs sm:max-w-sm flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
+            className="w-64 sm:w-80 flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-2 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
             onClick={() => setOpen(true)}
           >
             <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
@@ -169,7 +169,7 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0">
           <div className="p-4 border-b border-gray-700/50">
             <div className="flex items-center space-x-3">
               <Search className="w-5 h-5 text-gray-400" />
@@ -177,7 +177,7 @@ const Navigation = () => {
                 placeholder="Search articles and breaking news..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white"
+                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white border-0"
                 autoFocus
               />
             </div>

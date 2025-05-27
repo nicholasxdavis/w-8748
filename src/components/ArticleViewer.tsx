@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -21,7 +22,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
-  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [showActionButtons, setShowActionButtons] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const clickCountRef = useRef(0);
@@ -143,7 +144,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     setProgress(0);
     setIsTextFullyLoaded(false);
     clickCountRef.current = 0;
-    setShowMobileSidebar(false);
+    setShowActionButtons(false);
     onArticleChange(currentArticle);
 
     if (isReading) {
@@ -157,7 +158,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading]);
 
   const ActionButtons = ({ isMobile = false }) => (
-    <div className={`flex ${isMobile ? 'flex-row justify-around' : 'flex-col'} space-y-0 ${isMobile ? 'space-x-4' : 'space-y-3'} z-20`}>
+    <div className={`flex ${isMobile ? 'flex-row justify-around' : 'flex-col'} space-y-0 ${isMobile ? 'space-x-3' : 'space-y-2'} z-20`}>
       <LikeButton articleId={String(currentArticle?.id || '')} articleTitle={currentArticle?.title || ''} />
       <CommentButton 
         articleId={String(currentArticle?.id || '')} 
@@ -291,22 +292,22 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             )}
 
-            {/* Mobile Menu Toggle */}
-            <div className="sm:hidden absolute top-20 right-4 z-30">
+            {/* Action Buttons Toggle */}
+            <div className="absolute top-20 right-4 z-30">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowMobileSidebar(!showMobileSidebar);
+                  setShowActionButtons(!showActionButtons);
                 }}
-                className="p-2 rounded-full bg-black/30 text-white backdrop-blur-md border border-white/20 hover:bg-black/50 transition-all duration-200"
+                className="p-2 rounded-full bg-black/30 text-white backdrop-blur-md border border-white/20 hover:bg-black/50 transition-all duration-200 hover:scale-105"
               >
-                {showMobileSidebar ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                {showActionButtons ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
 
-            {/* Mobile Sidebar */}
-            {showMobileSidebar && (
-              <div className="sm:hidden absolute right-4 top-32 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/20 z-30">
+            {/* Action Buttons Sidebar */}
+            {showActionButtons && (
+              <div className="absolute right-4 top-32 bg-black/40 backdrop-blur-lg rounded-2xl p-3 border border-white/20 z-30">
                 <ActionButtons isMobile={true} />
               </div>
             )}
@@ -364,13 +365,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Desktop Action Buttons */}
-            {currentIndex === index && (
-              <div className="hidden sm:flex absolute right-3 bottom-20 sm:bottom-24 z-20">
-                <ActionButtons />
-              </div>
-            )}
 
             {/* Progress Bar */}
             {currentIndex === index && (
