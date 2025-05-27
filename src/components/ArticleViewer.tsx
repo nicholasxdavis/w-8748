@@ -9,7 +9,6 @@ import ShareModal from "./ShareModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useSaveArticle } from "@/hooks/useSaveArticle";
-
 const ArticleViewer = ({
   articles: initialArticles,
   onArticleChange
@@ -302,7 +301,7 @@ const ArticleViewer = ({
             delay: 0.2,
             duration: 0.4
           }}>
-                  <div className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
+                  <div className="bg-blue-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
                     <Lightbulb className="w-3 h-3" />
                     DID YOU KNOW?
                   </div>
@@ -473,5 +472,4 @@ const ArticleViewer = ({
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} title={currentArticle?.title || ''} articleId={String(currentArticle?.id || '')} />
     </>;
 };
-
 export default ArticleViewer;
