@@ -12,6 +12,7 @@ import UserMenu from "./navigation/UserMenu";
 const Navigation = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [saveAnimation, setSaveAnimation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -51,24 +52,53 @@ const Navigation = () => {
     }
   };
 
+  const triggerSaveAnimation = () => {
+    setSaveAnimation(true);
+    setTimeout(() => setSaveAnimation(false), 1000);
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg">
-        <div 
-          className="text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
-          onClick={handleRandomContent}
-        >
-          Lore
+        {/* Mobile Layout */}
+        <div className="flex items-center space-x-2 sm:hidden w-full">
+          <div 
+            className="text-lg font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
+            onClick={handleRandomContent}
+          >
+            Lore
+          </div>
+          
+          <SearchButton 
+            searchQuery={searchQuery}
+            onClick={() => setSearchOpen(true)}
+            isMobile={true}
+          />
+          
+          <div className="flex items-center space-x-2 ml-auto">
+            <SavedArticlesPopup onSaveAnimation={saveAnimation} />
+            <UserMenu />
+          </div>
         </div>
-        
-        <SearchButton 
-          searchQuery={searchQuery}
-          onClick={() => setSearchOpen(true)}
-        />
-        
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <SavedArticlesPopup />
-          <UserMenu />
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-center justify-between w-full">
+          <div 
+            className="text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
+            onClick={handleRandomContent}
+          >
+            Lore
+          </div>
+          
+          <SearchButton 
+            searchQuery={searchQuery}
+            onClick={() => setSearchOpen(true)}
+          />
+          
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <SavedArticlesPopup onSaveAnimation={saveAnimation} />
+            <UserMenu />
+          </div>
         </div>
       </div>
 
@@ -79,6 +109,7 @@ const Navigation = () => {
         setSearchQuery={setSearchQuery}
         results={searchResults || []}
         isSearching={isLoading}
+        onSaveArticle={triggerSaveAnimation}
       />
     </>
   );

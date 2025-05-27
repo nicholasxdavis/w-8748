@@ -16,13 +16,25 @@ interface SavedArticle {
   saved_at: string;
 }
 
-const SavedArticlesPopup = () => {
+interface SavedArticlesPopupProps {
+  onSaveAnimation?: boolean;
+}
+
+const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps) => {
   const [savedArticles, setSavedArticles] = useState<SavedArticle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (onSaveAnimation) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 1000);
+    }
+  }, [onSaveAnimation]);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -91,14 +103,18 @@ const SavedArticlesPopup = () => {
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(true)}
-        className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10"
+        className={`text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10 ${
+          isAnimating ? 'animate-pulse text-blue-400' : ''
+        }`}
       >
-        <Bookmark className="w-4 h-4" />
+        <Bookmark className={`w-4 h-4 transition-colors duration-300 ${
+          isAnimating ? 'text-blue-400' : ''
+        }`} />
       </Button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden mx-auto">
             <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-white text-lg flex items-center gap-2">
