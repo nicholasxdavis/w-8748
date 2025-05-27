@@ -1,5 +1,5 @@
 
-import { Search, User, LogOut, Heart, MessageCircle } from "lucide-react";
+import { Search, User, LogOut } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -16,6 +16,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import NotificationsPopover from "./NotificationsPopover";
+import LikedArticlesPopover from "./LikedArticlesPopover";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -98,38 +100,38 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4 bg-white border-b border-gray-200">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-6 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div 
-          className="text-2xl font-bold text-gray-900 cursor-pointer"
+          className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent cursor-pointer"
           onClick={handleRandomArticle}
         >
           Lore
         </div>
         
         <div 
-          className="flex-1 max-w-md mx-8 flex items-center bg-gray-100 rounded-lg px-4 py-2 cursor-pointer hover:bg-gray-200 transition-colors"
+          className="flex-1 max-w-lg mx-8 flex items-center bg-gray-50 rounded-full px-4 py-3 cursor-pointer hover:bg-gray-100 transition-all duration-200 border border-gray-200"
           onClick={() => setOpen(true)}
         >
-          <Search className="w-4 h-4 text-gray-500 mr-3" />
-          <span className="text-gray-500 text-sm">
+          <Search className="w-4 h-4 text-gray-400 mr-3" />
+          <span className="text-gray-500 text-sm font-medium">
             {searchValue || "Search articles..."}
           </span>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <Heart className="w-6 h-6 text-gray-700 hover:text-red-500 cursor-pointer transition-colors" />
-          <MessageCircle className="w-6 h-6 text-gray-700 hover:text-blue-500 cursor-pointer transition-colors" />
+        <div className="flex items-center space-x-2">
+          <NotificationsPopover />
+          <LikedArticlesPopover />
           
           {user ? (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-2 border-white shadow-md">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
                 <span className="text-white text-sm font-semibold">
                   {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                 </span>
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-700 hover:text-red-500 transition-colors"
+                className="text-gray-700 hover:text-red-500 transition-colors p-2 hover:bg-gray-100 rounded-full"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -137,10 +139,10 @@ const Navigation = () => {
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-500 transition-colors"
+              className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-medium shadow-lg"
             >
-              <User className="w-5 h-5" />
-              <span className="text-sm font-medium">Sign In</span>
+              <User className="w-4 h-4" />
+              <span className="text-sm">Sign In</span>
             </button>
           )}
         </div>
@@ -150,55 +152,86 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <Command shouldFilter={false} className="rounded-xl border-0 shadow-2xl">
-          <CommandInput 
-            placeholder="Search articles..." 
-            value={searchValue}
-            onValueChange={setSearchValue}
-            className="border-none focus:ring-0 text-base"
-          />
-          <CommandList className="max-h-[70vh] overflow-y-auto">
-            {isLoading && (
-              <CommandEmpty>Searching...</CommandEmpty>
+        <div className="bg-white rounded-2xl border-0 shadow-2xl overflow-hidden">
+          <div className="p-4 border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              <Search className="w-5 h-5 text-gray-400" />
+              <input
+                placeholder="Search articles..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="flex-1 bg-transparent text-base outline-none placeholder-gray-400"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="max-h-[60vh] overflow-y-auto">
+            {!searchValue && (
+              <div className="p-6 text-center">
+                <Search className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Discover Knowledge</h3>
+                <p className="text-gray-500">Search for any topic to explore articles</p>
+              </div>
             )}
-            {!isLoading && !searchResults && searchValue.length > 0 && (
-              <CommandEmpty>No results found.</CommandEmpty>
+
+            {isLoading && searchValue && (
+              <div className="p-6 text-center">
+                <div className="animate-spin w-8 h-8 border-2 border-gray-200 border-t-purple-500 rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-500">Searching...</p>
+              </div>
             )}
-            {!isLoading && !searchValue && (
-              <CommandEmpty>Start typing to search articles</CommandEmpty>
+
+            {!isLoading && searchValue && searchResults && searchResults.length === 0 && (
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No results found</h3>
+                <p className="text-gray-500">Try searching for something else</p>
+              </div>
             )}
-            {!isLoading && searchResults && searchResults.length === 0 && (
-              <CommandEmpty>No results found.</CommandEmpty>
-            )}
+
             {!isLoading && searchResults && searchResults.length > 0 && (
-              <CommandGroup heading="Articles">
-                {searchResults.map((result) => (
-                  <CommandItem
+              <div className="p-2">
+                {searchResults.map((result, index) => (
+                  <div
                     key={result.id}
-                    onSelect={() => handleArticleSelect(result.title, result)}
-                    className="flex items-center p-4 cursor-pointer hover:bg-gray-50 rounded-lg border-b border-gray-100 last:border-0"
+                    onClick={() => handleArticleSelect(result.title, result)}
+                    className="flex items-center p-4 rounded-xl cursor-pointer hover:bg-gray-50 transition-all duration-200 group"
                   >
-                    <div className="flex items-center w-full gap-4">
-                      {result.image && (
-                        <img 
-                          src={result.image} 
-                          alt={result.title}
-                          className="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-gray-200"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-base mb-1">{result.title}</div>
-                        <div className="text-sm text-gray-600 line-clamp-2">
-                          {result.content}
+                    <div className="flex items-center w-full space-x-4">
+                      {result.image ? (
+                        <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                          <img 
+                            src={result.image} 
+                            alt={result.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
                         </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-purple-600 font-semibold text-lg">
+                            {result.title[0]}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-base mb-1 group-hover:text-purple-600 transition-colors">
+                          {result.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                          {result.content}
+                        </p>
                       </div>
                     </div>
-                  </CommandItem>
+                  </div>
                 ))}
-              </CommandGroup>
+              </div>
             )}
-          </CommandList>
-        </Command>
+          </div>
+        </div>
       </CommandDialog>
     </>
   );
