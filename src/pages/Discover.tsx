@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -75,8 +76,8 @@ const Discover = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-16 pb-20">
-      {/* Fixed Header - Now properly fixed */}
-      <div className="fixed top-16 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
+      {/* Header - Now not sticky, only for discover page */}
+      <div className="absolute top-16 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">

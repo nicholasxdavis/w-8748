@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { music } from "lucide-react";
+import { Music } from "lucide-react";
 
 const MusicPlayer = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +13,7 @@ const MusicPlayer = () => {
           onClick={() => setIsOpen(!isOpen)}
           className="p-3 rounded-full bg-black/40 backdrop-blur-lg border border-white/20 text-white hover:bg-black/60 transition-all duration-200 hover:scale-105 shadow-lg"
         >
-          <music className="w-5 h-5" />
+          <Music className="w-5 h-5" />
         </button>
       </div>
 
