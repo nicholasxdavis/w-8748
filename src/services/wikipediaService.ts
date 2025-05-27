@@ -40,44 +40,35 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
   }
 };
 
-const getMostViewedArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
+const getPopularArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
+  // Use well-known popular Wikipedia articles that tend to have high traffic
+  const popularTitles = [
+    'World War II', 'Albert Einstein', 'Leonardo da Vinci', 'United States',
+    'Adolf Hitler', 'Jesus', 'India', 'China', 'France', 'Germany',
+    'The Beatles', 'Michael Jackson', 'Shakespeare', 'Napoleon',
+    'Isaac Newton', 'Charles Darwin', 'Artificial intelligence',
+    'Climate change', 'COVID-19 pandemic', 'Ancient Egypt',
+    'Roman Empire', 'Greek mythology', 'Space exploration',
+    'Quantum mechanics', 'DNA', 'Black hole', 'Solar System',
+    'Philosophy', 'Psychology', 'Medicine', 'Renaissance',
+    'Industrial Revolution', 'American Civil War', 'Cold War'
+  ];
+
   try {
-    // Get the most viewed articles from the last 30 days
-    const params = new URLSearchParams({
-      action: 'query',
-      format: 'json',
-      origin: '*',
-      list: 'mostviewed',
-      pvimlimit: (count * 3).toString(), // Get more to filter out invalid ones
-    });
+    // Randomly select from popular titles
+    const selectedTitles = popularTitles
+      .sort(() => 0.5 - Math.random())
+      .slice(0, count * 2);
 
-    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
-    
-    if (!response.ok) {
-      // Fallback to featured articles if mostviewed is not available
-      return getFeaturedArticles(count);
-    }
-
-    const data = await response.json() as WikipediaResponse;
-    
-    if (!data.query?.mostviewed?.length) {
-      return getFeaturedArticles(count);
-    }
-
-    const titles = data.query.mostviewed
-      .map(article => article.title)
-      .filter(title => !title.includes(':') && !title.includes('List of')) // Filter out special pages and lists
-      .slice(0, count * 2); // Get more to ensure we have enough valid articles
-
-    const articleData = await fetchWikipediaContent(titles) as WikipediaResponse;
-    const pages = Object.values(articleData.query?.pages || {});
+    const data = await fetchWikipediaContent(selectedTitles) as WikipediaResponse;
+    const pages = Object.values(data.query?.pages || {});
     
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
     return validArticles.slice(0, count);
   } catch (error) {
-    console.error('Error fetching most viewed articles:', error);
+    console.error('Error fetching popular articles:', error);
     return getFeaturedArticles(count);
   }
 };
@@ -153,9 +144,9 @@ const getPopularTopicArticles = async (count: number = 3): Promise<WikipediaArti
 
 const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
-    // First try to get popular/featured articles
+    // First try to get popular articles
     if (!category || category === "All") {
-      const popularArticles = await getMostViewedArticles(count);
+      const popularArticles = await getPopularArticles(count);
       if (popularArticles.length >= count) {
         return popularArticles;
       }

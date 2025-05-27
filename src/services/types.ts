@@ -1,3 +1,4 @@
+
 export interface WikipediaArticle {
   id: number;
   title: string;
@@ -36,5 +37,6 @@ export interface WikipediaResponse {
     random?: Array<{ title: string }>;
     categorymembers?: Array<{ title: string }>;
     search?: Array<{ title: string }>;
+    mostviewed?: Array<{ title: string }>;
   };
 }
