@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
+import { getRandomArticles, WikipediaArticle, searchArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,13 +10,13 @@ import { Heart, MessageCircle, Share, Bookmark, TrendingUp } from "lucide-react"
 
 const categories = [
   { id: "All", name: "For You", keywords: [] },
-  { id: "Science", name: "Science", keywords: ["science", "physics", "chemistry", "biology", "astronomy", "research", "laboratory", "experiment"] },
-  { id: "History", name: "History", keywords: ["history", "ancient", "medieval", "war", "empire", "civilization", "historical", "century"] },
-  { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming"] },
-  { id: "Arts", name: "Arts", keywords: ["art", "painting", "sculpture", "music", "literature", "artist", "creative", "culture"] },
-  { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game"] },
-  { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species"] },
-  { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory"] },
+  { id: "Science", name: "Science", keywords: ["science", "physics", "chemistry", "biology", "astronomy", "research", "laboratory", "experiment", "quantum", "molecule", "DNA", "theory", "discovery"] },
+  { id: "History", name: "History", keywords: ["history", "ancient", "medieval", "war", "empire", "civilization", "historical", "century", "dynasty", "kingdom", "revolution", "culture", "tradition"] },
+  { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming", "algorithm", "artificial", "intelligence", "machine"] },
+  { id: "Arts", name: "Arts", keywords: ["art", "painting", "sculpture", "music", "literature", "artist", "creative", "culture", "museum", "gallery", "design", "aesthetic"] },
+  { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game", "team", "competition", "player", "tournament"] },
+  { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species", "forest", "ocean", "bird", "mammal"] },
+  { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory", "wisdom", "consciousness", "existence"] },
 ];
 
 const Discover = () => {
@@ -28,29 +28,51 @@ const Discover = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
     queryFn: async ({ pageParam = 0 }) => {
-      let articles = await getRandomArticles(12);
+      let articles: WikipediaArticle[] = [];
       
-      // Filter articles based on selected category
       if (selectedCategory !== "All") {
         const categoryConfig = categories.find(cat => cat.id === selectedCategory);
         if (categoryConfig?.keywords.length) {
-          articles = articles.filter(article => {
-            const titleLower = article.title.toLowerCase();
-            const contentLower = article.content?.toLowerCase() || "";
-            return categoryConfig.keywords.some(keyword => 
-              titleLower.includes(keyword) || contentLower.includes(keyword)
-            );
-          });
+          // For specific categories, search using category keywords to get more relevant results
+          const searchPromises = categoryConfig.keywords.slice(0, 3).map(keyword => 
+            searchArticles(keyword).then(results => results.slice(0, 4))
+          );
+          
+          const searchResults = await Promise.all(searchPromises);
+          articles = searchResults.flat();
+          
+          // If we don't have enough articles from search, get random ones and filter
+          if (articles.length < 12) {
+            const randomArticles = await getRandomArticles(20);
+            const filteredRandom = randomArticles.filter(article => {
+              const titleLower = article.title.toLowerCase();
+              const contentLower = article.content?.toLowerCase() || "";
+              return categoryConfig.keywords.some(keyword => 
+                titleLower.includes(keyword) || contentLower.includes(keyword)
+              );
+            });
+            articles = [...articles, ...filteredRandom];
+          }
         }
+      } else {
+        articles = await getRandomArticles(12);
       }
       
-      return articles.filter(article => article.image);
+      // Remove duplicates and ensure we have images
+      const uniqueArticles = articles
+        .filter(article => article.image && !article.image.includes('placeholder'))
+        .filter((article, index, self) => 
+          index === self.findIndex(a => a.id === article.id)
+        )
+        .slice(0, 12);
+      
+      return uniqueArticles;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === 12 ? allPages.length : undefined;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000,
   });
 

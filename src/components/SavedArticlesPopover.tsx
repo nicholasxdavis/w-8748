@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Heart, Bookmark } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -61,7 +61,19 @@ const SavedArticlesPopover = () => {
   };
 
   const handleArticleClick = (article: SavedArticle) => {
-    navigate(`/?q=${encodeURIComponent(article.article_title)}`);
+    // Create a proper article object to pass to the search
+    const articleObject = {
+      id: article.article_id,
+      title: article.article_title,
+      content: article.article_content,
+      image: article.article_image,
+      readTime: Math.ceil(article.article_content.split(" ").length / 200),
+      views: 0
+    };
+
+    navigate(`/?q=${encodeURIComponent(article.article_title)}`, {
+      state: { reorderedResults: [articleObject] }
+    });
   };
 
   if (!user) {
@@ -118,7 +130,7 @@ const SavedArticlesPopover = () => {
               <Bookmark className="w-12 h-12 text-gray-600 mx-auto mb-3" />
               <h4 className="font-medium text-white mb-2">No saved articles yet</h4>
               <p className="text-gray-400 text-sm">
-                Double-tap on any article to save it for later reading
+                Articles you save will appear here for easy access
               </p>
             </div>
           ) : (
