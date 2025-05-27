@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -9,7 +8,7 @@ import LikeButton from "./LikeButton";
 import CommentButton from "./CommentButton";
 import CommentsModal from "./CommentsModal";
 import ShareModal from "./ShareModal";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -70,6 +69,16 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       return;
     }
 
+    // Check if speech synthesis is supported
+    if (!window.speechSynthesis) {
+      toast({
+        title: "Not supported",
+        description: "Text-to-speech is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
@@ -79,44 +88,58 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
         description: "Text-to-speech has been stopped.",
       });
     } else {
-      const utterance = new SpeechSynthesisUtterance(currentArticle.content);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      
-      utterance.onstart = () => {
-        setIsReading(true);
-        toast({
-          title: "Reading aloud",
-          description: "Article is being read to you.",
-        });
-      };
-      
-      utterance.onend = () => {
+      try {
+        // Cancel any existing speech
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(currentArticle.content);
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        
+        utterance.onstart = () => {
+          setIsReading(true);
+          toast({
+            title: "Reading aloud",
+            description: "Article is being read to you.",
+          });
+        };
+        
+        utterance.onend = () => {
+          setIsReading(false);
+          speechRef.current = null;
+          toast({
+            title: "Reading complete",
+            description: "Finished reading the article.",
+          });
+        };
+        
+        utterance.onerror = (event) => {
+          setIsReading(false);
+          speechRef.current = null;
+          console.error('Speech synthesis error:', event);
+          toast({
+            title: "Speech error",
+            description: "There was an error with text-to-speech. This feature may not be available in your current environment.",
+            variant: "destructive",
+          });
+        };
+        
+        speechRef.current = utterance;
+        
+        // Small delay to ensure proper initialization
+        setTimeout(() => {
+          if (speechRef.current) {
+            window.speechSynthesis.speak(speechRef.current);
+          }
+        }, 100);
+        
+      } catch (error) {
+        console.error('Error initializing speech synthesis:', error);
         setIsReading(false);
         toast({
-          title: "Reading complete",
-          description: "Finished reading the article.",
-        });
-      };
-      
-      utterance.onerror = () => {
-        setIsReading(false);
-        toast({
-          title: "Speech error",
-          description: "There was an error with text-to-speech.",
-          variant: "destructive",
-        });
-      };
-      
-      speechRef.current = utterance;
-      
-      if (window.speechSynthesis) {
-        window.speechSynthesis.speak(utterance);
-      } else {
-        toast({
-          title: "Not supported",
-          description: "Text-to-speech is not supported in your browser.",
+          title: "Speech unavailable",
+          description: "Text-to-speech is not available in your current environment.",
           variant: "destructive",
         });
       }
@@ -153,6 +176,14 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
   useEffect(() => {
     if (!isVisible || !currentArticle?.content || isTextFullyLoaded) return;
+
+    // Load all content immediately on first click
+    if (clickCountRef.current > 0) {
+      setDisplayedText(currentArticle.content);
+      setProgress(100);
+      setIsTextFullyLoaded(true);
+      return;
+    }
 
     let currentChar = 0;
     const text = currentArticle.content;
@@ -202,7 +233,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
   useEffect(() => {
     return () => {
-      if (speechRef.current) {
+      if (speechRef.current && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
     };
@@ -216,7 +247,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       >
         {articles.map((article, index) => (
           <div 
-            key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} 
+            key={isNewsArticle(article) ? `news-${article.id}` : `wiki-${article.id}`} 
             data-index={index}
             className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center"
             onClick={handleContentClick}
@@ -329,7 +360,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               <div className="absolute bottom-0 left-0 right-0 z-20">
                 <Progress 
                   value={progress} 
-                  className="h-0.5 bg-black/20"
+                  className="h-1 bg-black/20"
                   indicatorClassName="bg-gradient-to-r from-blue-400 to-blue-600"
                 />
               </div>

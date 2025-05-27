@@ -1,3 +1,4 @@
+
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 import { transformToArticle } from './articleTransformer';
@@ -11,7 +12,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
       origin: '*',
       list: 'categorymembers',
       cmtitle: categoryTitles,
-      cmlimit: '10', // Increased from 5 to ensure we get enough valid articles
+      cmlimit: '10',
       cmtype: 'page'
     });
 
@@ -39,43 +40,151 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
   }
 };
 
+const getMostViewedArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
+  try {
+    // Get the most viewed articles from the last 30 days
+    const params = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      origin: '*',
+      list: 'mostviewed',
+      pvimlimit: (count * 3).toString(), // Get more to filter out invalid ones
+    });
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+    
+    if (!response.ok) {
+      // Fallback to featured articles if mostviewed is not available
+      return getFeaturedArticles(count);
+    }
+
+    const data = await response.json() as WikipediaResponse;
+    
+    if (!data.query?.mostviewed?.length) {
+      return getFeaturedArticles(count);
+    }
+
+    const titles = data.query.mostviewed
+      .map(article => article.title)
+      .filter(title => !title.includes(':') && !title.includes('List of')) // Filter out special pages and lists
+      .slice(0, count * 2); // Get more to ensure we have enough valid articles
+
+    const articleData = await fetchWikipediaContent(titles) as WikipediaResponse;
+    const pages = Object.values(articleData.query?.pages || {});
+    
+    const articles = await Promise.all(pages.map(transformToArticle));
+    const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
+    
+    return validArticles.slice(0, count);
+  } catch (error) {
+    console.error('Error fetching most viewed articles:', error);
+    return getFeaturedArticles(count);
+  }
+};
+
+const getFeaturedArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
+  try {
+    // Get featured articles which are typically high-quality and popular
+    const params = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      origin: '*',
+      list: 'categorymembers',
+      cmtitle: 'Category:Featured articles',
+      cmlimit: (count * 3).toString(),
+      cmtype: 'page',
+      cmsort: 'timestamp',
+      cmdir: 'desc'
+    });
+
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+    if (!response.ok) throw new Error('Failed to fetch featured articles');
+    
+    const data = await response.json() as WikipediaResponse;
+    const titles = data.query?.categorymembers
+      ?.map(article => article.title)
+      ?.slice(0, count * 2) || [];
+
+    if (!titles.length) {
+      return getPopularTopicArticles(count);
+    }
+
+    const articleData = await fetchWikipediaContent(titles) as WikipediaResponse;
+    const pages = Object.values(articleData.query?.pages || {});
+    
+    const articles = await Promise.all(pages.map(transformToArticle));
+    const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
+    
+    return validArticles.slice(0, count);
+  } catch (error) {
+    console.error('Error fetching featured articles:', error);
+    return getPopularTopicArticles(count);
+  }
+};
+
+const getPopularTopicArticles = async (count: number = 3): Promise<WikipediaArticle[]> => {
+  // Popular topics that typically have good images and interesting content
+  const popularTopics = [
+    'Artificial intelligence', 'Climate change', 'Space exploration', 'Quantum computing',
+    'Ancient Egypt', 'World War II', 'Leonardo da Vinci', 'Albert Einstein',
+    'The Beatles', 'Olympic Games', 'Solar system', 'DNA',
+    'Renaissance', 'Black holes', 'Evolution', 'Photography',
+    'Psychology', 'Philosophy', 'Architecture', 'Medicine'
+  ];
+
+  try {
+    // Randomly select topics
+    const selectedTopics = popularTopics
+      .sort(() => 0.5 - Math.random())
+      .slice(0, count * 2);
+
+    const data = await fetchWikipediaContent(selectedTopics) as WikipediaResponse;
+    const pages = Object.values(data.query?.pages || {});
+    
+    const articles = await Promise.all(pages.map(transformToArticle));
+    const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
+    
+    return validArticles.slice(0, count);
+  } catch (error) {
+    console.error('Error fetching popular topic articles:', error);
+    throw error;
+  }
+};
+
 const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
-    let titles: string[];
-    const multiplier = 3; // Request more articles to ensure we get enough valid ones
-    
-    if (category && category !== "All") {
-      const params = new URLSearchParams({
-        action: 'query',
-        format: 'json',
-        origin: '*',
-        list: 'categorymembers',
-        cmtitle: `Category:${category}`,
-        cmlimit: (count * multiplier).toString(),
-        cmtype: 'page'
-      });
-
-      const categoryResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
-      if (!categoryResponse.ok) throw new Error('Failed to fetch category articles');
+    // First try to get popular/featured articles
+    if (!category || category === "All") {
+      const popularArticles = await getMostViewedArticles(count);
+      if (popularArticles.length >= count) {
+        return popularArticles;
+      }
       
-      const categoryData = await categoryResponse.json() as WikipediaResponse;
-      titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
-    } else {
-      const params = new URLSearchParams({
-        action: 'query',
-        format: 'json',
-        origin: '*',
-        list: 'random',
-        rnnamespace: '0',
-        rnlimit: (count * multiplier).toString()
-      });
-
-      const randomResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
-      if (!randomResponse.ok) throw new Error('Failed to fetch random articles');
-      
-      const randomData = await randomResponse.json() as WikipediaResponse;
-      titles = randomData.query?.random?.map(article => article.title) || [];
+      // If we don't have enough popular articles, supplement with featured articles
+      const additionalCount = count - popularArticles.length;
+      const featuredArticles = await getFeaturedArticles(additionalCount);
+      return [...popularArticles, ...featuredArticles].slice(0, count);
     }
+
+    // Category-specific articles
+    let titles: string[];
+    const multiplier = 3;
+    
+    const params = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      origin: '*',
+      list: 'categorymembers',
+      cmtitle: `Category:${category}`,
+      cmlimit: (count * multiplier).toString(),
+      cmtype: 'page'
+    });
+
+    const categoryResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+    if (!categoryResponse.ok) throw new Error('Failed to fetch category articles');
+    
+    const categoryData = await categoryResponse.json() as WikipediaResponse;
+    titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
 
     if (!titles.length) throw new Error('No articles found');
 
@@ -85,7 +194,6 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
-    // If we don't have enough articles, fetch more
     if (validArticles.length < count) {
       const moreArticles = await getRandomArticles(count - validArticles.length, category);
       return [...validArticles, ...moreArticles].slice(0, count);
@@ -108,7 +216,7 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
       origin: '*',
       list: 'search',
       srsearch: query,
-      srlimit: '20' // Increased from 10 to ensure we get enough valid articles
+      srlimit: '20'
     });
 
     const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
