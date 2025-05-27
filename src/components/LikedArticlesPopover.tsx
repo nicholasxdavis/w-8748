@@ -6,15 +6,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-interface LikedArticle {
+interface SavedArticle {
   id: string;
   article_id: string;
   article_title: string;
-  created_at: string;
+  saved_at: string;
 }
 
 const LikedArticlesPopover = () => {
-  const [likedArticles, setLikedArticles] = useState<LikedArticle[]>([]);
+  const [savedArticles, setSavedArticles] = useState<SavedArticle[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -22,33 +22,27 @@ const LikedArticlesPopover = () => {
 
   useEffect(() => {
     if (open && user) {
-      fetchLikedArticles();
+      fetchSavedArticles();
     }
   }, [open, user]);
 
-  const fetchLikedArticles = async () => {
+  const fetchSavedArticles = async () => {
     if (!user) return;
     
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('likes')
-        .select('*')
+      const { data, error } = await supabase
+        .from('saved_articles')
+        .select('id, article_id, article_title, saved_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('saved_at', { ascending: false })
         .limit(10);
 
-      // Transform the data to match our interface
-      const transformedData = (data || []).map(item => ({
-        id: item.id,
-        article_id: item.article_id,
-        article_title: item.article_id, // Using article_id as title for now
-        created_at: item.created_at
-      }));
+      if (error) throw error;
 
-      setLikedArticles(transformedData);
+      setSavedArticles(data || []);
     } catch (error) {
-      console.error('Error fetching liked articles:', error);
+      console.error('Error fetching saved articles:', error);
     } finally {
       setLoading(false);
     }
@@ -68,7 +62,7 @@ const LikedArticlesPopover = () => {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 bg-gray-900 border border-gray-700 shadow-xl rounded-lg" align="end">
         <div className="p-4 border-b border-gray-700">
-          <h3 className="font-semibold text-white">Liked Articles</h3>
+          <h3 className="font-semibold text-white">Saved Articles</h3>
         </div>
         
         <div className="max-h-96 overflow-y-auto">
@@ -79,15 +73,15 @@ const LikedArticlesPopover = () => {
           ) : !user ? (
             <div className="p-8 text-center">
               <Heart className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">Sign in to see liked articles</p>
+              <p className="text-gray-400">Sign in to see saved articles</p>
             </div>
-          ) : likedArticles.length === 0 ? (
+          ) : savedArticles.length === 0 ? (
             <div className="p-8 text-center">
               <Heart className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">No liked articles yet</p>
+              <p className="text-gray-400">No saved articles yet</p>
             </div>
           ) : (
-            likedArticles.map((article) => (
+            savedArticles.map((article) => (
               <div
                 key={article.id}
                 className="p-4 border-b border-gray-800 hover:bg-gray-800 cursor-pointer transition-colors"
@@ -97,7 +91,7 @@ const LikedArticlesPopover = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-white truncate">{article.article_title}</h4>
                     <p className="text-xs text-gray-400 mt-1">
-                      Liked {new Date(article.created_at).toLocaleDateString()}
+                      Saved {new Date(article.saved_at).toLocaleDateString()}
                     </p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-gray-500 flex-shrink-0 ml-2" />
