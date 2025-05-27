@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
-import MusicPlayer from "../components/MusicPlayer";
 import { getMixedContent, searchMixedContent } from "../services/contentService";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
@@ -64,7 +63,6 @@ const Index = () => {
         articles={articles} 
         onArticleChange={setCurrentArticle}
       />
-      <MusicPlayer />
     </div>
   );
 };

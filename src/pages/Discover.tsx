@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -7,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, MessageCircle, Share, Bookmark, TrendingUp } from "lucide-react";
-import MusicPlayer from "@/components/MusicPlayer";
 
 const categories = [
   { id: "All", name: "For You" },
@@ -171,8 +169,6 @@ const Discover = () => {
 
         <div ref={ref} className="h-20" />
       </div>
-      
-      <MusicPlayer />
     </div>
   );
 };
