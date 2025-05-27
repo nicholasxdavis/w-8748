@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { searchMixedContent, getMixedContent, isDidYouKnowFact, isHistoricQuote } from "../services/contentService";
+import { searchMixedContent, getMixedContent, isDidYouKnowFact, isHistoricQuote, isWikipediaArticle, isNewsArticle } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
 import SavedArticlesFullPage from "./SavedArticlesFullPage";
@@ -43,8 +43,10 @@ const Navigation = () => {
     const randomContent = await getMixedContent(6);
     if (randomContent.length > 0) {
       // Get the first article with a title for navigation
-      const firstArticle = randomContent.find(item => !isDidYouKnowFact(item) && !isHistoricQuote(item));
-      if (firstArticle) {
+      const firstArticle = randomContent.find(item => 
+        (isWikipediaArticle(item) || isNewsArticle(item)) && item.title
+      );
+      if (firstArticle && (isWikipediaArticle(firstArticle) || isNewsArticle(firstArticle))) {
         navigate(`/?q=${encodeURIComponent(firstArticle.title)}`, {
           state: { reorderedResults: randomContent }
         });
@@ -75,7 +77,7 @@ const Navigation = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+              className="text-gray-400 hover:text-blue-400 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-400/10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -110,7 +112,7 @@ const Navigation = () => {
             </button>
             <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+              className="text-gray-400 hover:text-blue-400 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-400/10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

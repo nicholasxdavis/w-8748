@@ -71,11 +71,11 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  const personalizedCount = Math.ceil(count * 0.4); // 40% personalized content
-  const randomWikiCount = Math.ceil(count * 0.25); // 25% random wiki content  
+  const personalizedCount = Math.ceil(count * 0.5); // 50% personalized content
+  const randomWikiCount = Math.ceil(count * 0.3); // 30% random wiki content  
   const newsCount = Math.ceil(count * 0.15); // 15% news content
-  const factsCount = Math.ceil(count * 0.1); // 10% facts
-  const quotesCount = Math.ceil(count * 0.1); // 10% quotes
+  const factsCount = 1; // Just 1 fact to improve performance
+  const quotesCount = 1; // Just 1 quote to improve performance
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -135,12 +135,12 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0 || contentPools.facts.length > 0 || contentPools.quotes.length > 0); i++) {
     let contentType: 'wiki' | 'news' | 'facts' | 'quotes';
     
-    // Every 6th item should be a fact or quote if available
-    if (i % 6 === 0 && contentPools.facts.length > 0) {
+    // Every 4th item should be a fact or quote if available
+    if (i % 4 === 0 && contentPools.facts.length > 0) {
       contentType = 'facts';
-    } else if (i % 8 === 0 && contentPools.quotes.length > 0) {
+    } else if (i % 6 === 0 && contentPools.quotes.length > 0) {
       contentType = 'quotes';
-    } else if (i % 4 === 0 && contentPools.news.length > 0) {
+    } else if (i % 3 === 0 && contentPools.news.length > 0) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
