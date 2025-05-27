@@ -20,7 +20,6 @@ export class ElevenLabsService {
   private onErrorCallback?: (error: Error) => void;
 
   constructor() {
-    // Initialize audio context on first user interaction
     if (typeof window !== 'undefined') {
       this.initAudioContext();
     }
@@ -40,7 +39,8 @@ export class ElevenLabsService {
     }
 
     try {
-      this.stop(); // Stop any currently playing audio
+      // Always stop any current playback first
+      this.stop();
       
       if (this.onStartCallback) {
         this.onStartCallback();
@@ -119,7 +119,11 @@ export class ElevenLabsService {
 
   stop(): void {
     if (this.currentSource && this.isPlaying) {
-      this.currentSource.stop();
+      try {
+        this.currentSource.stop();
+      } catch (error) {
+        // Ignore errors when stopping (might already be stopped)
+      }
       this.currentSource = null;
       this.isPlaying = false;
       if (this.onEndCallback) {

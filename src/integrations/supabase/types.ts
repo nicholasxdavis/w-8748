@@ -63,33 +63,6 @@ export type Database = {
         }
         Relationships: []
       }
-      comments: {
-        Row: {
-          article_id: string
-          content: string
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          article_id: string
-          content: string
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          article_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       deal_claims: {
         Row: {
           claimed_at: string | null
@@ -233,27 +206,6 @@ export type Database = {
           },
         ]
       }
-      likes: {
-        Row: {
-          article_id: string
-          created_at: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          article_id: string
-          created_at?: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          article_id?: string
-          created_at?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           action_url: string | null
@@ -340,6 +292,36 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"] | null
           subscription_level?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      saved_articles: {
+        Row: {
+          article_content: string | null
+          article_id: string
+          article_image: string | null
+          article_title: string
+          id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          article_content?: string | null
+          article_id: string
+          article_image?: string | null
+          article_title: string
+          id?: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          article_content?: string | null
+          article_id?: string
+          article_image?: string | null
+          article_title?: string
+          id?: string
+          saved_at?: string
+          user_id?: string
         }
         Relationships: []
       }

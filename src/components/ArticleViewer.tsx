@@ -5,12 +5,11 @@ import { Progress } from "./ui/progress";
 import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2 } from "lucide-react";
 import { getMixedContent } from "../services/contentService";
 import { isNewsArticle } from "../services/contentService";
-import LikeButton from "./LikeButton";
-import CommentButton from "./CommentButton";
-import CommentsModal from "./CommentsModal";
+import SaveButton from "./SaveButton";
 import ShareModal from "./ShareModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { useSaveArticle } from "@/hooks/useSaveArticle";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -19,15 +18,16 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
   const [showActionButtons, setShowActionButtons] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const clickCountRef = useRef(0);
+  const doubleClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentArticle = articles[currentIndex];
   const { toast } = useToast();
   const { speak, stop, isReading, isLoading: speechLoading } = useTextToSpeech();
+  const { toggleSave } = useSaveArticle();
 
   const loadMoreArticles = useCallback(async () => {
     if (isLoading) return;
@@ -46,18 +46,33 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const handleContentClick = useCallback(() => {
     clickCountRef.current += 1;
     
-    if (clickCountRef.current === 1) {
-      if (!isTextFullyLoaded) {
-        setDisplayedText(currentArticle?.content || "");
-        setProgress(100);
-        setIsTextFullyLoaded(true);
-      }
+    if (doubleClickTimeoutRef.current) {
+      clearTimeout(doubleClickTimeoutRef.current);
     }
-    
-    setTimeout(() => {
+
+    if (clickCountRef.current === 1) {
+      doubleClickTimeoutRef.current = setTimeout(() => {
+        // Single click - show full text if not loaded
+        if (!isTextFullyLoaded) {
+          setDisplayedText(currentArticle?.content || "");
+          setProgress(100);
+          setIsTextFullyLoaded(true);
+        }
+        clickCountRef.current = 0;
+      }, 300);
+    } else if (clickCountRef.current === 2) {
+      // Double click - save article
+      if (currentArticle) {
+        toggleSave({
+          id: String(currentArticle.id),
+          title: currentArticle.title,
+          content: currentArticle.content,
+          image: currentArticle.image
+        });
+      }
       clickCountRef.current = 0;
-    }, 300);
-  }, [isTextFullyLoaded, currentArticle?.content]);
+    }
+  }, [isTextFullyLoaded, currentArticle, toggleSave]);
 
   const handleTextToSpeech = useCallback(() => {
     if (!currentArticle?.content) {
@@ -96,11 +111,15 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
     >
-      <LikeButton articleId={String(currentArticle?.id || '')} articleTitle={currentArticle?.title || ''} />
-      <CommentButton 
-        articleId={String(currentArticle?.id || '')} 
-        onClick={() => setShowComments(true)}
+      <SaveButton 
+        article={{
+          id: String(currentArticle?.id || ''),
+          title: currentArticle?.title || '',
+          content: currentArticle?.content,
+          image: currentArticle?.image
+        }}
       />
+      
       <div className="flex flex-col items-center">
         <button
           onClick={(e) => {
@@ -170,13 +189,13 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     let currentChar = 0;
     const text = currentArticle.content;
     const totalChars = text.length;
-    const typingSpeed = Math.max(5, Math.min(30, 2000 / totalChars)); // Dynamic typing speed
+    const typingSpeed = Math.max(5, Math.min(30, 2000 / totalChars));
 
     const interval = setInterval(() => {
       if (currentChar <= totalChars) {
         setDisplayedText(text.slice(0, currentChar));
         setProgress((currentChar / totalChars) * 100);
-        currentChar += Math.ceil(typingSpeed / 5); // Skip characters for faster typing
+        currentChar += Math.ceil(typingSpeed / 5);
       } else {
         clearInterval(interval);
         setIsTextFullyLoaded(true);
@@ -222,6 +241,9 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   useEffect(() => {
     return () => {
       stop();
+      if (doubleClickTimeoutRef.current) {
+        clearTimeout(doubleClickTimeoutRef.current);
+      }
     };
   }, [stop]);
 
@@ -267,6 +289,18 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                   </div>
                 </motion.div>
               )}
+
+              {/* Double-click hint */}
+              <motion.div 
+                className="absolute top-20 right-4 z-20"
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+              >
+                <div className="bg-black/40 text-white px-3 py-1 rounded-xl text-xs backdrop-blur-md border border-white/20">
+                  Double-tap to save
+                </div>
+              </motion.div>
 
               {/* Action Buttons Toggle */}
               <motion.div 
@@ -405,13 +439,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
           </motion.div>
         )}
       </main>
-
-      <CommentsModal
-        articleId={String(currentArticle?.id || '')}
-        articleTitle={currentArticle?.title || ''}
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
-      />
 
       <ShareModal
         isOpen={showShare}

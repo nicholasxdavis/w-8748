@@ -45,7 +45,8 @@ export const useTextToSpeech = () => {
       return;
     }
 
-    if (isReading && currentTextRef.current === text) {
+    // If already reading, stop instead of starting again
+    if (isReading) {
       elevenLabsService.stop();
       return;
     }

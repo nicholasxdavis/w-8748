@@ -1,4 +1,6 @@
-import { Bookmark, Share2, Edit, BookOpen } from "lucide-react";
+
+import { Share2, Edit, BookOpen } from "lucide-react";
+import SaveButton from "./SaveButton";
 
 const RightSidebar = ({ article }) => {
   const handleWikipediaRedirect = () => {
@@ -33,30 +35,16 @@ const RightSidebar = ({ article }) => {
     window.open(`${baseUrl}edit/${articleTitle}`, '_blank');
   };
 
-  const handleBookmark = () => {
-    const bookmarks = JSON.parse(localStorage.getItem('wikitok-bookmarks') || '[]');
-    const isBookmarked = bookmarks.some(bookmark => bookmark.title === article.title);
-    
-    if (isBookmarked) {
-      const newBookmarks = bookmarks.filter(bookmark => bookmark.title !== article.title);
-      localStorage.setItem('wikitok-bookmarks', JSON.stringify(newBookmarks));
-    } else {
-      bookmarks.push({
-        title: article.title,
-        timestamp: new Date().toISOString()
-      });
-      localStorage.setItem('wikitok-bookmarks', JSON.stringify(bookmarks));
-    }
-  };
-
   return (
     <div className="fixed right-4 bottom-20 flex flex-col items-center space-y-4 z-50">
-      <div className="flex flex-col items-center">
-        <button className="sidebar-icon" onClick={handleBookmark}>
-          <Bookmark className="w-7 h-7" />
-        </button>
-        <span className="text-xs mt-1">Save</span>
-      </div>
+      <SaveButton 
+        article={{
+          id: String(article?.id || ''),
+          title: article?.title || '',
+          content: article?.content,
+          image: article?.image
+        }}
+      />
       
       <div className="flex flex-col items-center">
         <button className="sidebar-icon" onClick={handleShare}>
@@ -76,7 +64,7 @@ const RightSidebar = ({ article }) => {
         <button className="sidebar-icon" onClick={handleWikipediaRedirect}>
           <BookOpen className="w-7 h-7" />
         </button>
-        <span className="text-xs mt-1">View</span> {/* Updated text here */}
+        <span className="text-xs mt-1">View</span>
       </div>
     </div>
   );
