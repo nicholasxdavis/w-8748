@@ -1,5 +1,5 @@
 
-import { Search, User, LogOut, Bell } from "lucide-react";
+import { Search, User, LogOut } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -16,7 +16,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import NotificationsPopover from "./NotificationsPopover";
 import LikedArticlesPopover from "./LikedArticlesPopover";
 
 const Navigation = () => {
@@ -150,7 +149,6 @@ const Navigation = () => {
         </div>
         
         <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-          <NotificationsPopover />
           <LikedArticlesPopover />
           
           {user ? (
@@ -177,96 +175,105 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Command Dialog */}
+      {/* Redesigned Command Dialog */}
       <CommandDialog 
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0 outline-none ring-0">
-          <div className="p-4">
-            <div className="flex items-center space-x-3">
-              <Search className="w-5 h-5 text-gray-400" />
-              <input
-                placeholder="Search articles and breaking news..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white border-0 ring-0 focus:ring-0 focus:outline-none"
-                autoFocus
-              />
+        <div className="bg-gray-900/98 backdrop-blur-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[85vh] border border-gray-700/40">
+          <div className="p-6 border-b border-gray-700/30">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Search className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <input
+                  placeholder="Discover the universe of knowledge..."
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="w-full bg-transparent text-lg font-medium outline-none placeholder-gray-400 text-white border-0 ring-0 focus:ring-0 focus:outline-none"
+                  autoFocus
+                />
+                <p className="text-gray-500 text-sm mt-1">Search millions of articles and breaking news</p>
+              </div>
             </div>
           </div>
 
-          <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
+          <div className="max-h-[65vh] overflow-y-auto scrollbar-hide">
             {!searchValue && (
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-gray-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-gray-700 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <Search className="w-10 h-10 text-gray-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Discover Knowledge & News</h3>
-                <p className="text-gray-400 text-sm">Search for fascinating articles and breaking news</p>
+                <h3 className="text-2xl font-bold text-white mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Explore the Unknown
+                </h3>
+                <p className="text-gray-400 text-base max-w-md mx-auto leading-relaxed">
+                  Start typing to uncover fascinating articles, breaking news, and knowledge from every corner of the universe
+                </p>
               </div>
             )}
 
             {isLoading && searchValue && (
-              <div className="p-6 text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-400 text-sm">Searching the universe of knowledge...</p>
+              <div className="p-10 text-center">
+                <div className="animate-spin w-12 h-12 border-3 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-6"></div>
+                <p className="text-gray-400 text-base font-medium">Searching across the cosmos of knowledge...</p>
               </div>
             )}
 
             {!isLoading && searchValue && searchResults && searchResults.length === 0 && (
-              <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-gray-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-500" />
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 bg-gray-800/80 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-gray-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">No results found</h3>
-                <p className="text-gray-400 text-sm">Try a different search term</p>
+                <h3 className="text-xl font-bold text-white mb-3">No cosmic discoveries</h3>
+                <p className="text-gray-400 text-base">Try exploring with different keywords</p>
               </div>
             )}
 
             {!isLoading && searchResults && searchResults.length > 0 && (
-              <div className="p-2">
+              <div className="p-4">
                 {searchResults.map((result, index) => (
                   <div
                     key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
                     onClick={() => handleItemSelect(result.title, result)}
-                    className="flex items-center p-4 rounded-xl cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group"
+                    className="flex items-center p-5 rounded-2xl cursor-pointer hover:bg-gray-800/60 transition-all duration-300 group mb-2 border border-transparent hover:border-gray-700/50"
                   >
-                    <div className="flex items-center w-full space-x-4">
+                    <div className="flex items-center w-full space-x-5">
                       {result.image ? (
-                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-800 relative shadow-lg">
                           <img 
                             src={result.image} 
                             alt={result.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           />
                           {isNewsArticle(result) && (
-                            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                            <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg"></div>
                           )}
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0">
-                          <span className="text-gray-300 font-semibold text-lg">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <span className="text-gray-300 font-bold text-xl">
                             {result.title[0]}
                           </span>
                         </div>
                       )}
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors line-clamp-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-bold text-white text-lg group-hover:text-blue-400 transition-colors line-clamp-1">
                             {result.title}
                           </h4>
                           {isNewsArticle(result) && (
-                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                              LIVE
+                            <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
+                              BREAKING
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mb-1">
+                        <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mb-2">
                           {result.content}
                         </p>
-                        <span className="text-xs text-gray-500 font-medium">
+                        <span className="text-xs text-gray-500 font-medium bg-gray-800/50 px-3 py-1 rounded-full">
                           {formatItemDate(result)}
                         </span>
                       </div>

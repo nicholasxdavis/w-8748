@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -8,14 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Heart, MessageCircle, Share, Bookmark, TrendingUp } from "lucide-react";
 
 const categories = [
-  { id: "All", name: "For You" },
-  { id: "Science", name: "Science" },
-  { id: "History", name: "History" },
-  { id: "Technology", name: "Tech" },
-  { id: "Arts", name: "Arts" },
-  { id: "Sports", name: "Sports" },
-  { id: "Nature", name: "Nature" },
-  { id: "Philosophy", name: "Philosophy" },
+  { id: "All", name: "For You", keywords: [] },
+  { id: "Science", name: "Science", keywords: ["science", "physics", "chemistry", "biology", "astronomy", "research", "laboratory", "experiment"] },
+  { id: "History", name: "History", keywords: ["history", "ancient", "medieval", "war", "empire", "civilization", "historical", "century"] },
+  { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming"] },
+  { id: "Arts", name: "Arts", keywords: ["art", "painting", "sculpture", "music", "literature", "artist", "creative", "culture"] },
+  { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game"] },
+  { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species"] },
+  { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory"] },
 ];
 
 const Discover = () => {
@@ -27,15 +28,30 @@ const Discover = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
     queryFn: async ({ pageParam = 0 }) => {
-      const articles = await getRandomArticles(12);
+      let articles = await getRandomArticles(12);
+      
+      // Filter articles based on selected category
+      if (selectedCategory !== "All") {
+        const categoryConfig = categories.find(cat => cat.id === selectedCategory);
+        if (categoryConfig?.keywords.length) {
+          articles = articles.filter(article => {
+            const titleLower = article.title.toLowerCase();
+            const contentLower = article.content?.toLowerCase() || "";
+            return categoryConfig.keywords.some(keyword => 
+              titleLower.includes(keyword) || contentLower.includes(keyword)
+            );
+          });
+        }
+      }
+      
       return articles.filter(article => article.image);
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.length === 12 ? allPages.length : undefined;
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -47,7 +63,7 @@ const Discover = () => {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     toast({
-      title: `Exploring ${category === "All" ? "trending" : category}`,
+      title: `Exploring ${category === "All" ? "trending content" : category.toLowerCase()}`,
       variant: "default",
     });
   };
@@ -74,7 +90,7 @@ const Discover = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-16 pb-20">
-      {/* Header - Now not sticky, only for discover page */}
+      {/* Header */}
       <div className="absolute top-16 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
@@ -103,6 +119,18 @@ const Discover = () => {
             {Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} className={`bg-gray-800/50 rounded-xl ${getGridItemClass(i)}`} />
             ))}
+          </div>
+        ) : articles.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gray-800/50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <TrendingUp className="w-10 h-10 text-gray-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">No articles found</h3>
+              <p className="text-gray-400 text-base max-w-md mx-auto">
+                Try selecting a different category or check back later for fresh content.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
