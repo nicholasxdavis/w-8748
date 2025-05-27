@@ -106,9 +106,9 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-white text-lg flex items-center gap-2">
                   <Bookmark className="w-5 h-5 text-blue-400" />
@@ -123,19 +123,17 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
               </button>
             </div>
             
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto">
               {isLoading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-4"></div>
+                <div className="p-6 text-center">
+                  <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-3"></div>
                   <p className="text-gray-400 text-sm">Loading saved articles...</p>
                 </div>
               ) : savedArticles.length === 0 ? (
-                <div className="p-8 text-center">
-                  <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Bookmark className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <h4 className="text-xl font-bold text-white mb-2">No saved articles yet</h4>
-                  <p className="text-gray-400 text-sm max-w-md mx-auto">
+                <div className="p-6 text-center">
+                  <Bookmark className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <h4 className="font-medium text-white mb-2">No saved articles yet</h4>
+                  <p className="text-gray-400 text-sm">
                     Articles you save will appear here for easy access
                   </p>
                 </div>
@@ -145,36 +143,31 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
                     <div
                       key={article.id}
                       onClick={() => handleArticleClick(article)}
-                      className="flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-800/60 transition-all duration-300 group mb-1"
+                      className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-800/60 transition-all duration-200 group"
                     >
-                      <div className="flex items-center w-full space-x-3">
-                        {article.article_image ? (
-                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 relative">
-                            <img 
-                              src={article.article_image} 
-                              alt={article.article_title}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-                            <span className="text-gray-300 font-bold text-lg">
-                              {article.article_title[0]}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-1 mb-1">
-                            {article.article_title}
-                          </h4>
-                          <p className="text-xs text-gray-400 line-clamp-2 mb-1">
-                            {article.article_content}
-                          </p>
-                          <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-0.5 rounded-full">
-                            Saved {new Date(article.saved_at).toLocaleDateString()}
+                      {article.article_image ? (
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                          <img 
+                            src={article.article_image} 
+                            alt={article.article_title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0">
+                          <span className="text-gray-300 font-bold text-sm">
+                            {article.article_title[0]}
                           </span>
                         </div>
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                          {article.article_title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Saved {new Date(article.saved_at).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                   ))}

@@ -64,7 +64,7 @@ const Navigation = () => {
             Lore
           </div>
           
-          <div className="mx-4 flex-1" style={{ marginLeft: '21px' }}>
+          <div className="mx-4 flex-1">
             <SearchButton 
               searchQuery={searchQuery}
               onClick={() => setSearchOpen(true)}
