@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { X, Copy, Check, Share } from 'lucide-react';
+import { X, Copy, Check, Share, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ShareModalProps {
@@ -42,32 +42,33 @@ const ShareModal = ({ isOpen, onClose, title, articleId }: ShareModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-md border border-gray-700">
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h3 className="text-white font-semibold text-lg">Share Article</h3>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h3 className="text-gray-900 font-semibold text-lg">Share Article</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <h4 className="text-white font-medium mb-2">{title}</h4>
-            <div className="flex items-center gap-2 bg-gray-700 rounded-lg p-3">
+          <div className="bg-gray-50 rounded-xl p-4">
+            <h4 className="text-gray-900 font-medium mb-3 line-clamp-2">{title}</h4>
+            <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+              <Link2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="text"
                 value={shareUrl}
                 readOnly
-                className="bg-transparent text-gray-300 text-sm flex-1 outline-none"
+                className="bg-transparent text-gray-600 text-sm flex-1 outline-none"
               />
               <Button
                 onClick={handleCopy}
                 size="sm"
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2"
               >
                 {copied ? (
                   <>
@@ -87,7 +88,7 @@ const ShareModal = ({ isOpen, onClose, title, articleId }: ShareModalProps) => {
           {navigator.share && (
             <Button
               onClick={handleNativeShare}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white"
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg py-3"
             >
               <Share className="w-4 h-4 mr-2" />
               Share via...

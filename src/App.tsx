@@ -7,25 +7,35 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Discover from "./pages/Discover";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 2,
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/*" element={
-            <>
-              <Navigation />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/discover" element={<Discover />} />
-              </Routes>
-            </>
-          } />
-        </Routes>
-        <Toaster />
+        <div className="min-h-screen bg-white">
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/*" element={
+              <>
+                <Navigation />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/discover" element={<Discover />} />
+                </Routes>
+              </>
+            } />
+          </Routes>
+          <Toaster />
+        </div>
       </Router>
     </QueryClientProvider>
   );
