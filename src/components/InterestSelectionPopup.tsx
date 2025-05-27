@@ -13,13 +13,6 @@ interface Topic {
   icon: string;
 }
 
-interface UserInterest {
-  id: string;
-  user_id: string;
-  topic_id: string;
-  created_at: string;
-}
-
 const InterestSelectionPopup = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -39,8 +32,7 @@ const InterestSelectionPopup = () => {
     if (!user) return;
 
     try {
-      // Use type assertion since TypeScript doesn't know about our new tables yet
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('user_interests')
         .select('id')
         .eq('user_id', user.id)
@@ -57,8 +49,7 @@ const InterestSelectionPopup = () => {
 
   const fetchTopics = async () => {
     try {
-      // Use type assertion since TypeScript doesn't know about our new tables yet
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('topics')
         .select('*')
         .order('name');
@@ -67,6 +58,11 @@ const InterestSelectionPopup = () => {
       setTopics(data || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
+      toast({
+        title: "Error loading topics",
+        description: "Failed to load interest topics. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -98,8 +94,7 @@ const InterestSelectionPopup = () => {
         topic_id: topicId,
       }));
 
-      // Use type assertion since TypeScript doesn't know about our new tables yet
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('user_interests')
         .insert(interests);
 
@@ -112,6 +107,7 @@ const InterestSelectionPopup = () => {
 
       setIsVisible(false);
     } catch (error: any) {
+      console.error('Error saving interests:', error);
       toast({
         title: "Error saving interests",
         description: error.message,

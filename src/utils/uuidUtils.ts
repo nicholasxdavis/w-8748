@@ -6,7 +6,7 @@ export const generateUUIDFromString = (str: string): string => {
     str = `fallback-${Date.now()}-${Math.random()}`;
   }
   
-  // Create a simple hash-based UUID v4 format
+  // Create a simple hash-based UUID v4 format using a more robust method
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
@@ -17,8 +17,9 @@ export const generateUUIDFromString = (str: string): string => {
   // Convert to positive number and ensure we have enough characters
   const positiveHash = Math.abs(hash).toString(16).padStart(12, '0');
   const randomSuffix = Math.random().toString(16).slice(2, 14).padStart(12, '0');
-  const combined = (positiveHash + randomSuffix).padStart(32, '0');
+  const timestamp = Date.now().toString(16).padStart(12, '0');
+  const combined = (positiveHash + randomSuffix + timestamp).slice(0, 32).padStart(32, '0');
   
-  // Format as proper UUID v4
+  // Format as proper UUID v4 with valid characters
   return `${combined.slice(0, 8)}-${combined.slice(8, 12)}-4${combined.slice(13, 16)}-a${combined.slice(17, 20)}-${combined.slice(20, 32)}`;
 };
