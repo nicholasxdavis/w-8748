@@ -116,10 +116,10 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-center px-3 sm:px-6">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6">
         <div 
-          className={`absolute left-3 sm:left-6 text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 ${
-            isDiscoverPage ? 'text-blue-400' : 'text-white'
+          className={`text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 ${
+            isDiscoverPage ? 'text-blue-500' : 'text-white'
           }`}
           onClick={handleRandomContent}
         >
@@ -127,7 +127,7 @@ const Navigation = () => {
         </div>
         
         <div 
-          className="w-full max-w-xs sm:max-w-sm flex items-center bg-gray-800/60 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-200 border border-gray-700/50"
+          className="flex-1 max-w-xs sm:max-w-sm mx-2 sm:mx-8 flex items-center bg-gray-800/60 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-200 border border-gray-700/50"
           onClick={() => setOpen(true)}
         >
           <Search className="w-4 h-4 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
@@ -136,7 +136,7 @@ const Navigation = () => {
           </span>
         </div>
         
-        <div className="absolute right-3 sm:right-6 flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           <NotificationsPopover />
           <LikedArticlesPopover />
           
@@ -170,8 +170,8 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/85 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0">
-          <div className="p-3 sm:p-4 border-b border-gray-700/30">
+        <div className="bg-gray-900 rounded-xl border border-gray-700 shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
+          <div className="p-3 sm:p-4 border-b border-gray-700">
             <div className="flex items-center space-x-3">
               <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               <input
@@ -216,7 +216,7 @@ const Navigation = () => {
                   <div
                     key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
                     onClick={() => handleItemSelect(result.title, result)}
-                    className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800/40 transition-all duration-200 group"
+                    className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800 transition-all duration-200 group"
                   >
                     <div className="flex items-center w-full space-x-3 sm:space-x-4">
                       {result.image ? (

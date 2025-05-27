@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -8,7 +9,7 @@ import LikeButton from "./LikeButton";
 import CommentButton from "./CommentButton";
 import CommentsModal from "./CommentsModal";
 import ShareModal from "./ShareModal";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [articles, setArticles] = useState(initialArticles);
@@ -69,16 +70,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       return;
     }
 
-    // Check if speech synthesis is supported
-    if (!window.speechSynthesis) {
-      toast({
-        title: "Not supported",
-        description: "Text-to-speech is not supported in your browser.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
@@ -88,58 +79,44 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
         description: "Text-to-speech has been stopped.",
       });
     } else {
-      try {
-        // Cancel any existing speech
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(currentArticle.content);
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        utterance.volume = 0.8;
-        
-        utterance.onstart = () => {
-          setIsReading(true);
-          toast({
-            title: "Reading aloud",
-            description: "Article is being read to you.",
-          });
-        };
-        
-        utterance.onend = () => {
-          setIsReading(false);
-          speechRef.current = null;
-          toast({
-            title: "Reading complete",
-            description: "Finished reading the article.",
-          });
-        };
-        
-        utterance.onerror = (event) => {
-          setIsReading(false);
-          speechRef.current = null;
-          console.error('Speech synthesis error:', event);
-          toast({
-            title: "Speech error",
-            description: "There was an error with text-to-speech. This feature may not be available in your current environment.",
-            variant: "destructive",
-          });
-        };
-        
-        speechRef.current = utterance;
-        
-        // Small delay to ensure proper initialization
-        setTimeout(() => {
-          if (speechRef.current) {
-            window.speechSynthesis.speak(speechRef.current);
-          }
-        }, 100);
-        
-      } catch (error) {
-        console.error('Error initializing speech synthesis:', error);
+      const utterance = new SpeechSynthesisUtterance(currentArticle.content);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      utterance.onstart = () => {
+        setIsReading(true);
+        toast({
+          title: "Reading aloud",
+          description: "Article is being read to you.",
+        });
+      };
+      
+      utterance.onend = () => {
         setIsReading(false);
         toast({
-          title: "Speech unavailable",
-          description: "Text-to-speech is not available in your current environment.",
+          title: "Reading complete",
+          description: "Finished reading the article.",
+        });
+      };
+      
+      utterance.onerror = () => {
+        setIsReading(false);
+        toast({
+          title: "Speech error",
+          description: "There was an error with text-to-speech.",
+          variant: "destructive",
+        });
+      };
+      
+      speechRef.current = utterance;
+      
+      if (window.speechSynthesis) {
+        window.speechSynthesis.speak(utterance);
+      } else {
+        toast({
+          title: "Not supported",
+          description: "Text-to-speech is not supported in your browser.",
           variant: "destructive",
         });
       }
@@ -176,14 +153,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
   useEffect(() => {
     if (!isVisible || !currentArticle?.content || isTextFullyLoaded) return;
-
-    // Load all content immediately on first click
-    if (clickCountRef.current > 0) {
-      setDisplayedText(currentArticle.content);
-      setProgress(100);
-      setIsTextFullyLoaded(true);
-      return;
-    }
 
     let currentChar = 0;
     const text = currentArticle.content;
@@ -233,7 +202,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
   useEffect(() => {
     return () => {
-      if (speechRef.current && window.speechSynthesis) {
+      if (speechRef.current) {
         window.speechSynthesis.cancel();
       }
     };
@@ -247,7 +216,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       >
         {articles.map((article, index) => (
           <div 
-            key={isNewsArticle(article) ? `news-${article.id}` : `wiki-${article.id}`} 
+            key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} 
             data-index={index}
             className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center"
             onClick={handleContentClick}
@@ -281,21 +250,19 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               transition={{ duration: 0.5 }}
               className="relative z-10 text-white p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
             >
-              <div className="space-y-4 max-h-[60vh] overflow-hidden">
+              <div className="space-y-4">
                 <div className="flex items-start justify-between">
-                  <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{article.title}</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{article.title}</h1>
                 </div>
-                <div className="max-h-[40vh] overflow-y-auto scrollbar-hide">
-                  <p className="text-base sm:text-lg leading-relaxed opacity-90 break-words whitespace-pre-wrap">
-                    {currentIndex === index ? displayedText : article.content}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-white/70 flex-wrap">
+                <p className="text-base sm:text-lg leading-relaxed opacity-90">
+                  {currentIndex === index ? displayedText : article.content}
+                </p>
+                <div className="flex items-center space-x-4 text-sm text-white/70">
                   {isNewsArticle(article) ? (
                     <>
                       <div className="flex items-center gap-1">
                         <Globe className="w-4 h-4" />
-                        <span className="truncate">{article.source}</span>
+                        <span>{article.source}</span>
                       </div>
                       <span>•</span>
                       <div className="flex items-center gap-1">
@@ -362,7 +329,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               <div className="absolute bottom-0 left-0 right-0 z-20">
                 <Progress 
                   value={progress} 
-                  className="h-1 bg-black/20"
+                  className="h-0.5 bg-black/20"
                   indicatorClassName="bg-gradient-to-r from-blue-400 to-blue-600"
                 />
               </div>
