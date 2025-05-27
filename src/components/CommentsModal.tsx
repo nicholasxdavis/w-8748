@@ -13,10 +13,6 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  profiles?: {
-    first_name: string;
-    last_name: string;
-  };
 }
 
 interface CommentsModalProps {
@@ -43,13 +39,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
     try {
       const { data, error } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles (
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .eq('article_id', articleId)
         .order('created_at', { ascending: false });
 
@@ -121,11 +111,11 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-semibold">
-                        {comment.profiles?.first_name?.[0] || 'U'}
+                        U
                       </span>
                     </div>
                     <span className="text-white text-sm font-medium">
-                      {comment.profiles?.first_name} {comment.profiles?.last_name}
+                      Anonymous User
                     </span>
                     <span className="text-gray-400 text-xs">
                       {new Date(comment.created_at).toLocaleDateString()}
