@@ -94,7 +94,9 @@ const ArticleViewer = ({
           id: String(currentArticle.id),
           title: currentArticle.title,
           content: currentArticle.content,
-          image: currentArticle.image
+          image: currentArticle.image,
+          type: isDidYouKnowFact(currentArticle) ? 'fact' : undefined,
+          isBreakingNews: isNewsArticle(currentArticle) ? currentArticle.isBreakingNews : undefined
         });
       }
       clickCountRef.current = 0;
@@ -141,7 +143,9 @@ const ArticleViewer = ({
       id: String(currentArticle?.id || ''),
       title: currentArticle?.title || '',
       content: currentArticle?.content,
-      image: currentArticle?.image
+      image: currentArticle?.image,
+      type: isDidYouKnowFact(currentArticle) ? 'fact' : undefined,
+      isBreakingNews: isNewsArticle(currentArticle) ? currentArticle.isBreakingNews : undefined
     }} />
       
       <div className="flex flex-col items-center">
@@ -301,9 +305,9 @@ const ArticleViewer = ({
             delay: 0.2,
             duration: 0.4
           }}>
-                  <div className="bg-blue-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
+                  <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
                     <Lightbulb className="w-3 h-3" />
-                    DID YOU KNOW?
+                    QUICK FACT
                   </div>
                 </motion.div>}
 

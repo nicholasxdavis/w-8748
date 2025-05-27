@@ -9,6 +9,8 @@ interface SaveButtonProps {
     title: string;
     content?: string;
     image?: string;
+    type?: string;
+    isBreakingNews?: boolean;
   };
   onClick?: () => void;
 }
@@ -16,6 +18,11 @@ interface SaveButtonProps {
 const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   const { toggleSave, isSaved, isLoading, checkIfSaved } = useSaveArticle();
   const [isArticleSaved, setIsArticleSaved] = useState(false);
+
+  // Don't show save button for news articles or facts
+  if (article.type === 'fact' || article.isBreakingNews) {
+    return null;
+  }
 
   useEffect(() => {
     const checkSaveStatus = async () => {
