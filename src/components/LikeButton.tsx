@@ -4,28 +4,12 @@ import { Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { generateUUIDFromString } from '@/utils/uuidUtils';
 
 interface LikeButtonProps {
   articleId: string;
   articleTitle: string;
 }
-
-// Helper function to convert any string to a valid UUID format
-const generateUUIDFromString = (str: string): string => {
-  // Create a simple hash-based UUID v4 format
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  
-  // Convert to positive number and pad
-  const positiveHash = Math.abs(hash).toString(16).padStart(8, '0');
-  
-  // Format as UUID v4
-  return `${positiveHash.slice(0, 8)}-${positiveHash.slice(0, 4)}-4${positiveHash.slice(1, 4)}-a${positiveHash.slice(0, 3)}-${positiveHash.slice(0, 12)}`.slice(0, 36);
-};
 
 const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -34,8 +18,8 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Convert articleId to UUID format
-  const uuidArticleId = generateUUIDFromString(articleId);
+  // Convert articleId to UUID format using the improved function
+  const uuidArticleId = generateUUIDFromString(articleId || 'unknown');
 
   useEffect(() => {
     fetchLikeCount();

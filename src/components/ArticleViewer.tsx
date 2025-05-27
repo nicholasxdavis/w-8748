@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -69,6 +68,15 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       return;
     }
 
+    if (!('speechSynthesis' in window)) {
+      toast({
+        title: "Not supported",
+        description: "Text-to-speech is not supported in your browser.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isReading) {
       window.speechSynthesis.cancel();
       setIsReading(false);
@@ -79,9 +87,19 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       });
     } else {
       const utterance = new SpeechSynthesisUtterance(currentArticle.content);
-      utterance.rate = 0.9;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && voice.name.includes('Google')
+      ) || voices.find(voice => voice.lang.startsWith('en'));
+      
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      }
+      
+      utterance.rate = 0.85;
       utterance.pitch = 1;
-      utterance.volume = 1;
+      utterance.volume = 0.8;
       
       utterance.onstart = () => {
         setIsReading(true);
@@ -93,31 +111,32 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       
       utterance.onend = () => {
         setIsReading(false);
+        speechRef.current = null;
         toast({
           title: "Reading complete",
           description: "Finished reading the article.",
         });
       };
       
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
         setIsReading(false);
+        speechRef.current = null;
+        console.error('Speech synthesis error:', event);
         toast({
           title: "Speech error",
-          description: "There was an error with text-to-speech.",
+          description: "There was an error with text-to-speech. Please try again.",
           variant: "destructive",
         });
       };
       
       speechRef.current = utterance;
       
-      if (window.speechSynthesis) {
-        window.speechSynthesis.speak(utterance);
+      if (voices.length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.speak(utterance);
+        };
       } else {
-        toast({
-          title: "Not supported",
-          description: "Text-to-speech is not supported in your browser.",
-          variant: "destructive",
-        });
+        window.speechSynthesis.speak(utterance);
       }
     }
   };
