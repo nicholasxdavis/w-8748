@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { searchMixedContent, getMixedContent } from "../services/contentService";
+import { searchMixedContent, getMixedContent, isDidYouKnowFact, isHistoricQuote } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
 import { Compass } from "lucide-react";
 import SavedArticlesFullPage from "./SavedArticlesFullPage";
@@ -42,9 +42,13 @@ const Navigation = () => {
     setSearchQuery("");
     const randomContent = await getMixedContent(6);
     if (randomContent.length > 0) {
-      navigate(`/?q=${encodeURIComponent(randomContent[0].title)}`, {
-        state: { reorderedResults: randomContent }
-      });
+      // Get the first article with a title for navigation
+      const firstArticle = randomContent.find(item => !isDidYouKnowFact(item) && !isHistoricQuote(item));
+      if (firstArticle) {
+        navigate(`/?q=${encodeURIComponent(firstArticle.title)}`, {
+          state: { reorderedResults: randomContent }
+        });
+      }
     }
   };
 

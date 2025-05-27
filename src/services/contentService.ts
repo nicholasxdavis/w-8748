@@ -1,3 +1,4 @@
+
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
 import { getUserInterests } from './userInterestsService';
@@ -15,6 +16,10 @@ export const isDidYouKnowFact = (item: ContentItem): item is DidYouKnowFact => {
 
 export const isHistoricQuote = (item: ContentItem): item is HistoricQuote => {
   return 'quote' in item && 'author' in item;
+};
+
+export const isWikipediaArticle = (item: ContentItem): item is WikipediaArticle => {
+  return 'content' in item && 'citations' in item && !('isBreakingNews' in item);
 };
 
 // Cache for personalized content to reduce API calls
@@ -155,11 +160,12 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // For facts and quotes, we don't need to filter by images
+  // Filter content based on type - facts and quotes don't need images, but articles do
   const finalContent = mixedContent.filter(item => {
     if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
-      return true;
+      return true; // Facts and quotes are always valid
     }
+    // Only filter articles/news by image quality
     return item.image && !item.image.includes('placeholder');
   });
 
@@ -193,7 +199,13 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
     if (i < wikiResults.length && mixedResults.length < 20) mixedResults.push(wikiResults[i]);
   }
 
-  return mixedResults.filter(item => item.image && !item.image.includes('placeholder'));
+  // Only filter articles/news by image quality, not facts/quotes
+  return mixedResults.filter(item => {
+    if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
+      return true;
+    }
+    return item.image && !item.image.includes('placeholder');
+  });
 };
 
 // Clean up old cache entries periodically
