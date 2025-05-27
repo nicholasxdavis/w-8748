@@ -32,7 +32,8 @@ const InterestSelectionPopup = () => {
     if (!user) return;
 
     try {
-      const { data } = await supabase
+      // Use type assertion for the new table that doesn't exist in types yet
+      const { data } = await (supabase as any)
         .from('user_interests')
         .select('id')
         .eq('user_id', user.id)
@@ -49,7 +50,8 @@ const InterestSelectionPopup = () => {
 
   const fetchTopics = async () => {
     try {
-      const { data, error } = await supabase
+      // Use type assertion for the new table that doesn't exist in types yet
+      const { data, error } = await (supabase as any)
         .from('topics')
         .select('*')
         .order('name');
@@ -94,7 +96,8 @@ const InterestSelectionPopup = () => {
         topic_id: topicId,
       }));
 
-      const { error } = await supabase
+      // Use type assertion for the new table that doesn't exist in types yet
+      const { error } = await (supabase as any)
         .from('user_interests')
         .insert(interests);
 
