@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
 import { getRandomArticles, searchArticles } from "../services/wikipediaService";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,9 +15,6 @@ const Index = () => {
   const searchQuery = searchParams.get("q");
   const [currentArticle, setCurrentArticle] = useState(null);
   const { user, loading: authLoading } = useAuth();
-
-  // Don't redirect immediately - let users browse articles first
-  // They'll be prompted to sign in when they try to interact
 
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["articles", searchQuery],
@@ -47,7 +44,7 @@ const Index = () => {
 
   if (isLoading || authLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-black">
+      <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
         <div className="text-white text-lg">Loading amazing articles...</div>
       </div>
     );
@@ -55,14 +52,14 @@ const Index = () => {
 
   if (error || !articles || articles.length === 0) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-black">
+      <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
         <div className="text-white">Something went wrong. Please try again.</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden bg-black">
+    <div className="h-screen w-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <ArticleViewer 
         articles={articles} 
         onArticleChange={setCurrentArticle}
