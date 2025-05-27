@@ -26,7 +26,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,7 +52,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !newComment.trim()) return;
+    if (!user || !session || !newComment.trim()) return;
 
     setLoading(true);
 
@@ -74,9 +74,10 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
         description: "Your comment has been posted!",
       });
     } catch (error: any) {
+      console.error('Comment error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to post comment",
         variant: "destructive",
       });
     } finally {
@@ -128,7 +129,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
           </div>
         </ScrollArea>
 
-        {user && (
+        {user && session ? (
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
             <form onSubmit={handleSubmitComment} className="flex gap-2">
               <Input
@@ -147,9 +148,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
               </Button>
             </form>
           </div>
-        )}
-
-        {!user && (
+        ) : (
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
             <p className="text-gray-400 text-center text-sm">
               Sign in to leave a comment

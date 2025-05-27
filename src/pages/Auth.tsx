@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,6 +11,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
+
+const cleanupAuthState = () => {
+  // Clear all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Clear from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -32,6 +49,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out to clear any lingering sessions
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Sign out attempt during login:', err);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -44,7 +72,8 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
-        navigate('/');
+        // Force page refresh for clean state
+        window.location.href = '/';
       }
     } catch (error: any) {
       toast({
@@ -62,6 +91,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out to clear any lingering sessions
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Sign out attempt during signup:', err);
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -80,7 +120,8 @@ const Auth = () => {
           title: "Account created!",
           description: "Welcome to Lore! You can start exploring articles now.",
         });
-        navigate('/');
+        // Force page refresh for clean state
+        window.location.href = '/';
       }
     } catch (error: any) {
       toast({

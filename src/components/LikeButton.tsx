@@ -14,12 +14,14 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchLikeStatus();
     fetchLikeCount();
+    if (user) {
+      fetchLikeStatus();
+    }
   }, [articleId, user]);
 
   const fetchLikeStatus = async () => {
@@ -31,11 +33,11 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
         .select('id')
         .eq('article_id', articleId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       setIsLiked(!!data);
     } catch (error) {
-      // User hasn't liked this article
+      console.error('Error fetching like status:', error);
       setIsLiked(false);
     }
   };
@@ -54,7 +56,7 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
   };
 
   const handleLike = async () => {
-    if (!user) {
+    if (!user || !session) {
       toast({
         title: "Sign in required",
         description: "Please sign in to like articles",
@@ -68,30 +70,35 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
     try {
       if (isLiked) {
         // Unlike
-        await supabase
+        const { error } = await supabase
           .from('likes')
           .delete()
           .eq('article_id', articleId)
           .eq('user_id', user.id);
 
+        if (error) throw error;
+
         setIsLiked(false);
         setLikeCount(prev => prev - 1);
       } else {
         // Like
-        await supabase
+        const { error } = await supabase
           .from('likes')
           .insert({
             article_id: articleId,
             user_id: user.id,
           });
 
+        if (error) throw error;
+
         setIsLiked(true);
         setLikeCount(prev => prev + 1);
       }
     } catch (error: any) {
+      console.error('Like error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update like status",
         variant: "destructive",
       });
     } finally {
