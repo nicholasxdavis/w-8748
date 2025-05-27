@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchMixedContent, getMixedContent } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 import SavedArticlesPopup from "./SavedArticlesPopup";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
@@ -15,7 +14,6 @@ const Navigation = () => {
   const [saveAnimation, setSaveAnimation] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -41,9 +39,6 @@ const Navigation = () => {
 
   const handleRandomContent = async () => {
     setSearchQuery("");
-    toast({
-      title: "Finding something interesting...",
-    });
     const randomContent = await getMixedContent(6);
     if (randomContent.length > 0) {
       navigate(`/?q=${encodeURIComponent(randomContent[0].title)}`, {
@@ -59,30 +54,32 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center backdrop-blur-lg">
         {/* Mobile Layout */}
-        <div className="flex items-center space-x-2 sm:hidden w-full">
+        <div className="flex items-center w-full px-4 sm:hidden">
           <div 
-            className="text-lg font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
+            className="text-lg font-bold cursor-pointer text-white hover:scale-105 transition-transform"
             onClick={handleRandomContent}
           >
             Lore
           </div>
           
-          <SearchButton 
-            searchQuery={searchQuery}
-            onClick={() => setSearchOpen(true)}
-            isMobile={true}
-          />
+          <div className="mx-4 flex-1">
+            <SearchButton 
+              searchQuery={searchQuery}
+              onClick={() => setSearchOpen(true)}
+              isMobile={true}
+            />
+          </div>
           
-          <div className="flex items-center space-x-2 ml-auto">
+          <div className="flex items-center space-x-3">
             <SavedArticlesPopup onSaveAnimation={saveAnimation} />
             <UserMenu />
           </div>
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden sm:flex items-center justify-between w-full">
+        <div className="hidden sm:flex items-center justify-between w-full px-6">
           <div 
             className="text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
             onClick={handleRandomContent}

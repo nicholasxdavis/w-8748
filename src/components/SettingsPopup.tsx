@@ -4,7 +4,6 @@ import { X, Settings, User, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { getUserInterests, getTopics, saveUserInterests, removeUserInterest, Topic } from "@/services/userInterestsService";
 
 interface SettingsPopupProps {
@@ -20,7 +19,6 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen && user) {
@@ -78,18 +76,8 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
         .eq('id', user.id);
 
       if (error) throw error;
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been saved successfully.",
-      });
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast({
-        title: "Error saving profile",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -108,26 +96,16 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
         await saveUserInterests(user.id, [topicId]);
         setSelectedTopics(prev => [...prev, topicId]);
       }
-
-      toast({
-        title: "Topics updated",
-        description: "Your preferred topics have been saved.",
-      });
     } catch (error) {
       console.error('Error updating topics:', error);
-      toast({
-        title: "Error updating topics",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="bg-gray-900 w-full max-w-lg rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
         <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
           <h3 className="font-bold text-white text-lg flex items-center gap-2">
             <Settings className="w-5 h-5 text-blue-400" />

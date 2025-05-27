@@ -4,7 +4,6 @@ import { Bookmark, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 interface SavedArticle {
@@ -26,7 +25,6 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,11 +56,6 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
       setSavedArticles(data || []);
     } catch (error) {
       console.error('Error fetching saved articles:', error);
-      toast({
-        title: "Error loading saved articles",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -113,8 +106,8 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 w-full max-w-md rounded-xl overflow-hidden shadow-2xl max-h-[80vh]">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
             <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-white text-lg flex items-center gap-2">
