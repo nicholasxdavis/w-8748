@@ -59,7 +59,7 @@ const Navigation = () => {
             Lore
           </div>
           
-          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)]">
+          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)] ml-[21px]">
             <SearchButton 
               searchQuery={searchQuery}
               onClick={() => setSearchOpen(true)}
