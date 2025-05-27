@@ -13,6 +13,13 @@ interface Topic {
   icon: string;
 }
 
+interface UserInterest {
+  id: string;
+  user_id: string;
+  topic_id: string;
+  created_at: string;
+}
+
 const InterestSelectionPopup = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -32,7 +39,8 @@ const InterestSelectionPopup = () => {
     if (!user) return;
 
     try {
-      const { data } = await supabase
+      // Use type assertion since TypeScript doesn't know about our new tables yet
+      const { data } = await (supabase as any)
         .from('user_interests')
         .select('id')
         .eq('user_id', user.id)
@@ -49,7 +57,8 @@ const InterestSelectionPopup = () => {
 
   const fetchTopics = async () => {
     try {
-      const { data, error } = await supabase
+      // Use type assertion since TypeScript doesn't know about our new tables yet
+      const { data, error } = await (supabase as any)
         .from('topics')
         .select('*')
         .order('name');
@@ -89,7 +98,8 @@ const InterestSelectionPopup = () => {
         topic_id: topicId,
       }));
 
-      const { error } = await supabase
+      // Use type assertion since TypeScript doesn't know about our new tables yet
+      const { error } = await (supabase as any)
         .from('user_interests')
         .insert(interests);
 
