@@ -1,6 +1,8 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
+import { Volume2, VolumeX } from "lucide-react";
 import { getRandomArticles, getRelatedArticles } from "../services/wikipediaService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
@@ -10,7 +12,9 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [displayedText, setDisplayedText] = useState("");
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReading, setIsReading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const currentArticle = articles[currentIndex];
 
   const loadMoreArticles = useCallback(async () => {
@@ -30,16 +34,46 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     }
   }, [isLoading, currentArticle]);
 
+  const handleTextToSpeech = () => {
+    if (!currentArticle?.content) return;
+
+    if (isReading) {
+      // Stop reading
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      speechRef.current = null;
+    } else {
+      // Start reading
+      const utterance = new SpeechSynthesisUtterance(currentArticle.content);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      
+      utterance.onstart = () => setIsReading(true);
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+      
+      speechRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
     setProgress(0);
     onArticleChange(currentArticle);
 
+    // Stop any ongoing speech when article changes
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+    }
+
     if (currentIndex >= articles.length - 2) {
       loadMoreArticles();
     }
-  }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles]);
+  }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading]);
 
   useEffect(() => {
     if (!isVisible || !currentArticle?.content) return;
@@ -89,6 +123,15 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     };
   }, [articles]);
 
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => {
+      if (speechRef.current) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   return (
     <main 
       ref={containerRef} 
@@ -117,7 +160,22 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
             transition={{ duration: 0.5 }}
             className="relative z-10 text-white p-8 max-w-3xl mx-auto"
           >
-            <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-4xl font-bold">{article.title}</h1>
+              {currentIndex === index && (
+                <button
+                  onClick={handleTextToSpeech}
+                  className="ml-4 p-2 bg-black/20 backdrop-blur-sm rounded-full hover:bg-black/40 transition-colors"
+                  aria-label={isReading ? "Stop reading" : "Read article aloud"}
+                >
+                  {isReading ? (
+                    <VolumeX className="w-6 h-6 text-white" />
+                  ) : (
+                    <Volume2 className="w-6 h-6 text-white" />
+                  )}
+                </button>
+              )}
+            </div>
             <p className="text-lg leading-relaxed mb-12">
               {currentIndex === index ? displayedText : article.content}
             </p>

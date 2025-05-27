@@ -1,3 +1,4 @@
+
 import { Search, Compass } from "lucide-react";
 import {
   Command,
@@ -101,7 +102,7 @@ const Navigation = () => {
           className="text-xl font-bold text-wikitok-red cursor-pointer"
           onClick={handleRandomArticle}
         >
-          WikTok
+          Lore
         </div>
         <div 
           className="flex items-center bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 cursor-pointer"
