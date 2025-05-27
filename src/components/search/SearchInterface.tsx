@@ -12,6 +12,7 @@ interface SearchInterfaceProps {
   setSearchQuery: (value: string) => void;
   results: any[];
   isSearching: boolean;
+  onSaveArticle: () => void;
 }
 
 const SearchInterface = ({ 
@@ -20,7 +21,8 @@ const SearchInterface = ({
   searchQuery, 
   setSearchQuery, 
   results, 
-  isSearching 
+  isSearching,
+  onSaveArticle
 }: SearchInterfaceProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
