@@ -36,10 +36,10 @@ export const getDidYouKnowFacts = async (count: number = 3): Promise<DidYouKnowF
     
     for (let i = 0; i < count; i++) {
       try {
-        const factType = factTypes[i % factTypes.length];
+        const currentFactType = factTypes[i % factTypes.length];
         let url = '';
         
-        switch (factType) {
+        switch (currentFactType) {
           case 'trivia':
             url = 'http://numbersapi.com/random/trivia';
             break;
@@ -58,13 +58,13 @@ export const getDidYouKnowFacts = async (count: number = 3): Promise<DidYouKnowF
         const factText = await response.text();
         
         facts.push({
-          id: `fact-${factType}-${i}-${Date.now()}`,
+          id: `fact-${currentFactType}-${i}-${Date.now()}`,
           fact: factText,
-          category: factType.charAt(0).toUpperCase() + factType.slice(1),
+          category: currentFactType.charAt(0).toUpperCase() + currentFactType.slice(1),
           source: 'Numbers API'
         });
       } catch (error) {
-        console.warn(`Failed to fetch ${factType} fact:`, error);
+        console.warn(`Failed to fetch ${currentFactType} fact:`, error);
       }
     }
     
