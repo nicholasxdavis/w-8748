@@ -36,9 +36,9 @@ const UserMenu = () => {
     return (
       <button
         onClick={() => navigate('/auth')}
-        className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium hover:scale-105"
+        className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium hover:scale-105 h-8 sm:h-9"
       >
-        <User className="w-3 h-3 sm:w-4 sm:h-4" />
+        <User className="w-4 h-4" />
         <span className="text-xs sm:text-sm hidden sm:inline">Sign In</span>
       </button>
     );
@@ -47,12 +47,12 @@ const UserMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="w-5 h-5 sm:w-7 sm:h-7 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 hover:bg-blue-700 transition-colors">
-          <User className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-white" />
+        <button className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 hover:bg-blue-700 transition-colors">
+          <User className="w-4 h-4 text-white" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-48 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl"
+        className="w-48 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl z-[60]"
         align="end"
       >
         <DropdownMenuItem 

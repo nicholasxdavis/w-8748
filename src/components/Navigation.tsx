@@ -55,7 +55,7 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg overflow-x-hidden">
         <div 
           className="text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
           onClick={handleRandomContent}
@@ -76,7 +76,7 @@ const Navigation = () => {
           />
         </div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
           <SavedArticlesPopover />
           <UserMenu />
         </div>
