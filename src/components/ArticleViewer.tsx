@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -21,6 +20,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [showShare, setShowShare] = useState(false);
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
   const [showActionButtons, setShowActionButtons] = useState(false);
+  const [showDoubleTapHint, setShowDoubleTapHint] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const clickCountRef = useRef(0);
   const doubleClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -28,6 +28,15 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const { toast } = useToast();
   const { speak, stop, isReading, isLoading: speechLoading } = useTextToSpeech();
   const { toggleSave } = useSaveArticle();
+
+  // Hide double-tap hint after 3 seconds on first load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDoubleTapHint(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const loadMoreArticles = useCallback(async () => {
     if (isLoading) return;
@@ -290,17 +299,22 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 </motion.div>
               )}
 
-              {/* Double-click hint */}
-              <motion.div 
-                className="absolute top-20 right-4 z-20"
-                initial={{ x: 50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-              >
-                <div className="bg-black/40 text-white px-3 py-1 rounded-xl text-xs backdrop-blur-md border border-white/20">
-                  Double-tap to save
-                </div>
-              </motion.div>
+              {/* Double-click hint - only show briefly on first load */}
+              <AnimatePresence>
+                {showDoubleTapHint && (
+                  <motion.div 
+                    className="absolute top-20 right-4 z-20"
+                    initial={{ x: 50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 50, opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <div className="bg-black/40 text-white px-3 py-1 rounded-xl text-xs backdrop-blur-md border border-white/20">
+                      Double-tap to save
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Action Buttons Toggle */}
               <motion.div 
@@ -357,7 +371,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 )}
               </AnimatePresence>
 
-              {/* Content */}
+              {/* Content with increased max height */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{
@@ -371,7 +385,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                   <div className="flex items-start justify-between">
                     <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                   </div>
-                  <div className="max-h-32 sm:max-h-40 overflow-y-auto scrollbar-hide">
+                  <div className="max-h-40 sm:max-h-48 overflow-y-auto scrollbar-hide">
                     <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
                       {currentIndex === index ? displayedText : article.content}
                     </p>

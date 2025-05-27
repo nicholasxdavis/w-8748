@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import LikedArticlesPopover from "./LikedArticlesPopover";
+import SavedArticlesPopover from "./SavedArticlesPopover";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -122,8 +122,8 @@ const Navigation = () => {
           Lore
         </div>
         
-        {/* Mobile Search Bar */}
-        <div className="sm:hidden flex-1 mx-2">
+        {/* Mobile Search Bar - with max width constraint */}
+        <div className="sm:hidden flex-1 mx-2 max-w-[200px]">
           <div 
             className="w-full flex items-center bg-gray-800/40 backdrop-blur-xl rounded-xl px-2 py-1 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
             onClick={() => setOpen(true)}
@@ -149,7 +149,7 @@ const Navigation = () => {
         </div>
         
         <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-          <LikedArticlesPopover />
+          <SavedArticlesPopover />
           
           {user ? (
             <div className="flex items-center space-x-1 sm:space-x-2">
