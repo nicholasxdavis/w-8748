@@ -18,7 +18,6 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Convert articleId to UUID format using the improved function
   const uuidArticleId = generateUUIDFromString(articleId || 'unknown');
 
   useEffect(() => {
@@ -26,6 +25,33 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
     if (user) {
       fetchLikeStatus();
     }
+  }, [uuidArticleId, user]);
+
+  // Set up real-time subscription for likes
+  useEffect(() => {
+    const channel = supabase
+      .channel('likes-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'likes',
+          filter: `article_id=eq.${uuidArticleId}`
+        },
+        () => {
+          console.log('Like change detected, refetching...');
+          fetchLikeCount();
+          if (user) {
+            fetchLikeStatus();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [uuidArticleId, user]);
 
   const fetchLikeStatus = async () => {
@@ -42,7 +68,6 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
       setIsLiked(!!data);
     } catch (error) {
       console.error('Error fetching like status:', error);
-      setIsLiked(false);
     }
   };
 
@@ -69,11 +94,11 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
       return;
     }
 
+    if (loading) return;
     setLoading(true);
 
     try {
       if (isLiked) {
-        // Unlike
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -81,11 +106,8 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
           .eq('user_id', user.id);
 
         if (error) throw error;
-
-        setIsLiked(false);
-        setLikeCount(prev => prev - 1);
+        console.log('Like removed successfully');
       } else {
-        // Like
         const { error } = await supabase
           .from('likes')
           .insert({
@@ -94,9 +116,7 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
           });
 
         if (error) throw error;
-
-        setIsLiked(true);
-        setLikeCount(prev => prev + 1);
+        console.log('Like added successfully');
       }
     } catch (error: any) {
       console.error('Like error:', error);

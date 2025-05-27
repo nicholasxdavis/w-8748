@@ -30,13 +30,38 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
   const { user, session } = useAuth();
   const { toast } = useToast();
 
-  // Convert articleId to UUID format using the improved function
   const uuidArticleId = generateUUIDFromString(articleId || 'unknown');
 
   useEffect(() => {
     if (isOpen) {
       fetchComments();
     }
+  }, [isOpen, uuidArticleId]);
+
+  // Set up real-time subscription for comments
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const channel = supabase
+      .channel('comments-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `article_id=eq.${uuidArticleId}`
+        },
+        () => {
+          console.log('Comment change detected, refetching...');
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isOpen, uuidArticleId]);
 
   const fetchComments = async () => {
@@ -48,6 +73,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Comments fetched:', data);
       setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -59,20 +85,24 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
     if (!user || !session || !newComment.trim()) return;
 
     setLoading(true);
+    console.log('Submitting comment:', { articleId: uuidArticleId, userId: user.id, content: newComment.trim() });
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('comments')
         .insert({
           article_id: uuidArticleId,
           user_id: user.id,
           content: newComment.trim(),
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-
+      
+      console.log('Comment inserted successfully:', data);
       setNewComment('');
-      fetchComments();
+      
       toast({
         title: "Comment added",
         description: "Your comment has been posted!",
@@ -95,7 +125,7 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center">
       <div className="bg-gray-900 w-full max-w-md h-2/3 rounded-t-3xl border-t border-gray-700">
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h3 className="text-white font-semibold">Comments</h3>
+          <h3 className="text-white font-semibold">Comments ({comments.length})</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white"
@@ -116,11 +146,11 @@ const CommentsModal = ({ articleId, articleTitle, isOpen, onClose }: CommentsMod
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                       <span className="text-white text-sm font-semibold">
-                        U
+                        {comment.user_id.slice(0, 2).toUpperCase()}
                       </span>
                     </div>
                     <span className="text-white text-sm font-medium">
-                      Anonymous User
+                      User
                     </span>
                     <span className="text-gray-400 text-xs">
                       {new Date(comment.created_at).toLocaleDateString()}

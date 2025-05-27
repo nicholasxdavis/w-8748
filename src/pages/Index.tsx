@@ -19,7 +19,7 @@ const Index = () => {
   const { user, loading: authLoading } = useAuth();
 
   const { data: articles, isLoading, error } = useQuery({
-    queryKey: ["mixed-content", searchQuery],
+    queryKey: ["mixed-content", searchQuery, user?.id],
     queryFn: async () => {
       let fetchedContent;
       if (searchQuery) {
@@ -29,7 +29,8 @@ const Index = () => {
           fetchedContent = await searchMixedContent(searchQuery);
         }
       } else {
-        fetchedContent = await getMixedContent(6);
+        // Pass user ID for personalized content
+        fetchedContent = await getMixedContent(8, user?.id);
       }
       return fetchedContent.filter(item => item.image);
     },

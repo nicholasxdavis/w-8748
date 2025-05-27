@@ -12,11 +12,34 @@ interface CommentButtonProps {
 const CommentButton = ({ articleId, onClick }: CommentButtonProps) => {
   const [commentCount, setCommentCount] = useState(0);
 
-  // Convert articleId to UUID format using the improved function
   const uuidArticleId = generateUUIDFromString(articleId || 'unknown');
 
   useEffect(() => {
     fetchCommentCount();
+  }, [uuidArticleId]);
+
+  // Set up real-time subscription for comment count
+  useEffect(() => {
+    const channel = supabase
+      .channel('comment-count-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `article_id=eq.${uuidArticleId}`
+        },
+        () => {
+          console.log('Comment count change detected, refetching...');
+          fetchCommentCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [uuidArticleId]);
 
   const fetchCommentCount = async () => {
