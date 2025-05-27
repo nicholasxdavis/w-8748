@@ -1,4 +1,5 @@
-import { Search, User, LogOut, Bell, Heart } from "lucide-react";
+
+import { Search, User, LogOut, Bell } from "lucide-react";
 import {
   Command,
   CommandDialog,
@@ -123,12 +124,12 @@ const Navigation = () => {
         </div>
         
         {/* Mobile Search Bar */}
-        <div className="sm:hidden flex-1 mx-3">
+        <div className="sm:hidden flex-1 mx-2">
           <div 
-            className="w-full flex items-center bg-gray-800/40 backdrop-blur-xl rounded-xl px-3 py-1.5 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
+            className="w-full flex items-center bg-gray-800/40 backdrop-blur-xl rounded-xl px-2 py-1 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
             onClick={() => setOpen(true)}
           >
-            <Search className="w-3 h-3 text-gray-400 mr-2 flex-shrink-0" />
+            <Search className="w-3 h-3 text-gray-400 mr-1 flex-shrink-0" />
             <span className="text-gray-400 text-xs font-medium truncate">
               {searchValue || "Search..."}
             </span>
@@ -148,18 +149,18 @@ const Navigation = () => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           <NotificationsPopover />
           <LikedArticlesPopover />
           
           {user ? (
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
-                <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="w-5 h-5 sm:w-7 sm:h-7 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
+                <User className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-white" />
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-400 hover:text-red-400 transition-all p-1.5 sm:p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105"
+                className="text-gray-400 hover:text-red-400 transition-all p-1 sm:p-1.5 hover:bg-gray-800/50 rounded-xl hover:scale-105"
               >
                 <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
               </button>
@@ -167,7 +168,7 @@ const Navigation = () => {
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:scale-105"
+              className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:scale-105"
             >
               <User className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm hidden sm:inline">Sign In</span>
@@ -176,13 +177,13 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Command Dialog - keeping existing implementation */}
+      {/* Command Dialog */}
       <CommandDialog 
         open={open} 
         onOpenChange={handleOpenChange}
       >
         <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh] border-0 outline-none ring-0">
-          <div className="p-4 border-b border-gray-700/50">
+          <div className="p-4">
             <div className="flex items-center space-x-3">
               <Search className="w-5 h-5 text-gray-400" />
               <input
@@ -198,8 +199,8 @@ const Navigation = () => {
           <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
             {!searchValue && (
               <div className="p-6 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-blue-400" />
+                <div className="w-16 h-16 bg-gray-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Discover Knowledge & News</h3>
                 <p className="text-gray-400 text-sm">Search for fascinating articles and breaking news</p>
@@ -229,11 +230,11 @@ const Navigation = () => {
                   <div
                     key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
                     onClick={() => handleItemSelect(result.title, result)}
-                    className="flex items-center p-4 rounded-xl cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group border border-transparent hover:border-gray-700/50"
+                    className="flex items-center p-4 rounded-xl cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group"
                   >
                     <div className="flex items-center w-full space-x-4">
                       {result.image ? (
-                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative border border-gray-700/30">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative">
                           <img 
                             src={result.image} 
                             alt={result.title}
@@ -244,7 +245,7 @@ const Navigation = () => {
                           )}
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-600/30">
+                        <div className="w-12 h-12 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0">
                           <span className="text-gray-300 font-semibold text-lg">
                             {result.title[0]}
                           </span>
@@ -257,7 +258,7 @@ const Navigation = () => {
                             {result.title}
                           </h4>
                           {isNewsArticle(result) && (
-                            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
                               LIVE
                             </span>
                           )}
