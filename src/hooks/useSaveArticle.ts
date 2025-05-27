@@ -44,7 +44,6 @@ export const useSaveArticle = () => {
     title: string;
     content?: string;
     image?: string;
-    type?: string;
     isBreakingNews?: boolean;
   }) => {
     if (!user) {

@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
-import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2, Lightbulb } from "lucide-react";
+import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2 } from "lucide-react";
 import { getMixedContent } from "../services/contentService";
-import { isNewsArticle, isDidYouKnowFact } from "../services/contentService";
+import { isNewsArticle } from "../services/contentService";
 import SaveButton from "./SaveButton";
 import ShareModal from "./ShareModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useSaveArticle } from "@/hooks/useSaveArticle";
+
 const ArticleViewer = ({
   articles: initialArticles,
   onArticleChange
@@ -95,7 +96,6 @@ const ArticleViewer = ({
           title: currentArticle.title,
           content: currentArticle.content,
           image: currentArticle.image,
-          type: isDidYouKnowFact(currentArticle) ? 'fact' : undefined,
           isBreakingNews: isNewsArticle(currentArticle) ? currentArticle.isBreakingNews : undefined
         });
       }
@@ -144,7 +144,6 @@ const ArticleViewer = ({
       title: currentArticle?.title || '',
       content: currentArticle?.content,
       image: currentArticle?.image,
-      type: isDidYouKnowFact(currentArticle) ? 'fact' : undefined,
       isBreakingNews: isNewsArticle(currentArticle) ? currentArticle.isBreakingNews : undefined
     }} />
       
@@ -263,7 +262,7 @@ const ArticleViewer = ({
   return <>
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
         <AnimatePresence>
-          {articles.map((article, index) => <motion.div key={isNewsArticle(article) ? article.id : isDidYouKnowFact(article) ? article.id : `wiki-${article.id}`} data-index={index} className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden" onClick={handleContentClick} initial={{
+          {articles.map((article, index) => <motion.div key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} data-index={index} className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden" onClick={handleContentClick} initial={{
           opacity: 0
         }} animate={{
           opacity: 1
@@ -291,23 +290,6 @@ const ArticleViewer = ({
                   <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-red-400/30">
                     <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                     BREAKING NEWS
-                  </div>
-                </motion.div>}
-
-              {/* Did You Know Badge */}
-              {isDidYouKnowFact(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
-            x: -50,
-            opacity: 0
-          }} animate={{
-            x: 0,
-            opacity: 1
-          }} transition={{
-            delay: 0.2,
-            duration: 0.4
-          }}>
-                  <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
-                    <Lightbulb className="w-3 h-3" />
-                    QUICK FACT
                   </div>
                 </motion.div>}
 
@@ -428,13 +410,6 @@ const ArticleViewer = ({
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span>{formatNewsDate(article.publishedAt)}</span>
                         </div>
-                      </> : isDidYouKnowFact(article) ? <>
-                        <div className="flex items-center gap-1">
-                          <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="capitalize">{article.category}</span>
-                        </div>
-                        <span>•</span>
-                        <span>Mind-blowing fact</span>
                       </> : <>
                         <span>{article.readTime} min read</span>
                         <span>•</span>
@@ -476,4 +451,5 @@ const ArticleViewer = ({
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} title={currentArticle?.title || ''} articleId={String(currentArticle?.id || '')} />
     </>;
 };
+
 export default ArticleViewer;

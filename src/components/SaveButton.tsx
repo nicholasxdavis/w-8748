@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { useSaveArticle } from '@/hooks/useSaveArticle';
@@ -8,7 +9,6 @@ interface SaveButtonProps {
     title: string;
     content?: string;
     image?: string;
-    type?: string;
     isBreakingNews?: boolean;
   };
   onClick?: () => void;
@@ -18,8 +18,8 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   const { toggleSave, isSaved, isLoading, checkIfSaved } = useSaveArticle();
   const [isArticleSaved, setIsArticleSaved] = useState(false);
 
-  // Don't show save button for news articles or facts
-  if (article.type === 'fact' || article.isBreakingNews) {
+  // Don't show save button for news articles
+  if (article.isBreakingNews) {
     return null;
   }
 
