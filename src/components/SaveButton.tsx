@@ -53,7 +53,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
       >
         {isArticleSaved ? (
-          <BookmarkCheck className="w-4 h-4 text-yellow-400" />
+          <BookmarkCheck className="w-4 h-4 text-blue-400" />
         ) : (
           <Bookmark className="w-4 h-4" />
         )}

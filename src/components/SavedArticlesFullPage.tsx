@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Bookmark } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -72,81 +72,104 @@ const SavedArticlesFullPage = ({ isOpen, onClose }: SavedArticlesFullPageProps) 
   return (
     <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700/30">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            Saved Articles
-          </h1>
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700/20 backdrop-blur-xl bg-black/10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-600/20 border border-blue-400/30">
+              <Bookmark className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Saved Articles</h1>
+              <p className="text-sm text-gray-400">Your bookmarked content</p>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-800/60 transition-colors"
+            className="p-3 rounded-xl hover:bg-gray-800/60 transition-all duration-200 group"
           >
-            <X className="w-6 h-6 text-gray-400" />
+            <X className="w-6 h-6 text-gray-400 group-hover:text-white transition-colors" />
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
           {!user ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <svg className="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              <h3 className="text-xl font-medium text-white mb-2">Sign in to see saved articles</h3>
-              <p className="text-gray-400 mb-4">Create an account to save and access your favorite articles</p>
-              <button
-                onClick={() => navigate('/auth')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Sign In
-              </button>
+            <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
+              <div className="p-6 rounded-2xl bg-gray-800/40 border border-gray-700/50 backdrop-blur-xl mb-6">
+                <Bookmark className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-3">Sign in Required</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">Create an account to save and access your favorite articles across all your devices.</p>
+                <button
+                  onClick={() => navigate('/auth')}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium hover:scale-105"
+                >
+                  Sign In
+                </button>
+              </div>
             </div>
           ) : isLoading ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mb-4"></div>
-              <p className="text-gray-400">Loading saved articles...</p>
+              <div className="relative">
+                <div className="animate-spin w-12 h-12 border-2 border-gray-600 border-t-blue-500 rounded-full"></div>
+              </div>
+              <p className="text-gray-400 mt-4 font-medium">Loading your saved articles...</p>
             </div>
           ) : savedArticles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <svg className="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              <h3 className="text-xl font-medium text-white mb-2">No saved articles yet</h3>
-              <p className="text-gray-400">Articles you save will appear here for easy access</p>
+            <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
+              <div className="p-6 rounded-2xl bg-gray-800/40 border border-gray-700/50 backdrop-blur-xl">
+                <Bookmark className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-3">No Saved Articles</h3>
+                <p className="text-gray-400 leading-relaxed">Start exploring and save articles that interest you. They'll appear here for easy access.</p>
+              </div>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {savedArticles.map((article) => (
-                <div
-                  key={article.id}
-                  onClick={() => handleArticleClick(article)}
-                  className="bg-gray-800/60 rounded-xl p-4 cursor-pointer hover:bg-gray-700/60 transition-all duration-200 group"
-                >
-                  {article.article_image ? (
-                    <div className="w-full h-48 rounded-lg overflow-hidden mb-4 bg-gray-800">
-                      <img 
-                        src={article.article_image} 
-                        alt={article.article_title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
+            <div className="max-w-6xl mx-auto">
+              <div className="mb-6">
+                <p className="text-gray-400">
+                  {savedArticles.length} saved article{savedArticles.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {savedArticles.map((article) => (
+                  <div
+                    key={article.id}
+                    onClick={() => handleArticleClick(article)}
+                    className="bg-gray-800/30 backdrop-blur-xl border border-gray-700/30 rounded-2xl p-6 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 group hover:scale-105 hover:border-gray-600/50"
+                  >
+                    {article.article_image ? (
+                      <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-gray-800/50">
+                        <img 
+                          src={article.article_image} 
+                          alt={article.article_title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 rounded-xl bg-gradient-to-br from-gray-700/50 to-gray-800/50 flex items-center justify-center mb-4 border border-gray-600/30">
+                        <span className="text-gray-300 font-bold text-3xl">
+                          {article.article_title[0]}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-3 text-lg leading-tight">
+                      {article.article_title}
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-400">
+                        {new Date(article.saved_at).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <div className="p-2 rounded-lg bg-blue-600/20 border border-blue-400/30">
+                        <Bookmark className="w-4 h-4 text-blue-400" />
+                      </div>
                     </div>
-                  ) : (
-                    <div className="w-full h-48 rounded-lg bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center mb-4">
-                      <span className="text-gray-300 font-bold text-2xl">
-                        {article.article_title[0]}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <h3 className="font-medium text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
-                    {article.article_title}
-                  </h3>
-                  <p className="text-sm text-gray-400">
-                    Saved {new Date(article.saved_at).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
