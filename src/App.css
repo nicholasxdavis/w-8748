@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,21 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Custom scrollbar styles */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Text overflow handling */
+.break-words {
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }

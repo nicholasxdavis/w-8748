@@ -281,19 +281,21 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               transition={{ duration: 0.5 }}
               className="relative z-10 text-white p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
             >
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[60vh] overflow-hidden">
                 <div className="flex items-start justify-between">
-                  <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{article.title}</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{article.title}</h1>
                 </div>
-                <p className="text-base sm:text-lg leading-relaxed opacity-90">
-                  {currentIndex === index ? displayedText : article.content}
-                </p>
-                <div className="flex items-center space-x-4 text-sm text-white/70">
+                <div className="max-h-[40vh] overflow-y-auto scrollbar-hide">
+                  <p className="text-base sm:text-lg leading-relaxed opacity-90 break-words whitespace-pre-wrap">
+                    {currentIndex === index ? displayedText : article.content}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4 text-sm text-white/70 flex-wrap">
                   {isNewsArticle(article) ? (
                     <>
                       <div className="flex items-center gap-1">
                         <Globe className="w-4 h-4" />
-                        <span>{article.source}</span>
+                        <span className="truncate">{article.source}</span>
                       </div>
                       <span>•</span>
                       <div className="flex items-center gap-1">

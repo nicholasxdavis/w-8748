@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 import { transformToArticle } from './articleTransformer';
@@ -42,7 +41,6 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
 
 const getPopularArticles = async (count: number = 10): Promise<WikipediaArticle[]> => {
   // Expanded list of high-quality, popular Wikipedia articles by category
-  // Each time we fetch, we'll pull from different categories to ensure variety
   const popularCategories = {
     science: [
       'Albert Einstein', 'Isaac Newton', 'Charles Darwin', 'Marie Curie',
@@ -134,12 +132,11 @@ const getPopularArticles = async (count: number = 10): Promise<WikipediaArticle[
   };
 
   try {
-    // Select 2-3 random categories for variety
+    // Select 3-4 random categories for variety
     const categories = Object.keys(popularCategories);
     const selectedCategories = [];
     
-    // Always include at least 2 categories
-    for (let i = 0; i < Math.min(3, categories.length); i++) {
+    for (let i = 0; i < Math.min(4, categories.length); i++) {
       const randomIndex = Math.floor(Math.random() * categories.length);
       selectedCategories.push(categories.splice(randomIndex, 1)[0]);
     }
@@ -148,25 +145,18 @@ const getPopularArticles = async (count: number = 10): Promise<WikipediaArticle[
     let allTitles = [];
     for (const category of selectedCategories) {
       const categoryTitles = popularCategories[category];
-      // Shuffle the titles within each category
       const shuffled = [...categoryTitles].sort(() => 0.5 - Math.random());
-      allTitles = [...allTitles, ...shuffled.slice(0, Math.ceil(count / selectedCategories.length) + 5)];
+      allTitles = [...allTitles, ...shuffled.slice(0, Math.ceil(count / selectedCategories.length) + 8)];
     }
     
     // Shuffle again for better mixing
-    allTitles = allTitles.sort(() => 0.5 - Math.random()).slice(0, count * 2);
+    allTitles = allTitles.sort(() => 0.5 - Math.random()).slice(0, count * 3);
 
     const data = await fetchWikipediaContent(allTitles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
     
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
-    
-    if (validArticles.length < count) {
-      // If we don't have enough articles, try the featured approach as backup
-      const featuredArticles = await getFeaturedArticles(count - validArticles.length);
-      return [...validArticles, ...featuredArticles].slice(0, count);
-    }
     
     return validArticles.slice(0, count);
   } catch (error) {
@@ -221,61 +211,26 @@ const getFeaturedArticles = async (count: number = 10): Promise<WikipediaArticle
   }
 };
 
-const getRandomArticles = async (count: number = 10, category?: string): Promise<WikipediaArticle[]> => {
+const getRandomArticles = async (count: number = 10, mode: string = "random"): Promise<WikipediaArticle[]> => {
   try {
-    // First try to get popular articles for better quality
-    if (!category || category === "All") {
-      const popularArticles = await getPopularArticles(count);
-      if (popularArticles.length >= count) {
-        return popularArticles.sort(() => 0.5 - Math.random()); // Shuffle for variety
-      }
+    // Different strategies based on mode
+    if (mode === "popular") {
+      return getPopularArticles(count);
+    } else if (mode === "mixed") {
+      const popularCount = Math.ceil(count * 0.4);
+      const randomCount = count - popularCount;
       
-      // If we don't have enough popular articles, supplement with featured articles
-      const additionalCount = count - popularArticles.length;
-      const featuredArticles = await getFeaturedArticles(additionalCount);
-      const combined = [...popularArticles, ...featuredArticles];
-      return combined.sort(() => 0.5 - Math.random()).slice(0, count);
+      const [popular, random] = await Promise.all([
+        getPopularArticles(popularCount),
+        getRandomArticles(randomCount, "random")
+      ]);
+      
+      return [...popular, ...random].sort(() => 0.5 - Math.random());
     }
 
-    // Category-specific articles
-    let titles: string[];
-    const multiplier = 8; // Increased multiplier for more variety
-    
-    const params = new URLSearchParams({
-      action: 'query',
-      format: 'json',
-      origin: '*',
-      list: 'categorymembers',
-      cmtitle: `Category:${category}`,
-      cmlimit: (count * multiplier).toString(),
-      cmtype: 'page',
-      cmsort: 'timestamp',
-      cmdir: 'desc'
-    });
-
-    const categoryResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
-    if (!categoryResponse.ok) throw new Error('Failed to fetch category articles');
-    
-    const categoryData = await categoryResponse.json() as WikipediaResponse;
-    titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
-
-    if (!titles.length) throw new Error('No articles found');
-
-    // Shuffle titles for variety
-    titles = titles.sort(() => 0.5 - Math.random());
-
-    const data = await fetchWikipediaContent(titles) as WikipediaResponse;
-    const pages = Object.values(data.query?.pages || {});
-    
-    const articles = await Promise.all(pages.map(transformToArticle));
-    const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
-    
-    if (validArticles.length < count) {
-      const moreArticles = await getPopularArticles(count - validArticles.length);
-      return [...validArticles, ...moreArticles].slice(0, count);
-    }
-    
-    return validArticles.slice(0, count);
+    // Default random mode - get from featured articles for quality
+    const featuredArticles = await getFeaturedArticles(count * 2);
+    return featuredArticles.sort(() => 0.5 - Math.random()).slice(0, count);
   } catch (error) {
     console.error('Error fetching articles:', error);
     return getPopularArticles(count);
