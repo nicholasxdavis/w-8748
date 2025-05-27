@@ -99,7 +99,7 @@ const Auth = () => {
       {/* Close Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 p-2 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 transition-colors border border-gray-700"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 p-2 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-gray-700/50 transition-all duration-200 border border-gray-700 hover:scale-110"
       >
         <X className="w-5 h-5 text-white" />
       </button>
@@ -110,7 +110,7 @@ const Auth = () => {
           <p className="text-gray-400 text-sm sm:text-base">Discover knowledge in a new way</p>
         </div>
 
-        <Card className="bg-gray-900/90 backdrop-blur-sm border-gray-800">
+        <Card className="bg-gray-900/90 backdrop-blur-sm border-gray-800 rounded-2xl">
           <CardHeader className="pb-4">
             <CardTitle className="text-white text-lg sm:text-xl">Welcome</CardTitle>
             <CardDescription className="text-gray-400 text-sm">
@@ -119,9 +119,9 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-800 mb-6">
-                <TabsTrigger value="signin" className="text-white text-sm">Sign In</TabsTrigger>
-                <TabsTrigger value="signup" className="text-white text-sm">Sign Up</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-gray-800 mb-6 rounded-xl">
+                <TabsTrigger value="signin" className="text-white text-sm rounded-lg transition-all duration-200 hover:bg-gray-700">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="text-white text-sm rounded-lg transition-all duration-200 hover:bg-gray-700">Sign Up</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
@@ -134,7 +134,7 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                       required
                     />
                   </div>
@@ -146,13 +146,13 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl transition-all duration-200 hover:scale-105"
                     disabled={loading}
                   >
                     {loading ? 'Signing in...' : 'Sign In'}
@@ -170,7 +170,7 @@ const Auth = () => {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         placeholder="First name"
-                        className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                        className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                         required
                       />
                     </div>
@@ -181,7 +181,7 @@ const Auth = () => {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         placeholder="Last name"
-                        className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                        className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                         required
                       />
                     </div>
@@ -194,7 +194,7 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                       required
                     />
                   </div>
@@ -206,13 +206,13 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Create a password"
-                      className="bg-gray-800 border-gray-700 text-white text-sm h-10"
+                      className="bg-gray-800 border-gray-700 text-white text-sm h-10 rounded-xl"
                       required
                     />
                   </div>
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl transition-all duration-200 hover:scale-105"
                     disabled={loading}
                   >
                     {loading ? 'Creating account...' : 'Create Account'}
@@ -220,6 +220,37 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+
+            {/* Terms and Policy Links */}
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <div className="flex justify-center space-x-4 text-xs text-gray-400 mb-3">
+                <button
+                  onClick={() => navigate('/terms')}
+                  className="hover:text-white transition-colors duration-200"
+                >
+                  Terms of Service
+                </button>
+                <span>•</span>
+                <button
+                  onClick={() => navigate('/privacy')}
+                  className="hover:text-white transition-colors duration-200"
+                >
+                  Privacy Policy
+                </button>
+              </div>
+              <div className="text-center text-xs text-gray-500">
+                © 2025 Lore by{' '}
+                <a 
+                  href="https://www.blacnova.net" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
+                >
+                  Blacnova
+                </a>
+                . All rights reserved.
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -237,7 +238,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             )}
 
-            {/* Content */}
+            {/* Content with black overlay */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{
@@ -247,16 +248,16 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               transition={{ duration: 0.5 }}
               className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
             >
-              <div className="space-y-3 sm:space-y-4">
+              <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10 space-y-3 sm:space-y-4">
                 <div className="flex items-start justify-between">
                   <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg">{article.title}</h1>
                 </div>
-                <div className="max-h-48 sm:max-h-64 overflow-y-auto scrollbar-hide bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                  <p className="text-sm sm:text-lg leading-relaxed opacity-95">
+                <div className="max-h-32 sm:max-h-40 overflow-y-auto scrollbar-hide">
+                  <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words">
                     {currentIndex === index ? displayedText : article.content}
                   </p>
                 </div>
-                <div className="flex items-center space-x-4 text-xs sm:text-sm text-white/80 bg-black/30 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10">
+                <div className="flex items-center space-x-4 text-xs sm:text-sm text-white/80">
                   {isNewsArticle(article) ? (
                     <>
                       <div className="flex items-center gap-1">
@@ -280,9 +281,9 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             </motion.div>
 
-            {/* Action Buttons - Mobile & Desktop Optimized */}
+            {/* Compact Action Buttons */}
             {currentIndex === index && (
-              <div className="absolute right-2 sm:right-4 bottom-24 sm:bottom-32 flex flex-col space-y-2 sm:space-y-4 z-20">
+              <div className="absolute right-3 bottom-20 sm:bottom-24 flex flex-col space-y-2 z-20">
                 <LikeButton articleId={String(article.id)} articleTitle={article.title} />
                 <CommentButton 
                   articleId={String(article.id)} 
@@ -294,31 +295,31 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                       e.stopPropagation();
                       handleTextToSpeech();
                     }}
-                    className={`p-2 sm:p-3 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 ${
+                    className={`p-2 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110 ${
                       isReading 
                         ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30' 
-                        : 'bg-black/30 text-white hover:bg-black/50 hover:scale-110'
+                        : 'bg-black/30 text-white hover:bg-black/50'
                     }`}
                   >
                     {isReading ? (
-                      <VolumeX className="w-4 h-4 sm:w-6 sm:h-6" />
+                      <VolumeX className="w-4 h-4" />
                     ) : (
-                      <Volume2 className="w-4 h-4 sm:w-6 sm:h-6" />
+                      <Volume2 className="w-4 h-4" />
                     )}
                   </button>
                   <span className="text-white text-xs mt-1 font-medium">Listen</span>
                 </div>
                 
-                {/* Hide share button on mobile, show on desktop */}
+                {/* Desktop only share button */}
                 <div className="hidden sm:flex flex-col items-center">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowShare(true);
                     }}
-                    className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
+                    className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
                   >
-                    <Share2 className="w-6 h-6" />
+                    <Share2 className="w-4 h-4" />
                   </button>
                   <span className="text-white text-xs mt-1 font-medium">Share</span>
                 </div>

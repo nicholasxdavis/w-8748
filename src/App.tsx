@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import Navigation from "./components/Navigation";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import Discover from "./pages/Discover";
 
 const queryClient = new QueryClient({
@@ -24,6 +26,8 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/*" element={
               <>
                 <Navigation />
