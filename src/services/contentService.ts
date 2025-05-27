@@ -13,24 +13,16 @@ export const getMixedContent = async (count: number = 10): Promise<ContentItem[]
   const targetWikiCount = Math.ceil(count * 0.7); // 70% wiki content
   const targetNewsCount = Math.floor(count * 0.3); // 30% news content
   
-  // Fetch with a smart strategy: 60% popular, 40% random for variety
-  const popularCount = Math.ceil(targetWikiCount * 0.6);
-  const randomCount = targetWikiCount - popularCount;
+  // Simple fetch strategy - just get random content
+  const fetchMultiplier = 3;
   
-  // Fetch more content than needed to filter out cached items
-  const fetchMultiplier = 4;
-  
-  const [popularWikiArticles, randomWikiArticles, newsArticles] = await Promise.all([
-    getWikiArticles(popularCount * fetchMultiplier, "popular"),
-    getWikiArticles(randomCount * fetchMultiplier, "random"), 
+  const [wikiArticles, newsArticles] = await Promise.all([
+    getWikiArticles(targetWikiCount * fetchMultiplier),
     getBreakingNews(targetNewsCount * fetchMultiplier)
   ]);
 
-  // Combine wiki content with popular content appearing first
-  const allWikiArticles = [...popularWikiArticles, ...randomWikiArticles];
-
   // Filter out cached content
-  const freshWikiArticles = contentCache.filterUncached(allWikiArticles);
+  const freshWikiArticles = contentCache.filterUncached(wikiArticles);
   const freshNewsArticles = contentCache.filterUncached(newsArticles);
   
   // If we have very few fresh articles, clear part of the cache
@@ -40,7 +32,7 @@ export const getMixedContent = async (count: number = 10): Promise<ContentItem[]
     
     // Retry with fresh cache
     const [retryWikiArticles, retryNewsArticles] = await Promise.all([
-      getWikiArticles(targetWikiCount * 2, "mixed"),
+      getWikiArticles(targetWikiCount * 2),
       getBreakingNews(targetNewsCount * 2)
     ]);
     
@@ -58,21 +50,22 @@ export const getMixedContent = async (count: number = 10): Promise<ContentItem[]
     contentCache.addToCache(String(article.id), 'news');
   });
 
-  // Mix the content with bias toward popular content appearing earlier
+  // Simple mixing - alternate between wiki and news
   const mixedContent: ContentItem[] = [];
+  const selectedWiki = freshWikiArticles.slice(0, targetWikiCount);
+  const selectedNews = freshNewsArticles.slice(0, targetNewsCount);
+  
   let wikiIndex = 0;
   let newsIndex = 0;
 
   for (let i = 0; i < count; i++) {
-    // 30% chance for news, but prioritize popular wiki content
-    const shouldAddNews = Math.random() < 0.3 && newsIndex < freshNewsArticles.length;
-    
-    if (shouldAddNews) {
-      mixedContent.push(freshNewsArticles[newsIndex++]);
-    } else if (wikiIndex < freshWikiArticles.length) {
-      mixedContent.push(freshWikiArticles[wikiIndex++]);
-    } else if (newsIndex < freshNewsArticles.length) {
-      mixedContent.push(freshNewsArticles[newsIndex++]);
+    if (i % 3 === 0 && newsIndex < selectedNews.length) {
+      // Every 3rd item is news if available
+      mixedContent.push(selectedNews[newsIndex++]);
+    } else if (wikiIndex < selectedWiki.length) {
+      mixedContent.push(selectedWiki[wikiIndex++]);
+    } else if (newsIndex < selectedNews.length) {
+      mixedContent.push(selectedNews[newsIndex++]);
     }
   }
 
