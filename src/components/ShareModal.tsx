@@ -42,22 +42,22 @@ const ShareModal = ({ isOpen, onClose, title, articleId }: ShareModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h3 className="text-gray-900 font-semibold text-lg">Share Article</h3>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-md shadow-2xl border border-gray-200/50">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100/50">
+          <h3 className="text-gray-900 font-bold text-lg">Share Article</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100/50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="bg-gray-50 rounded-xl p-4">
-            <h4 className="text-gray-900 font-medium mb-3 line-clamp-2">{title}</h4>
-            <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+          <div className="bg-gray-50/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-200/30">
+            <h4 className="text-gray-900 font-semibold mb-3 line-clamp-2">{title}</h4>
+            <div className="flex items-center gap-3 bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-gray-200/50">
               <Link2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="text"
@@ -68,7 +68,7 @@ const ShareModal = ({ isOpen, onClose, title, articleId }: ShareModalProps) => {
               <Button
                 onClick={handleCopy}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl px-4 py-2 shadow-lg"
               >
                 {copied ? (
                   <>
@@ -88,7 +88,7 @@ const ShareModal = ({ isOpen, onClose, title, articleId }: ShareModalProps) => {
           {navigator.share && (
             <Button
               onClick={handleNativeShare}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg py-3"
+              className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white rounded-2xl py-3 shadow-lg"
             >
               <Share className="w-4 h-4 mr-2" />
               Share via...

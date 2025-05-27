@@ -28,7 +28,6 @@ const Navigation = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
-  // Determine if we're on the discover page
   const isDiscoverPage = location.pathname === "/discover";
 
   useEffect(() => {
@@ -116,10 +115,10 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 bg-gradient-to-r from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/30">
         <div 
-          className={`text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 ${
-            isDiscoverPage ? 'text-blue-500' : 'text-white'
+          className={`text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent hover:scale-105 transition-transform ${
+            isDiscoverPage ? 'from-blue-500 to-blue-400' : ''
           }`}
           onClick={handleRandomContent}
         >
@@ -127,29 +126,29 @@ const Navigation = () => {
         </div>
         
         <div 
-          className="flex-1 max-w-xs sm:max-w-sm mx-2 sm:mx-8 flex items-center bg-gray-800/60 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-200 border border-gray-700/50"
+          className="flex-1 max-w-xs sm:max-w-sm mx-2 sm:mx-8 flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
           onClick={() => setOpen(true)}
         >
-          <Search className="w-4 h-4 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
-          <span className="text-gray-400 text-xs sm:text-sm font-medium truncate">
-            {searchValue || "Search..."}
+          <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+          <span className="text-gray-400 text-sm font-medium truncate">
+            {searchValue || "Search articles & news..."}
           </span>
         </div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-2 flex-shrink-0">
           <NotificationsPopover />
           <LikedArticlesPopover />
           
           {user ? (
-            <div className="flex items-center space-x-1 sm:space-x-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-700 rounded-full flex items-center justify-center border border-gray-600">
-                <span className="text-white text-xs sm:text-sm font-semibold">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
+                <span className="text-white text-sm font-bold">
                   {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                 </span>
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-400 hover:text-red-400 transition-colors p-1.5 sm:p-2 hover:bg-gray-800/50 rounded-full"
+                className="text-gray-400 hover:text-red-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -157,10 +156,10 @@ const Navigation = () => {
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-1 sm:space-x-2 bg-gray-800/60 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-gray-700/60 transition-all duration-200 font-medium border border-gray-600/50"
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-blue-500/25"
             >
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm hidden sm:inline">Sign In</span>
+              <User className="w-4 h-4" />
+              <span className="text-sm hidden sm:inline">Sign In</span>
             </button>
           )}
         </div>
@@ -170,69 +169,71 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900 rounded-xl border border-gray-700 shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
-          <div className="p-3 sm:p-4 border-b border-gray-700">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
+          <div className="p-4 border-b border-gray-700/50">
             <div className="flex items-center space-x-3">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              <Search className="w-5 h-5 text-gray-400" />
               <input
-                placeholder="Search articles and news..."
+                placeholder="Search articles and breaking news..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                className="flex-1 bg-transparent text-sm sm:text-base outline-none placeholder-gray-500 text-white"
+                className="flex-1 bg-transparent text-base outline-none placeholder-gray-500 text-white"
                 autoFocus
               />
             </div>
           </div>
 
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
             {!searchValue && (
-              <div className="p-4 sm:p-6 text-center">
-                <Search className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 mx-auto mb-3 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Discover Knowledge & News</h3>
-                <p className="text-gray-400 text-sm">Search for articles and breaking news</p>
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Discover Knowledge & News</h3>
+                <p className="text-gray-400 text-sm">Search for fascinating articles and breaking news</p>
               </div>
             )}
 
             {isLoading && searchValue && (
-              <div className="p-4 sm:p-6 text-center">
-                <div className="animate-spin w-6 h-6 sm:w-8 sm:h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-3 sm:mb-4"></div>
-                <p className="text-gray-400 text-sm">Searching...</p>
+              <div className="p-6 text-center">
+                <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-400 text-sm">Searching the universe of knowledge...</p>
               </div>
             )}
 
             {!isLoading && searchValue && searchResults && searchResults.length === 0 && (
-              <div className="p-4 sm:p-6 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Search className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-gray-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-500" />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">No results found</h3>
-                <p className="text-gray-400 text-sm">Try searching for something else</p>
+                <h3 className="text-lg font-semibold text-white mb-2">No results found</h3>
+                <p className="text-gray-400 text-sm">Try a different search term</p>
               </div>
             )}
 
             {!isLoading && searchResults && searchResults.length > 0 && (
-              <div className="p-1 sm:p-2">
+              <div className="p-2">
                 {searchResults.map((result, index) => (
                   <div
                     key={`${isNewsArticle(result) ? 'news' : 'wiki'}-${result.id}`}
                     onClick={() => handleItemSelect(result.title, result)}
-                    className="flex items-center p-3 sm:p-4 rounded-xl cursor-pointer hover:bg-gray-800 transition-all duration-200 group"
+                    className="flex items-center p-4 rounded-xl cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group border border-transparent hover:border-gray-700/50"
                   >
-                    <div className="flex items-center w-full space-x-3 sm:space-x-4">
+                    <div className="flex items-center w-full space-x-4">
                       {result.image ? (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800 relative">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800 relative border border-gray-700/30">
                           <img 
                             src={result.image} 
                             alt={result.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                           />
                           {isNewsArticle(result) && (
-                            <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
+                            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                           )}
                         </div>
                       ) : (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-700 flex items-center justify-center flex-shrink-0">
-                          <span className="text-gray-300 font-semibold text-sm sm:text-lg">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-600/30">
+                          <span className="text-gray-300 font-semibold text-lg">
                             {result.title[0]}
                           </span>
                         </div>
@@ -240,19 +241,19 @@ const Navigation = () => {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-white text-sm sm:text-base group-hover:text-blue-400 transition-colors line-clamp-1">
+                          <h4 className="font-semibold text-white text-base group-hover:text-blue-400 transition-colors line-clamp-1">
                             {result.title}
                           </h4>
                           {isNewsArticle(result) && (
-                            <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                              NEWS
+                            <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                              LIVE
                             </span>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm text-gray-400 line-clamp-2 leading-relaxed mb-1">
+                        <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed mb-1">
                           {result.content}
                         </p>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 font-medium">
                           {formatItemDate(result)}
                         </span>
                       </div>

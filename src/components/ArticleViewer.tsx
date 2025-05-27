@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -46,7 +45,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     clickCountRef.current += 1;
     
     if (clickCountRef.current === 1) {
-      // First click - load all content immediately
       if (!isTextFullyLoaded) {
         setDisplayedText(currentArticle?.content || "");
         setProgress(100);
@@ -54,7 +52,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       }
     }
     
-    // Reset click count after a delay
     setTimeout(() => {
       clickCountRef.current = 0;
     }, 300);
@@ -227,13 +224,13 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 alt={article.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
             </div>
 
             {/* Breaking News Badge */}
             {isNewsArticle(article) && (
               <div className="absolute top-20 left-4 z-20">
-                <div className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-red-400/30">
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                   BREAKING NEWS
                 </div>
@@ -248,25 +245,27 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 y: isVisible && currentIndex === index ? 0 : 20,
               }}
               transition={{ duration: 0.5 }}
-              className="relative z-10 text-white p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
+              className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-start justify-between">
-                  <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{article.title}</h1>
+                  <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg">{article.title}</h1>
                 </div>
-                <p className="text-base sm:text-lg leading-relaxed opacity-90">
-                  {currentIndex === index ? displayedText : article.content}
-                </p>
-                <div className="flex items-center space-x-4 text-sm text-white/70">
+                <div className="max-h-48 sm:max-h-64 overflow-y-auto scrollbar-hide bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                  <p className="text-sm sm:text-lg leading-relaxed opacity-95">
+                    {currentIndex === index ? displayedText : article.content}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4 text-xs sm:text-sm text-white/80 bg-black/30 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10">
                   {isNewsArticle(article) ? (
                     <>
                       <div className="flex items-center gap-1">
-                        <Globe className="w-4 h-4" />
+                        <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{article.source}</span>
                       </div>
                       <span>•</span>
                       <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{formatNewsDate(article.publishedAt)}</span>
                       </div>
                     </>
@@ -281,9 +280,9 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             </motion.div>
 
-            {/* Action Buttons - Right Side */}
+            {/* Action Buttons - Mobile & Desktop Optimized */}
             {currentIndex === index && (
-              <div className="absolute right-4 bottom-32 flex flex-col space-y-4 z-20">
+              <div className="absolute right-2 sm:right-4 bottom-24 sm:bottom-32 flex flex-col space-y-2 sm:space-y-4 z-20">
                 <LikeButton articleId={String(article.id)} articleTitle={article.title} />
                 <CommentButton 
                   articleId={String(article.id)} 
@@ -295,31 +294,33 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                       e.stopPropagation();
                       handleTextToSpeech();
                     }}
-                    className={`p-3 rounded-full transition-all duration-200 ${
+                    className={`p-2 sm:p-3 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 ${
                       isReading 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-black/20 text-white hover:bg-black/40'
+                        ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30' 
+                        : 'bg-black/30 text-white hover:bg-black/50 hover:scale-110'
                     }`}
                   >
                     {isReading ? (
-                      <VolumeX className="w-6 h-6" />
+                      <VolumeX className="w-4 h-4 sm:w-6 sm:h-6" />
                     ) : (
-                      <Volume2 className="w-6 h-6" />
+                      <Volume2 className="w-4 h-4 sm:w-6 sm:h-6" />
                     )}
                   </button>
-                  <span className="text-white text-xs mt-1">Listen</span>
+                  <span className="text-white text-xs mt-1 font-medium">Listen</span>
                 </div>
-                <div className="flex flex-col items-center">
+                
+                {/* Hide share button on mobile, show on desktop */}
+                <div className="hidden sm:flex flex-col items-center">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowShare(true);
                     }}
-                    className="p-3 rounded-full bg-black/20 text-white hover:bg-black/40 transition-all duration-200"
+                    className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
                   >
                     <Share2 className="w-6 h-6" />
                   </button>
-                  <span className="text-white text-xs mt-1">Share</span>
+                  <span className="text-white text-xs mt-1 font-medium">Share</span>
                 </div>
               </div>
             )}
@@ -329,8 +330,8 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               <div className="absolute bottom-0 left-0 right-0 z-20">
                 <Progress 
                   value={progress} 
-                  className="h-0.5 bg-black/20"
-                  indicatorClassName="bg-gradient-to-r from-blue-400 to-blue-600"
+                  className="h-1 bg-black/30"
+                  indicatorClassName="bg-gradient-to-r from-blue-400 to-purple-600"
                 />
               </div>
             )}
@@ -338,7 +339,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
         ))}
         {isLoading && (
           <div className="h-screen w-screen flex items-center justify-center bg-black">
-            <div className="text-white">Loading more content...</div>
+            <div className="text-white text-lg">Loading more amazing content...</div>
           </div>
         )}
       </main>
