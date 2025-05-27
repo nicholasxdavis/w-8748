@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
 import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2 } from "lucide-react";
-import { getMixedContent, isNewsArticle, isDidYouKnowFact, isHistoricQuote } from "../services/contentService";
+import { getMixedContent } from "../services/contentService";
+import { isNewsArticle } from "../services/contentService";
 import SaveButton from "./SaveButton";
 import ShareModal from "./ShareModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useSaveArticle } from "@/hooks/useSaveArticle";
-
 const ArticleViewer = ({
   articles: initialArticles,
   onArticleChange
@@ -42,6 +42,7 @@ const ArticleViewer = ({
     toggleSave
   } = useSaveArticle();
 
+  // Hide double-tap hint after 3 seconds on first load
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowDoubleTapHint(false);
@@ -62,10 +63,13 @@ const ArticleViewer = ({
   }, [isLoading]);
   const showFullText = useCallback(() => {
     if (currentArticle?.content && !isTextFullyLoaded) {
+      // Clear any ongoing typing animation
       if (typingIntervalRef.current) {
         clearInterval(typingIntervalRef.current);
         typingIntervalRef.current = null;
       }
+
+      // Show complete text immediately
       setDisplayedText(currentArticle.content);
       setProgress(100);
       setIsTextFullyLoaded(true);
@@ -79,10 +83,12 @@ const ArticleViewer = ({
     }
     if (clickCountRef.current === 1) {
       doubleClickTimeoutRef.current = setTimeout(() => {
+        // Single click - show full text if not loaded
         showFullText();
         clickCountRef.current = 0;
       }, 300);
     } else if (clickCountRef.current === 2) {
+      // Double click - save article
       if (currentArticle) {
         toggleSave({
           id: String(currentArticle.id),
@@ -119,6 +125,7 @@ const ArticleViewer = ({
     window.open(`${baseUrl}${articleTitle}`, '_blank');
   }, [currentArticle?.title]);
 
+  // Memoized action buttons to prevent unnecessary re-renders
   const ActionButtons = useMemo(() => ({
     isMobile = false
   }) => <motion.div className={`flex ${isMobile ? 'flex-row justify-around' : 'flex-col'} space-y-0 ${isMobile ? 'space-x-3' : 'space-y-2'} z-20`} initial={{
@@ -160,6 +167,7 @@ const ArticleViewer = ({
         </div>}
     </motion.div>, [currentArticle, handleTextToSpeech, isReading, speechLoading]);
 
+  // Reset states when article changes
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
@@ -170,6 +178,7 @@ const ArticleViewer = ({
     setShowActionButtons(false);
     onArticleChange(currentArticle);
 
+    // Clear any existing typing interval
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
       typingIntervalRef.current = null;
@@ -182,6 +191,7 @@ const ArticleViewer = ({
     }
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop]);
 
+  // Optimized typing animation with better state management
   useEffect(() => {
     if (!isVisible || !currentArticle?.content || isTextFullyLoaded || isTypingPaused) return;
     let currentChar = 0;
@@ -208,6 +218,7 @@ const ArticleViewer = ({
     };
   }, [isVisible, currentArticle?.content, isTextFullyLoaded, isTypingPaused]);
 
+  // Optimized intersection observer
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -233,6 +244,7 @@ const ArticleViewer = ({
     };
   }, [articles, currentIndex]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stop();
@@ -244,109 +256,75 @@ const ArticleViewer = ({
       }
     };
   }, [stop]);
-
-  return (
-    <>
+  return <>
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
         <AnimatePresence>
-          {articles.map((article, index) => {
-            return (
-              <motion.div 
-                key={isNewsArticle(article) ? article.id : `content-${article.id}`} 
-                data-index={index} 
-                className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden" 
-                onClick={handleContentClick} 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }} 
-                transition={{ duration: 0.3 }}
-              >
-                <div className="absolute inset-0 w-screen h-screen">
-                  <img src={article.image} alt={article.title} className="w-full h-full object-cover" loading={index <= currentIndex + 1 ? "eager" : "lazy"} />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-                </div>
+          {articles.map((article, index) => <motion.div key={isNewsArticle(article) ? article.id : `wiki-${article.id}`} data-index={index} className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden" onClick={handleContentClick} initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} exit={{
+          opacity: 0
+        }} transition={{
+          duration: 0.3
+        }}>
+              <div className="absolute inset-0 w-screen h-screen">
+                <img src={article.image} alt={article.title} className="w-full h-full object-cover" loading={index <= currentIndex + 1 ? "eager" : "lazy"} />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
+              </div>
 
-                {isNewsArticle(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
-              x: -50,
+              {/* Breaking News Badge */}
+              {isNewsArticle(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
+            x: -50,
+            opacity: 0
+          }} animate={{
+            x: 0,
+            opacity: 1
+          }} transition={{
+            delay: 0.2,
+            duration: 0.4
+          }}>
+                  <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-red-400/30">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    BREAKING NEWS
+                  </div>
+                </motion.div>}
+
+              {/* Double-click hint - only show briefly on first load */}
+              <AnimatePresence>
+                {showDoubleTapHint && <motion.div className="absolute top-20 right-4 z-20" initial={{
+              x: 50,
               opacity: 0
             }} animate={{
               x: 0,
               opacity: 1
-            }} transition={{
-              delay: 0.2,
-              duration: 0.4
-            }}>
-                    <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-red-400/30">
-                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                      BREAKING NEWS
-                    </div>
-                  </motion.div>}
-
-                {isDidYouKnowFact(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
-              x: -50,
+            }} exit={{
+              x: 50,
               opacity: 0
-            }} animate={{
-              x: 0,
-              opacity: 1
             }} transition={{
-              delay: 0.2,
               duration: 0.4
             }}>
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-blue-400/30">
-                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                      DID YOU KNOW
-                    </div>
-                  </motion.div>}
-
-                {isHistoricQuote(article) && <motion.div className="absolute top-20 left-4 z-20" initial={{
-              x: -50,
-              opacity: 0
-            }} animate={{
-              x: 0,
-              opacity: 1
-            }} transition={{
-              delay: 0.2,
-              duration: 0.4
-            }}>
-                    <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm border border-purple-400/30">
-                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                      HISTORIC QUOTE
-                    </div>
-                  </motion.div>}
-
-                <AnimatePresence>
-                  {showDoubleTapHint && <motion.div className="absolute top-20 right-4 z-20" initial={{
-                x: 50,
-                opacity: 0
-              }} animate={{
-                x: 0,
-                opacity: 1
-              }} exit={{
-                x: 50,
-                opacity: 0
-              }} transition={{
-                duration: 0.4
-              }}>
                     <div className="bg-black/40 text-white px-3 py-1 rounded-xl text-xs backdrop-blur-md border border-white/20">
                       Double-tap to save
                     </div>
                   </motion.div>}
-                </AnimatePresence>
+              </AnimatePresence>
 
-                <motion.div className="absolute bottom-20 right-4 z-30" initial={{
-              scale: 0
-            }} animate={{
-              scale: 1
-            }} transition={{
-              delay: 0.3,
-              duration: 0.3
-            }}>
-                  <button onClick={e => {
-                e.stopPropagation();
-                setShowActionButtons(!showActionButtons);
-              }} className="p-3 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105">
-                    <AnimatePresence mode="wait">
-                      {showActionButtons ? <motion.div key="close" initial={{
+              {/* Action Buttons Toggle */}
+              <motion.div className="absolute bottom-20 right-4 z-30" initial={{
+            scale: 0
+          }} animate={{
+            scale: 1
+          }} transition={{
+            delay: 0.3,
+            duration: 0.3
+          }}>
+                <button onClick={e => {
+              e.stopPropagation();
+              setShowActionButtons(!showActionButtons);
+            }} className="p-3 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105">
+                  <AnimatePresence mode="wait">
+                    {showActionButtons ? <motion.div key="close" initial={{
                   rotate: -90,
                   opacity: 0
                 }} animate={{
@@ -373,91 +351,84 @@ const ArticleViewer = ({
                 }}>
                         <Menu className="w-5 h-5" />
                       </motion.div>}
-                    </AnimatePresence>
-                  </button>
-                </motion.div>
+                  </AnimatePresence>
+                </button>
+              </motion.div>
 
-                <AnimatePresence>
-                  {showActionButtons && <motion.div className="absolute right-4 bottom-36 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/20 z-30" initial={{
-                opacity: 0,
-                scale: 0.8,
-                y: 20
-              }} animate={{
-                opacity: 1,
-                scale: 1,
-                y: 0
-              }} exit={{
-                opacity: 0,
-                scale: 0.8,
-                y: 20
-              }} transition={{
-                duration: 0.2
-              }}>
+              {/* Action Buttons Sidebar */}
+              <AnimatePresence>
+                {showActionButtons && <motion.div className="absolute right-4 bottom-36 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/20 z-30" initial={{
+              opacity: 0,
+              scale: 0.8,
+              y: 20
+            }} animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0
+            }} exit={{
+              opacity: 0,
+              scale: 0.8,
+              y: 20
+            }} transition={{
+              duration: 0.2
+            }}>
                     <ActionButtons isMobile={true} />
                   </motion.div>}
-                </AnimatePresence>
+              </AnimatePresence>
 
-                <motion.div initial={{
-              opacity: 0,
-              y: 30
-            }} animate={{
-              opacity: isVisible && currentIndex === index ? 1 : 0,
-              y: isVisible && currentIndex === index ? 0 : 30
-            }} transition={{
-              duration: 0.5,
-              ease: "easeOut"
-            }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
-                  <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 max-w-2xl min-h-[calc(20vh+30px)]">
-                    <div className="flex items-start justify-between">
-                      <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
-                    </div>
-                    <div className="max-h-60 sm:max-h-96 overflow-y-auto scrollbar-hide">
-                      <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
-                        {currentIndex === index ? displayedText : article.content}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-center space-x-4 text-xs sm:text-sm text-white/80">
-                      {isNewsArticle(article) ? <>
-                          <div className="flex items-center gap-1">
-                            <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>{article.source}</span>
-                          </div>
-                          <span>•</span>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>{formatNewsDate(article.publishedAt)}</span>
-                          </div>
-                        </> : isDidYouKnowFact(article) ? <>
-                          <span>{article.category}</span>
-                          <span>•</span>
-                          <span>{article.source}</span>
-                        </> : isHistoricQuote(article) ? <>
-                          <span>by {article.author}</span>
-                          <span>•</span>
-                          <span>{article.category}</span>
-                        </> : <>
-                          <span>{article.readTime} min read</span>
-                          <span>•</span>
-                          <span>{article.views.toLocaleString()} views</span>
-                          <span>•</span>
-                          <button onClick={e => {
-                      e.stopPropagation();
-                      handleWikipediaRedirect();
-                    }} className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-                        <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span>Wikipedia</span>
-                      </button>
-                    </>}
-                    </div>
+              {/* Content with increased max height */}
+              <motion.div initial={{
+            opacity: 0,
+            y: 30
+          }} animate={{
+            opacity: isVisible && currentIndex === index ? 1 : 0,
+            y: isVisible && currentIndex === index ? 0 : 30
+          }} transition={{
+            duration: 0.5,
+            ease: "easeOut"
+          }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
+                <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 max-w-2xl min-h-[calc(20vh+30px)]">
+                  <div className="flex items-start justify-between">
+                    <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                   </div>
-                </motion.div>
-
-                {currentIndex === index && <div className="absolute bottom-0 left-0 right-0 z-20">
-                    <Progress value={progress} className="h-1 bg-black/30" indicatorClassName="bg-blue-500 transition-all duration-200" />
-                  </div>}
+                  <div className="max-h-60 sm:max-h-96 overflow-y-auto scrollbar-hide">
+                    <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
+                      {currentIndex === index ? displayedText : article.content}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center space-x-4 text-xs sm:text-sm text-white/80">
+                    {isNewsArticle(article) ? <>
+                        <div className="flex items-center gap-1">
+                          <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>{article.source}</span>
+                        </div>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>{formatNewsDate(article.publishedAt)}</span>
+                        </div>
+                      </> : <>
+                        <span>{article.readTime} min read</span>
+                        <span>•</span>
+                        <span>{article.views.toLocaleString()} views</span>
+                        <span>•</span>
+                        <button onClick={e => {
+                    e.stopPropagation();
+                    handleWikipediaRedirect();
+                  }} className="flex items-center gap-1 hover:text-blue-400 transition-colors">
+                          <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>Wikipedia</span>
+                        </button>
+                      </>}
+                  </div>
+                </div>
               </motion.div>
-            );
-          })}
+
+              {/* Progress Bar */}
+              {currentIndex === index && <div className="absolute bottom-0 left-0 right-0 z-20">
+                  <Progress value={progress} className="h-1 bg-black/30" indicatorClassName="bg-blue-500 transition-all duration-200" />
+                </div>}
+            </motion.div>)}
         </AnimatePresence>
         
         {isLoading && <motion.div className="h-screen w-screen flex items-center justify-center bg-black" initial={{
@@ -474,14 +445,7 @@ const ArticleViewer = ({
           </motion.div>}
       </main>
 
-      <ShareModal 
-        isOpen={showShare} 
-        onClose={() => setShowShare(false)} 
-        title={currentArticle?.title || (isDidYouKnowFact(currentArticle) ? 'Did You Know Fact' : isHistoricQuote(currentArticle) ? 'Historic Quote' : '')} 
-        articleId={String(currentArticle?.id || '')} 
-      />
-    </>
-  );
+      <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} title={currentArticle?.title || ''} articleId={String(currentArticle?.id || '')} />
+    </>;
 };
-
 export default ArticleViewer;

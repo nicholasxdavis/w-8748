@@ -2,24 +2,11 @@
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
 import { getUserInterests } from './userInterestsService';
-import { getDidYouKnowFacts, getHistoricQuotes, DidYouKnowFact, HistoricQuote } from './factsService';
 
-export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | HistoricQuote;
+export type ContentItem = WikipediaArticle | NewsArticle;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
-};
-
-export const isDidYouKnowFact = (item: ContentItem): item is DidYouKnowFact => {
-  return 'fact' in item;
-};
-
-export const isHistoricQuote = (item: ContentItem): item is HistoricQuote => {
-  return 'quote' in item && 'author' in item;
-};
-
-export const isWikipediaArticle = (item: ContentItem): item is WikipediaArticle => {
-  return 'content' in item && 'citations' in item && !('isBreakingNews' in item);
 };
 
 // Cache for personalized content to reduce API calls
@@ -73,9 +60,7 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
   const personalizedCount = Math.ceil(count * 0.5); // 50% personalized content
   const randomWikiCount = Math.ceil(count * 0.3); // 30% random wiki content  
-  const newsCount = Math.ceil(count * 0.15); // 15% news content
-  const factsCount = 1; // Just 1 fact to improve performance
-  const quotesCount = 1; // Just 1 quote to improve performance
+  const newsCount = Math.ceil(count * 0.2); // 20% news content
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -100,21 +85,13 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const remainingWikiCount = Math.max(0, randomWikiCount + (personalizedCount - personalizedArticles.length));
 
   // Fetch all content types in parallel for better performance
-  const [randomWikiArticles, newsArticles, facts, quotes] = await Promise.all([
+  const [randomWikiArticles, newsArticles] = await Promise.all([
     getWikiArticles(remainingWikiCount).catch(error => {
       console.error('Error fetching random wiki articles:', error);
       return [];
     }),
     getBreakingNews(newsCount).catch(error => {
       console.error('Error fetching news:', error);
-      return [];
-    }),
-    getDidYouKnowFacts(factsCount).catch(error => {
-      console.error('Error fetching facts:', error);
-      return [];
-    }),
-    getHistoricQuotes(quotesCount).catch(error => {
-      console.error('Error fetching quotes:', error);
       return [];
     })
   ]);
@@ -126,30 +103,20 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const mixedContent: ContentItem[] = [];
   const contentPools = {
     wiki: [...allWikiArticles],
-    news: [...newsArticles],
-    facts: [...facts],
-    quotes: [...quotes]
+    news: [...newsArticles]
   };
 
   // Interleave content types for better variety
-  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0 || contentPools.facts.length > 0 || contentPools.quotes.length > 0); i++) {
-    let contentType: 'wiki' | 'news' | 'facts' | 'quotes';
+  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
+    let contentType: 'wiki' | 'news';
     
-    // Every 4th item should be a fact or quote if available
-    if (i % 4 === 0 && contentPools.facts.length > 0) {
-      contentType = 'facts';
-    } else if (i % 6 === 0 && contentPools.quotes.length > 0) {
-      contentType = 'quotes';
-    } else if (i % 3 === 0 && contentPools.news.length > 0) {
+    // Every 4th item should be news if available
+    if (i % 4 === 0 && contentPools.news.length > 0) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
     } else if (contentPools.news.length > 0) {
       contentType = 'news';
-    } else if (contentPools.facts.length > 0) {
-      contentType = 'facts';
-    } else if (contentPools.quotes.length > 0) {
-      contentType = 'quotes';
     } else {
       break;
     }
@@ -160,16 +127,9 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Filter content based on type - facts and quotes don't need images, but articles do
-  const finalContent = mixedContent.filter(item => {
-    if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
-      return true; // Facts and quotes are always valid
-    }
-    // Only filter articles/news by image quality
-    return item.image && !item.image.includes('placeholder');
-  });
+  const finalContent = mixedContent.filter(item => item.image && !item.image.includes('placeholder'));
 
-  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news, ${facts.filter(fact => finalContent.includes(fact)).length} facts, ${quotes.filter(quote => finalContent.includes(quote)).length} quotes)`);
+  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news)`);
   
   return finalContent;
 };
@@ -199,13 +159,7 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
     if (i < wikiResults.length && mixedResults.length < 20) mixedResults.push(wikiResults[i]);
   }
 
-  // Only filter articles/news by image quality, not facts/quotes
-  return mixedResults.filter(item => {
-    if (isDidYouKnowFact(item) || isHistoricQuote(item)) {
-      return true;
-    }
-    return item.image && !item.image.includes('placeholder');
-  });
+  return mixedResults.filter(item => item.image && !item.image.includes('placeholder'));
 };
 
 // Clean up old cache entries periodically

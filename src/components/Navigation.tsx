@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { searchMixedContent, getMixedContent, isDidYouKnowFact, isHistoricQuote, isWikipediaArticle, isNewsArticle } from "../services/contentService";
+import { searchMixedContent, getMixedContent } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
-import { Compass } from "lucide-react";
 import SavedArticlesFullPage from "./SavedArticlesFullPage";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
@@ -42,15 +41,9 @@ const Navigation = () => {
     setSearchQuery("");
     const randomContent = await getMixedContent(6);
     if (randomContent.length > 0) {
-      // Get the first article with a title for navigation
-      const firstArticle = randomContent.find(item => 
-        (isWikipediaArticle(item) || isNewsArticle(item)) && item.title
-      );
-      if (firstArticle && (isWikipediaArticle(firstArticle) || isNewsArticle(firstArticle))) {
-        navigate(`/?q=${encodeURIComponent(firstArticle.title)}`, {
-          state: { reorderedResults: randomContent }
-        });
-      }
+      navigate(`/?q=${encodeURIComponent(randomContent[0].title)}`, {
+        state: { reorderedResults: randomContent }
+      });
     }
   };
 
@@ -66,7 +59,7 @@ const Navigation = () => {
             Lore
           </div>
           
-          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)] ml-[31px]">
+          <div className="mx-4 flex-1 max-w-[calc(100vw-200px)] ml-[26px]">
             <SearchButton 
               searchQuery={searchQuery}
               onClick={() => setSearchOpen(true)}
@@ -77,7 +70,7 @@ const Navigation = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-400/10"
+              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -105,14 +98,8 @@ const Navigation = () => {
           
           <div className="flex items-center space-x-2 flex-shrink-0 ml-auto">
             <button
-              onClick={() => navigate('/discover')}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
-            >
-              <Compass className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-400/10"
+              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -121,16 +108,6 @@ const Navigation = () => {
             <UserMenu />
           </div>
         </div>
-      </div>
-
-      {/* Mobile Discover Button - Bottom Left */}
-      <div className="sm:hidden fixed bottom-4 left-4 z-50">
-        <button
-          onClick={() => navigate('/discover')}
-          className="p-3 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105"
-        >
-          <Compass className="w-5 h-5" />
-        </button>
       </div>
 
       <SearchInterface
