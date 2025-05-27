@@ -1,12 +1,16 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews } from './newsService';
+import { DidYouKnowFact, getRandomFacts } from './factsService';
 import { getUserInterests } from './userInterestsService';
 
-export type ContentItem = WikipediaArticle | NewsArticle;
+export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
+};
+
+export const isDidYouKnowFact = (item: ContentItem): item is DidYouKnowFact => {
+  return 'type' in item && item.type === 'fact';
 };
 
 // Cache for personalized content to reduce API calls
@@ -58,9 +62,10 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  const personalizedCount = Math.ceil(count * 0.5); // 50% personalized content
+  const personalizedCount = Math.ceil(count * 0.4); // 40% personalized content
   const randomWikiCount = Math.ceil(count * 0.3); // 30% random wiki content  
   const newsCount = Math.ceil(count * 0.2); // 20% news content
+  const factsCount = Math.ceil(count * 0.1); // 10% did you know facts
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -85,13 +90,17 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const remainingWikiCount = Math.max(0, randomWikiCount + (personalizedCount - personalizedArticles.length));
 
   // Fetch all content types in parallel for better performance
-  const [randomWikiArticles, newsArticles] = await Promise.all([
+  const [randomWikiArticles, newsArticles, facts] = await Promise.all([
     getWikiArticles(remainingWikiCount).catch(error => {
       console.error('Error fetching random wiki articles:', error);
       return [];
     }),
     getBreakingNews(newsCount).catch(error => {
       console.error('Error fetching news:', error);
+      return [];
+    }),
+    getRandomFacts(factsCount).catch(error => {
+      console.error('Error fetching facts:', error);
       return [];
     })
   ]);
@@ -103,20 +112,27 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const mixedContent: ContentItem[] = [];
   const contentPools = {
     wiki: [...allWikiArticles],
-    news: [...newsArticles]
+    news: [...newsArticles],
+    facts: [...facts]
   };
 
   // Interleave content types for better variety
-  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
-    let contentType: 'wiki' | 'news';
+  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0 || contentPools.facts.length > 0); i++) {
+    let contentType: 'wiki' | 'news' | 'facts';
     
+    // Every 6th item should be a fact if available
+    if (i % 6 === 0 && contentPools.facts.length > 0) {
+      contentType = 'facts';
+    }
     // Every 4th item should be news if available
-    if (i % 4 === 0 && contentPools.news.length > 0) {
+    else if (i % 4 === 0 && contentPools.news.length > 0) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
     } else if (contentPools.news.length > 0) {
       contentType = 'news';
+    } else if (contentPools.facts.length > 0) {
+      contentType = 'facts';
     } else {
       break;
     }
@@ -129,7 +145,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
 
   const finalContent = mixedContent.filter(item => item.image && !item.image.includes('placeholder'));
 
-  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news)`);
+  console.log(`Mixed content generated: ${finalContent.length} total (${personalizedArticles.length} personalized, ${randomWikiArticles.length} random wiki, ${newsArticles.filter(article => finalContent.includes(article)).length} news, ${facts.filter(fact => finalContent.includes(fact)).length} facts)`);
   
   return finalContent;
 };
@@ -138,7 +154,7 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
   if (!query || query.length < 3) return [];
 
   // Parallel search for better performance
-  const [wikiResults, newsResults] = await Promise.all([
+  const [wikiResults, newsResults, facts] = await Promise.all([
     searchWikiArticles(query).catch(error => {
       console.error('Error searching wiki articles:', error);
       return [];
@@ -146,17 +162,22 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
     searchNews(query).catch(error => {
       console.error('Error searching news:', error);
       return [];
+    }),
+    getRandomFacts(5).catch(error => {
+      console.error('Error fetching facts:', error);
+      return [];
     })
   ]);
 
   // Interleave search results with preference for relevance
   const mixedResults: ContentItem[] = [];
-  const maxResults = Math.max(wikiResults.length, newsResults.length);
+  const maxResults = Math.max(wikiResults.length, newsResults.length, facts.length);
 
   for (let i = 0; i < maxResults && mixedResults.length < 20; i++) {
     // Prioritize news for current events
     if (i < newsResults.length) mixedResults.push(newsResults[i]);
     if (i < wikiResults.length && mixedResults.length < 20) mixedResults.push(wikiResults[i]);
+    if (i < facts.length && mixedResults.length < 20) mixedResults.push(facts[i]);
   }
 
   return mixedResults.filter(item => item.image && !item.image.includes('placeholder'));
