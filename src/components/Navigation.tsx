@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchMixedContent, getMixedContent } from "../services/contentService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import SavedArticlesPopover from "./SavedArticlesPopover";
+import SavedArticlesPopup from "./SavedArticlesPopup";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
 import UserMenu from "./navigation/UserMenu";
@@ -66,8 +66,8 @@ const Navigation = () => {
           onClick={() => setSearchOpen(true)}
         />
         
-        <div className="flex items-center space-x-4 flex-shrink-0">
-          <SavedArticlesPopover />
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          <SavedArticlesPopup />
           <UserMenu />
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -21,9 +22,11 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [showDoubleTapHint, setShowDoubleTapHint] = useState(true);
+  const [isTypingPaused, setIsTypingPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const clickCountRef = useRef(0);
   const doubleClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentArticle = articles[currentIndex];
   const { toast } = useToast();
   const { speak, stop, isReading, isLoading: speechLoading } = useTextToSpeech();
@@ -52,6 +55,22 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     }
   }, [isLoading]);
 
+  const showFullText = useCallback(() => {
+    if (currentArticle?.content && !isTextFullyLoaded) {
+      // Clear any ongoing typing animation
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+      
+      // Show complete text immediately
+      setDisplayedText(currentArticle.content);
+      setProgress(100);
+      setIsTextFullyLoaded(true);
+      setIsTypingPaused(false);
+    }
+  }, [currentArticle?.content, isTextFullyLoaded]);
+
   const handleContentClick = useCallback(() => {
     clickCountRef.current += 1;
     
@@ -62,11 +81,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     if (clickCountRef.current === 1) {
       doubleClickTimeoutRef.current = setTimeout(() => {
         // Single click - show full text if not loaded
-        if (!isTextFullyLoaded) {
-          setDisplayedText(currentArticle?.content || "");
-          setProgress(100);
-          setIsTextFullyLoaded(true);
-        }
+        showFullText();
         clickCountRef.current = 0;
       }, 300);
     } else if (clickCountRef.current === 2) {
@@ -81,7 +96,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       }
       clickCountRef.current = 0;
     }
-  }, [isTextFullyLoaded, currentArticle, toggleSave]);
+  }, [currentArticle, toggleSave, showFullText]);
 
   const handleTextToSpeech = useCallback(() => {
     if (!currentArticle?.content) {
@@ -178,9 +193,16 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     setDisplayedText("");
     setProgress(0);
     setIsTextFullyLoaded(false);
+    setIsTypingPaused(false);
     clickCountRef.current = 0;
     setShowActionButtons(false);
     onArticleChange(currentArticle);
+
+    // Clear any existing typing interval
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
 
     if (isReading) {
       stop();
@@ -191,28 +213,35 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     }
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop]);
 
-  // Optimized typing animation
+  // Optimized typing animation with better state management
   useEffect(() => {
-    if (!isVisible || !currentArticle?.content || isTextFullyLoaded) return;
+    if (!isVisible || !currentArticle?.content || isTextFullyLoaded || isTypingPaused) return;
 
     let currentChar = 0;
     const text = currentArticle.content;
     const totalChars = text.length;
     const typingSpeed = Math.max(5, Math.min(30, 2000 / totalChars));
 
-    const interval = setInterval(() => {
-      if (currentChar <= totalChars) {
-        setDisplayedText(text.slice(0, currentChar));
+    typingIntervalRef.current = setInterval(() => {
+      if (currentChar <= totalChars && !isTypingPaused) {
+        const newText = text.slice(0, currentChar);
+        setDisplayedText(newText);
         setProgress((currentChar / totalChars) * 100);
         currentChar += Math.ceil(typingSpeed / 5);
-      } else {
-        clearInterval(interval);
+      } else if (currentChar > totalChars) {
+        clearInterval(typingIntervalRef.current!);
+        typingIntervalRef.current = null;
         setIsTextFullyLoaded(true);
       }
     }, typingSpeed);
 
-    return () => clearInterval(interval);
-  }, [isVisible, currentArticle?.content, isTextFullyLoaded]);
+    return () => {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+    };
+  }, [isVisible, currentArticle?.content, isTextFullyLoaded, isTypingPaused]);
 
   // Optimized intersection observer
   useEffect(() => {
@@ -252,6 +281,9 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       stop();
       if (doubleClickTimeoutRef.current) {
         clearTimeout(doubleClickTimeoutRef.current);
+      }
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
       }
     };
   }, [stop]);
@@ -385,7 +417,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                   <div className="flex items-start justify-between">
                     <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                   </div>
-                  <div className="max-h-48 sm:max-h-78 overflow-y-auto scrollbar-hide">
+                  <div className="max-h-60 sm:max-h-96 overflow-y-auto scrollbar-hide">
                     <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
                       {currentIndex === index ? displayedText : article.content}
                     </p>

@@ -10,7 +10,7 @@ interface SearchButtonProps {
 const SearchButton = ({ searchQuery, onClick, isMobile = false }: SearchButtonProps) => {
   if (isMobile) {
     return (
-      <div className="flex-1 mx-2 max-w-[200px]">
+      <div className="flex-1 mx-2 max-w-[120px] flex justify-center">
         <div 
           className="w-full flex items-center bg-gray-800/60 backdrop-blur-xl rounded-xl px-2 py-1 cursor-pointer hover:bg-gray-700/60 transition-all duration-300"
           onClick={onClick}
@@ -27,7 +27,7 @@ const SearchButton = ({ searchQuery, onClick, isMobile = false }: SearchButtonPr
   return (
     <div className="absolute left-1/2 transform -translate-x-1/2">
       <div 
-        className="w-64 sm:w-80 flex items-center bg-gray-800/60 backdrop-blur-xl rounded-2xl px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-300"
+        className="w-48 sm:w-80 flex items-center bg-gray-800/60 backdrop-blur-xl rounded-2xl px-4 py-2 cursor-pointer hover:bg-gray-700/60 transition-all duration-300"
         onClick={onClick}
       >
         <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
