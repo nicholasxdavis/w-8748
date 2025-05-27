@@ -387,7 +387,7 @@ const ArticleViewer = ({
             duration: 0.5,
             ease: "easeOut"
           }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
-                <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 max-w-2xl min-h-[calc(13vh+30px)]">
+                <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 max-w-2xl min-h-[calc(20vh+30px)]">
                   <div className="flex items-start justify-between">
                     <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                   </div>
