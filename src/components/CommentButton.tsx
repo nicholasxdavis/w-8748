@@ -32,11 +32,11 @@ const CommentButton = ({ articleId, onClick }: CommentButtonProps) => {
     <div className="flex flex-col items-center">
       <button
         onClick={onClick}
-        className="p-2 rounded-full bg-black/20 text-white hover:bg-black/40 transition-all duration-200 hover:scale-110"
+        className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
       >
         <MessageCircle className="w-4 h-4" />
       </button>
-      <span className="text-white text-xs mt-1">{commentCount}</span>
+      <span className="text-white text-xs mt-1 font-medium">{commentCount}</span>
     </div>
   );
 };

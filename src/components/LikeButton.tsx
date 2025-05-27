@@ -104,15 +104,15 @@ const LikeButton = ({ articleId, articleTitle }: LikeButtonProps) => {
       <button
         onClick={handleLike}
         disabled={loading}
-        className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
+        className={`p-2 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110 ${
           isLiked 
-            ? 'bg-red-500 text-white' 
-            : 'bg-black/20 text-white hover:bg-black/40'
+            ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30' 
+            : 'bg-black/30 text-white hover:bg-black/50'
         }`}
       >
         <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
       </button>
-      <span className="text-white text-xs mt-1">{likeCount}</span>
+      <span className="text-white text-xs mt-1 font-medium">{likeCount}</span>
     </div>
   );
 };

@@ -1,8 +1,7 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Progress } from "./ui/progress";
-import { Volume2, VolumeX, Share2, Calendar, Globe } from "lucide-react";
+import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink } from "lucide-react";
 import { getMixedContent } from "../services/contentService";
 import { isNewsArticle } from "../services/contentService";
 import LikeButton from "./LikeButton";
@@ -22,6 +21,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [isTextFullyLoaded, setIsTextFullyLoaded] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
   const clickCountRef = useRef(0);
@@ -131,12 +131,19 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     return date.toLocaleDateString();
   };
 
+  const handleWikipediaRedirect = () => {
+    const baseUrl = "https://en.wikipedia.org/wiki/";
+    const articleTitle = encodeURIComponent(currentArticle.title);
+    window.open(`${baseUrl}${articleTitle}`, '_blank');
+  };
+
   useEffect(() => {
     setIsVisible(true);
     setDisplayedText("");
     setProgress(0);
     setIsTextFullyLoaded(false);
     clickCountRef.current = 0;
+    setShowMobileSidebar(false);
     onArticleChange(currentArticle);
 
     if (isReading) {
@@ -148,6 +155,52 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       loadMoreArticles();
     }
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading]);
+
+  const ActionButtons = ({ isMobile = false }) => (
+    <div className={`flex ${isMobile ? 'flex-row justify-around' : 'flex-col'} space-y-0 ${isMobile ? 'space-x-4' : 'space-y-3'} z-20`}>
+      <LikeButton articleId={String(currentArticle?.id || '')} articleTitle={currentArticle?.title || ''} />
+      <CommentButton 
+        articleId={String(currentArticle?.id || '')} 
+        onClick={() => setShowComments(true)}
+      />
+      <div className="flex flex-col items-center">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTextToSpeech();
+          }}
+          className={`p-2 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110 ${
+            isReading 
+              ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30' 
+              : 'bg-black/30 text-white hover:bg-black/50'
+          }`}
+        >
+          {isReading ? (
+            <VolumeX className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+        </button>
+        <span className="text-white text-xs mt-1 font-medium">Listen</span>
+      </div>
+      
+      {/* Desktop only share button */}
+      {!isMobile && (
+        <div className="flex flex-col items-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowShare(true);
+            }}
+            className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+          <span className="text-white text-xs mt-1 font-medium">Share</span>
+        </div>
+      )}
+    </div>
+  );
 
   useEffect(() => {
     if (!isVisible || !currentArticle?.content || isTextFullyLoaded) return;
@@ -238,6 +291,26 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               </div>
             )}
 
+            {/* Mobile Menu Toggle */}
+            <div className="sm:hidden absolute top-20 right-4 z-30">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMobileSidebar(!showMobileSidebar);
+                }}
+                className="p-2 rounded-full bg-black/30 text-white backdrop-blur-md border border-white/20 hover:bg-black/50 transition-all duration-200"
+              >
+                {showMobileSidebar ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Mobile Sidebar */}
+            {showMobileSidebar && (
+              <div className="sm:hidden absolute right-4 top-32 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/20 z-30">
+                <ActionButtons isMobile={true} />
+              </div>
+            )}
+
             {/* Content with black overlay */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -246,18 +319,18 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 y: isVisible && currentIndex === index ? 0 : 20,
               }}
               transition={{ duration: 0.5 }}
-              className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-end pb-32"
+              className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center"
             >
-              <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10 space-y-3 sm:space-y-4">
+              <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10 space-y-3 sm:space-y-4 max-w-2xl">
                 <div className="flex items-start justify-between">
-                  <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg">{article.title}</h1>
+                  <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">{article.title}</h1>
                 </div>
                 <div className="max-h-32 sm:max-h-40 overflow-y-auto scrollbar-hide">
-                  <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words">
+                  <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
                     {currentIndex === index ? displayedText : article.content}
                   </p>
                 </div>
-                <div className="flex items-center space-x-4 text-xs sm:text-sm text-white/80">
+                <div className="flex items-center justify-center space-x-4 text-xs sm:text-sm text-white/80">
                   {isNewsArticle(article) ? (
                     <>
                       <div className="flex items-center gap-1">
@@ -275,54 +348,27 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                       <span>{article.readTime} min read</span>
                       <span>•</span>
                       <span>{article.views.toLocaleString()} views</span>
+                      <span>•</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWikipediaRedirect();
+                        }}
+                        className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span>Wikipedia</span>
+                      </button>
                     </>
                   )}
                 </div>
               </div>
             </motion.div>
 
-            {/* Compact Action Buttons */}
+            {/* Desktop Action Buttons */}
             {currentIndex === index && (
-              <div className="absolute right-3 bottom-20 sm:bottom-24 flex flex-col space-y-2 z-20">
-                <LikeButton articleId={String(article.id)} articleTitle={article.title} />
-                <CommentButton 
-                  articleId={String(article.id)} 
-                  onClick={() => setShowComments(true)}
-                />
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleTextToSpeech();
-                    }}
-                    className={`p-2 rounded-full transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110 ${
-                      isReading 
-                        ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30' 
-                        : 'bg-black/30 text-white hover:bg-black/50'
-                    }`}
-                  >
-                    {isReading ? (
-                      <VolumeX className="w-4 h-4" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                  </button>
-                  <span className="text-white text-xs mt-1 font-medium">Listen</span>
-                </div>
-                
-                {/* Desktop only share button */}
-                <div className="hidden sm:flex flex-col items-center">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowShare(true);
-                    }}
-                    className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                  <span className="text-white text-xs mt-1 font-medium">Share</span>
-                </div>
+              <div className="hidden sm:flex absolute right-3 bottom-20 sm:bottom-24 z-20">
+                <ActionButtons />
               </div>
             )}
 

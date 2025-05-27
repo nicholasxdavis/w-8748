@@ -115,24 +115,24 @@ const Navigation = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 bg-gradient-to-r from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/30">
+      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-3 sm:px-6 backdrop-blur-lg border-b border-gray-800/30">
         <div 
-          className={`text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent hover:scale-105 transition-transform ${
-            isDiscoverPage ? 'from-blue-500 to-blue-400' : ''
-          }`}
+          className="text-lg sm:text-2xl font-bold cursor-pointer flex-shrink-0 text-white hover:scale-105 transition-transform"
           onClick={handleRandomContent}
         >
           Lore
         </div>
         
-        <div 
-          className="flex-1 max-w-xs sm:max-w-sm mx-2 sm:mx-8 flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
-          onClick={() => setOpen(true)}
-        >
-          <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-          <span className="text-gray-400 text-sm font-medium truncate">
-            {searchValue || "Search articles & news..."}
-          </span>
+        <div className="flex-1 flex justify-center px-4">
+          <div 
+            className="w-full max-w-xs sm:max-w-sm flex items-center bg-gray-800/40 backdrop-blur-xl rounded-2xl px-4 py-3 cursor-pointer hover:bg-gray-700/40 transition-all duration-300 border border-gray-700/30 hover:border-gray-600/50 shadow-lg"
+            onClick={() => setOpen(true)}
+          >
+            <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+            <span className="text-gray-400 text-sm font-medium truncate">
+              {searchValue || "Search articles & news..."}
+            </span>
+          </div>
         </div>
         
         <div className="flex items-center space-x-2 flex-shrink-0">
@@ -141,14 +141,14 @@ const Navigation = () => {
           
           {user ? (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center border-2 border-gray-700/50 shadow-lg">
                 <span className="text-white text-sm font-bold">
                   {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                 </span>
               </div>
               <button
                 onClick={handleSignOut}
-                className="text-gray-400 hover:text-red-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl"
+                className="text-gray-400 hover:text-red-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -156,7 +156,7 @@ const Navigation = () => {
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium shadow-lg hover:shadow-blue-500/25"
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium shadow-lg hover:scale-105"
             >
               <User className="w-4 h-4" />
               <span className="text-sm hidden sm:inline">Sign In</span>
@@ -169,7 +169,7 @@ const Navigation = () => {
         open={open} 
         onOpenChange={handleOpenChange}
       >
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] sm:max-h-[70vh]">
           <div className="p-4 border-b border-gray-700/50">
             <div className="flex items-center space-x-3">
               <Search className="w-5 h-5 text-gray-400" />
