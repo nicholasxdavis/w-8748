@@ -15,6 +15,20 @@ export interface NewsArticle {
 // Using NewsAPI.org which is free and provides real news
 const NEWS_API_URL = 'https://newsapi.org/v2/top-headlines';
 
+// High-quality stock images for different news categories
+const NEWS_IMAGES = [
+  "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Earth from space
+  "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Technology/circuits
+  "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Medical/health
+  "https://images.unsplash.com/photo-1581089778245-3ce67677f718?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // DNA/science
+  "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Nature/environment
+  "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Archaeology/ancient
+  "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Forest/trees
+  "https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Space/stars
+  "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Solar panels/renewable energy
+  "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Laboratory/research
+];
+
 // Fallback news sources for when API is not available
 const FALLBACK_NEWS = [
   {
@@ -65,7 +79,7 @@ const generateNewsFromFallback = (): NewsArticle[] => {
       id: `news-${index}`,
       title: news.title,
       content: news.content,
-      image: `https://images.unsplash.com/photo-${1600000000000 + Math.floor(Math.random() * 100000000)}?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80`,
+      image: NEWS_IMAGES[index % NEWS_IMAGES.length],
       publishedAt: publishedAt.toISOString(),
       source: news.source,
       url: `https://example.com/news/${index}`,

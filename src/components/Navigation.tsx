@@ -74,12 +74,6 @@ const Navigation = () => {
           
           <div className="flex items-center space-x-3">
             <button
-              onClick={handleDiscoverClick}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
-            >
-              <Compass className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => setSavedArticlesOpen(true)}
               className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
@@ -125,6 +119,16 @@ const Navigation = () => {
             <UserMenu />
           </div>
         </div>
+      </div>
+
+      {/* Mobile Discover Button - Bottom Left */}
+      <div className="fixed bottom-20 left-4 z-40 sm:hidden">
+        <button
+          onClick={handleDiscoverClick}
+          className="bg-black/40 backdrop-blur-md text-white p-3 rounded-full border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105 shadow-lg"
+        >
+          <Compass className="w-5 h-5" />
+        </button>
       </div>
 
       <SearchInterface
