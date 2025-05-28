@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface DisappearingLabelProps {
   show: boolean;
@@ -18,12 +19,22 @@ const DisappearingLabel = ({ show, message, className = "" }: DisappearingLabelP
     }
   }, [show]);
 
-  if (!isVisible) return null;
-
   return (
-    <div className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-md border border-white/20 animate-in fade-in duration-200 ${className}`}>
-      {message}
-    </div>
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div 
+          className="absolute top-20 right-4 z-20"
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 50, opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="bg-black/40 text-white px-3 py-1 rounded-xl text-xs backdrop-blur-md border border-white/20">
+            {message}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
