@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, ChevronDown, Hand, Volume2, Share2, X } from "lucide-react";
+import { Hand, Volume2, Share2, X } from "lucide-react";
 
 interface TutorialStep {
   id: number;
@@ -42,12 +42,6 @@ interface TutorialOverlayProps {
 const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Check if device is mobile
-    setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -81,26 +75,6 @@ const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
     >
-      {/* Background with animated arrows - centered properly */}
-      <div className="absolute inset-0 overflow-hidden flex items-center justify-center">
-        <div className="relative w-full h-full max-w-md mx-auto">
-          <motion.div
-            animate={{ y: [-20, 20, -20] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/2 transform -translate-x-1/2"
-          >
-            <ChevronUp className="w-12 h-12 text-white/20" />
-          </motion.div>
-          <motion.div
-            animate={{ y: [20, -20, 20] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2"
-          >
-            <ChevronDown className="w-12 h-12 text-white/20" />
-          </motion.div>
-        </div>
-      </div>
-
       {/* Skip button */}
       <button
         onClick={handleSkip}
@@ -179,64 +153,7 @@ const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
             </motion.div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Call to action for first step */}
-        {currentStep === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
-            className="mt-8"
-          >
-            <p className="text-sm text-gray-400">
-              {isMobile ? 'Try swiping up or down now' : 'Try scrolling up or down now'}
-            </p>
-          </motion.div>
-        )}
       </div>
-
-      {/* Gesture animation for first step - different for mobile vs desktop */}
-      {currentStep === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
-        >
-          {isMobile ? (
-            // Mobile: Finger swipe gesture
-            <motion.div
-              animate={{ y: [0, -30, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="flex flex-col items-center"
-            >
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-8 h-8 bg-white/60 rounded-full mb-2"
-              />
-              <motion.div
-                animate={{ height: [20, 40, 20] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-1 bg-white/40 rounded-full"
-              />
-            </motion.div>
-          ) : (
-            // Desktop: Mouse scroll gesture
-            <motion.div
-              animate={{ y: [0, -30, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-12 h-20 border-2 border-white/40 rounded-full flex justify-center"
-            >
-              <motion.div
-                animate={{ y: [5, -10, 5] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-1 h-6 bg-white/60 rounded-full mt-2"
-              />
-            </motion.div>
-          )}
-        </motion.div>
-      )}
     </motion.div>
   );
 };
