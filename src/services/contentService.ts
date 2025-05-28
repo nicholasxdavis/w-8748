@@ -9,97 +9,51 @@ export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
 };
 
-const personalizedContentCache = new Map<string, { content: WikipediaArticle[], timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-const getPersonalizedContent = async (userTopics: string[], count: number): Promise<WikipediaArticle[]> => {
-  if (!userTopics.length) return [];
-
-  const cacheKey = userTopics.join(',');
-  const cached = personalizedContentCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.content.slice(0, count);
-  }
-
-  const personalizedArticles: WikipediaArticle[] = [];
-  const articlesPerTopic = Math.ceil(count * 1.5 / userTopics.length);
-
-  const topicPromises = userTopics.map(async (topic) => {
-    try {
-      const topicArticles = await searchWikiArticles(topic);
-      return topicArticles.slice(0, articlesPerTopic);
-    } catch (error) {
-      console.error(`Error fetching articles for topic ${topic}:`, error);
-      return [];
-    }
-  });
-
-  const topicResults = await Promise.all(topicPromises);
-  const allTopicArticles = topicResults.flat();
-  const shuffled = allTopicArticles.sort(() => Math.random() - 0.5);
-  personalizedArticles.push(...shuffled.slice(0, count));
-
-  personalizedContentCache.set(cacheKey, {
-    content: personalizedArticles,
-    timestamp: Date.now()
-  });
-
-  return personalizedArticles;
-};
-
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  // Reduced to 20% chance: only 1 news article per 10 content items max
-  const personalizedCount = Math.ceil(count * 0.7);
-  const randomWikiCount = Math.ceil(count * 0.3);
-  const newsCount = Math.random() < 0.2 ? 1 : 0; // 20% chance to show 1 news article
+  // 20% chance to show 1 news article
+  const newsCount = Math.random() < 0.2 ? 1 : 0;
+  const wikiCount = count - newsCount;
   
-  let userTopics: string[] = [];
-  let personalizedArticles: WikipediaArticle[] = [];
-
-  if (userId) {
-    try {
-      const interests = await getUserInterests(userId);
-      userTopics = interests.map(interest => interest.topic?.name || '').filter(Boolean);
-      
-      if (userTopics.length > 0) {
-        personalizedArticles = await getPersonalizedContent(userTopics, personalizedCount);
-      }
-    } catch (error) {
-      console.error('Error fetching user interests for content:', error);
-    }
-  }
-
-  const remainingWikiCount = Math.max(0, randomWikiCount + (personalizedCount - personalizedArticles.length));
-
+  // Get completely random Wikipedia articles - no personalization to avoid related content
   const [randomWikiArticles, newsArticles] = await Promise.all([
-    getWikiArticles(remainingWikiCount).catch(() => []),
+    getWikiArticles(wikiCount * 2).catch(() => []), // Get more than needed to ensure variety
     newsCount > 0 ? getBreakingNews(newsCount).catch(() => []) : Promise.resolve([])
   ]);
 
-  const allWikiArticles = [...personalizedArticles, ...randomWikiArticles];
+  // Shuffle Wikipedia articles multiple times to ensure randomness
+  const shuffledWiki = randomWikiArticles
+    .sort(() => Math.random() - 0.5)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, wikiCount);
+
   const mixedContent: ContentItem[] = [];
-  const contentPools = { wiki: [...allWikiArticles], news: [...newsArticles] };
+  
+  // Create pools for random selection
+  const wikiPool = [...shuffledWiki];
+  const newsPool = [...newsArticles];
 
-  // Only show news if we have any and randomly (20% chance)
-  for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
-    let contentType: 'wiki' | 'news';
+  // Randomly distribute content
+  for (let i = 0; i < count && (wikiPool.length > 0 || newsPool.length > 0); i++) {
+    const useNews = newsPool.length > 0 && Math.random() < 0.2;
     
-    // Show news only if available and at random positions
-    if (contentPools.news.length > 0 && Math.random() < 0.2) {
-      contentType = 'news';
-    } else if (contentPools.wiki.length > 0) {
-      contentType = 'wiki';
-    } else if (contentPools.news.length > 0) {
-      contentType = 'news';
-    } else {
-      break;
+    if (useNews) {
+      const newsItem = newsPool.shift();
+      if (newsItem) mixedContent.push(newsItem);
+    } else if (wikiPool.length > 0) {
+      const wikiItem = wikiPool.shift();
+      if (wikiItem) mixedContent.push(wikiItem);
+    } else if (newsPool.length > 0) {
+      const newsItem = newsPool.shift();
+      if (newsItem) mixedContent.push(newsItem);
     }
-
-    const item = contentPools[contentType].shift();
-    if (item) mixedContent.push(item);
   }
 
-  return mixedContent.filter(item => item.image && !item.image.includes('placeholder'));
+  // Final shuffle to ensure completely random order
+  const finalContent = mixedContent
+    .sort(() => Math.random() - 0.5)
+    .sort(() => Math.random() - 0.5);
+
+  return finalContent.filter(item => item.image && !item.image.includes('placeholder'));
 };
 
 export const searchMixedContent = async (query: string): Promise<ContentItem[]> => {
@@ -123,13 +77,3 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
 
   return mixedResults.filter(item => item.image && !item.image.includes('placeholder'));
 };
-
-// Cache cleanup
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of personalizedContentCache.entries()) {
-    if (now - value.timestamp > CACHE_DURATION) {
-      personalizedContentCache.delete(key);
-    }
-  }
-}, CACHE_DURATION);
