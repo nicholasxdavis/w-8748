@@ -140,7 +140,7 @@ const Discover = () => {
   return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
-        <div className="px-4 py-4 pt-20 pb-12">
+        <div className="px-4 pt-20 pb-2 py-[79px]">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
           <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2 mb-4">
             {categories.map(category => <button key={category.id} onClick={() => handleCategoryChange(category.id)} className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center justify-center ${selectedCategory === category.id ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" : "bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 hover:scale-105"}`}>
