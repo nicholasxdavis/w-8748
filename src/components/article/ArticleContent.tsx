@@ -56,6 +56,19 @@ const ArticleContent = ({
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>{article.publishedAt ? formatNewsDate(article.publishedAt) : 'Recent'}</span>
             </div>
+            <span>•</span>
+            <button 
+              onClick={e => {
+                e.stopPropagation();
+                if (article.url) {
+                  window.open(article.url, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Read Full Story</span>
+            </button>
           </>
         ) : article ? (
           <>

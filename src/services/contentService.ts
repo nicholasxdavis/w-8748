@@ -48,9 +48,10 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  const personalizedCount = Math.ceil(count * 0.5);
+  // Reduced news ratio: 1 news article per 6-8 content items instead of every 4-5
+  const personalizedCount = Math.ceil(count * 0.6);
   const randomWikiCount = Math.ceil(count * 0.3);
-  const newsCount = Math.ceil(count * 0.2);
+  const newsCount = Math.min(2, Math.ceil(count * 0.1)); // Much less news, max 2 articles
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -79,10 +80,12 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   const mixedContent: ContentItem[] = [];
   const contentPools = { wiki: [...allWikiArticles], news: [...newsArticles] };
 
+  // Changed pattern: only add news every 6-8 items instead of every 4
   for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
     let contentType: 'wiki' | 'news';
     
-    if (i % 4 === 0 && contentPools.news.length > 0) {
+    // Show news much less frequently (every 6-8 items instead of every 4)
+    if (i > 0 && i % 7 === 0 && contentPools.news.length > 0) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
@@ -110,9 +113,12 @@ export const searchMixedContent = async (query: string): Promise<ContentItem[]> 
   const mixedResults: ContentItem[] = [];
   const maxResults = Math.max(wikiResults.length, newsResults.length);
 
+  // Prioritize Wikipedia results over news in search
   for (let i = 0; i < maxResults && mixedResults.length < 20; i++) {
-    if (i < newsResults.length) mixedResults.push(newsResults[i]);
-    if (i < wikiResults.length && mixedResults.length < 20) mixedResults.push(wikiResults[i]);
+    if (i < wikiResults.length) mixedResults.push(wikiResults[i]);
+    if (i < newsResults.length && mixedResults.length < 20 && i % 3 === 0) {
+      mixedResults.push(newsResults[i]);
+    }
   }
 
   return mixedResults.filter(item => item.image && !item.image.includes('placeholder'));
