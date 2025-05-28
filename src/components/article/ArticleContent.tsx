@@ -34,34 +34,34 @@ const ArticleContent = ({
     <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 max-w-2xl min-h-[calc(20vh+30px)]">
       <div className="flex items-start justify-between">
         <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">
-          {article.title}
+          {article?.title || 'Loading...'}
         </h1>
       </div>
       
       <div className="max-h-60 sm:max-h-96 overflow-y-auto scrollbar-hide">
         <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
-          {currentIndex === index ? displayedText : article.content}
+          {article?.content || 'Loading content...'}
         </p>
       </div>
       
       <div className="flex items-center justify-center space-x-4 text-xs sm:text-sm text-white/80">
-        {isNewsArticle(article) ? (
+        {article && isNewsArticle(article) ? (
           <>
             <div className="flex items-center gap-1">
               <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{article.source}</span>
+              <span>{article.source || 'Unknown'}</span>
             </div>
             <span>•</span>
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{formatNewsDate(article.publishedAt)}</span>
+              <span>{article.publishedAt ? formatNewsDate(article.publishedAt) : 'Recent'}</span>
             </div>
           </>
-        ) : (
+        ) : article ? (
           <>
-            <span>{article.readTime} min read</span>
+            <span>{article.readTime || 5} min read</span>
             <span>•</span>
-            <span>{article.views.toLocaleString()} views</span>
+            <span>{article.views?.toLocaleString() || '0'} views</span>
             <span>•</span>
             <button 
               onClick={e => {
@@ -74,7 +74,7 @@ const ArticleContent = ({
               <span>Wikipedia</span>
             </button>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   </motion.div>

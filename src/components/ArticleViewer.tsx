@@ -71,12 +71,21 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     return () => clearTimeout(timer);
   }, [setShowDoubleTapHint]);
 
-  // Reset states when article changes
+  // Reset states when article changes - immediately show full content
   useEffect(() => {
     setIsVisible(true);
-    setDisplayedText("");
-    setProgress(0);
-    setIsTextFullyLoaded(false);
+    
+    // Immediately show full content without typing animation
+    if (currentArticle?.content) {
+      setDisplayedText(currentArticle.content);
+      setProgress(100);
+      setIsTextFullyLoaded(true);
+    } else {
+      setDisplayedText("");
+      setProgress(0);
+      setIsTextFullyLoaded(false);
+    }
+    
     setIsTypingPaused(false);
     clickCountRef.current = 0;
     onArticleChange(currentArticle);
