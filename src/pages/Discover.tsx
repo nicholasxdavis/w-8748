@@ -147,7 +147,7 @@ const Discover = () => {
               <button
                 key={category.id}
                 onClick={() => handleCategoryChange(category.id)}
-                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === category.id
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
                     : "bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 hover:scale-105"
