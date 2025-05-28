@@ -1,4 +1,6 @@
 
+import { getNewsPlaceholderImage } from '../utils/newsPlaceholders';
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -12,79 +14,88 @@ export interface NewsArticle {
   isBreakingNews: true;
 }
 
-// Using NewsAPI.org which is free and provides real news
-const NEWS_API_URL = 'https://newsapi.org/v2/top-headlines';
-
-// High-quality stock images for different news categories
-const NEWS_IMAGES = [
-  "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Earth from space
-  "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Technology/circuits
-  "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Medical/health
-  "https://images.unsplash.com/photo-1581089778245-3ce67677f718?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // DNA/science
-  "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Nature/environment
-  "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Archaeology/ancient
-  "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Forest/trees
-  "https://images.unsplash.com/photo-1567095761054-7a02e69e5c43?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Space/stars
-  "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Solar panels/renewable energy
-  "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop&crop=entropy&auto=format&q=80", // Laboratory/research
-];
-
-// Fallback news sources for when API is not available
-const FALLBACK_NEWS = [
+// Updated with more interesting and current breaking news stories
+const BREAKING_NEWS_STORIES = [
   {
-    title: "Global Climate Summit Reaches Historic Agreement on Carbon Reduction",
-    content: "World leaders from 195 countries have agreed to ambitious new carbon reduction targets, marking a turning point in global climate policy. The agreement includes binding commitments to reduce emissions by 50% by 2030 and achieve net-zero emissions by 2050.",
+    title: "Revolutionary AI System Achieves Major Breakthrough in Quantum Computing",
+    content: "Scientists have successfully integrated artificial intelligence with quantum computing systems, achieving computational speeds previously thought impossible. This breakthrough could revolutionize cryptography, drug discovery, and climate modeling within the next decade. The hybrid system demonstrated the ability to solve complex problems in seconds that would take traditional computers thousands of years.",
+    source: "TechCrunch",
+    category: "technology"
+  },
+  {
+    title: "Historic Climate Agreement: 200+ Nations Commit to Net-Zero by 2035",
+    content: "In an unprecedented global climate summit, over 200 nations have agreed to accelerate their carbon neutrality goals to 2035, a full 15 years ahead of previous commitments. The agreement includes massive funding for renewable energy infrastructure and revolutionary carbon capture technologies that could reverse decades of climate damage.",
     source: "Reuters",
     category: "environment"
   },
   {
-    title: "Breakthrough in Quantum Computing Brings Practical Applications Closer",
-    content: "Scientists have achieved a major milestone in quantum computing, demonstrating error correction that could make quantum computers practical for everyday use. This advancement could revolutionize cryptography, drug discovery, and artificial intelligence.",
-    source: "Nature",
-    category: "technology"
-  },
-  {
-    title: "Archaeological Discovery Reveals Ancient Civilization in Amazon Rainforest",
-    content: "Researchers have uncovered evidence of a sophisticated ancient civilization deep in the Amazon rainforest, challenging previous assumptions about pre-Columbian societies. The discovery includes complex urban planning and advanced agricultural techniques.",
-    source: "National Geographic",
-    category: "science"
-  },
-  {
-    title: "Major Medical Breakthrough: New Gene Therapy Shows Promise for Rare Diseases",
-    content: "Clinical trials of a revolutionary gene therapy have shown remarkable success in treating previously incurable genetic disorders. The treatment could offer hope to millions of patients worldwide suffering from rare genetic conditions.",
-    source: "The Lancet",
+    title: "Medical Miracle: Gene Therapy Cures Previously Incurable Genetic Diseases",
+    content: "A groundbreaking gene therapy treatment has shown 100% success rate in clinical trials for treating rare genetic disorders affecting over 300 million people worldwide. The one-time treatment rewrites defective genes and has already restored sight to blind patients and mobility to paralyzed individuals.",
+    source: "Nature Medicine",
     category: "health"
   },
   {
-    title: "Renewable Energy Milestone: Solar and Wind Power Reach Record Efficiency",
-    content: "New technological advances have pushed solar panel efficiency beyond 30% while wind turbines achieve record energy output. These breakthroughs could accelerate the transition to clean energy and reduce costs for consumers.",
-    source: "Energy Today",
+    title: "Space Discovery: Potentially Habitable Exoplanet Found Just 12 Light-Years Away",
+    content: "Astronomers have discovered a potentially habitable exoplanet orbiting Proxima Centauri's neighbor star, featuring liquid water, a stable atmosphere, and conditions remarkably similar to Earth. This marks the closest potentially habitable world ever found and could be reached by next-generation space missions within decades.",
+    source: "NASA",
+    category: "space"
+  },
+  {
+    title: "Economic Revolution: Universal Basic Income Trials Show Unprecedented Success",
+    content: "Large-scale Universal Basic Income trials across 15 countries have demonstrated remarkable results, reducing poverty by 85% and increasing entrepreneurship by 300%. The program, funded by AI-generated wealth, is now being considered for global implementation by 2030.",
+    source: "Financial Times",
+    category: "economics"
+  },
+  {
+    title: "Fusion Energy Breakthrough: First Commercial Fusion Power Plant Goes Online",
+    content: "The world's first commercial fusion power plant has successfully begun generating clean, unlimited energy, marking the end of humanity's dependence on fossil fuels. The plant produces zero radioactive waste and enough energy to power 10 million homes continuously.",
+    source: "Science",
+    category: "energy"
+  },
+  {
+    title: "Archaeological Sensation: Lost Civilization Discovered Beneath Amazon Rainforest",
+    content: "Using advanced LiDAR technology, archaeologists have uncovered a massive ancient civilization beneath the Amazon rainforest, featuring sophisticated urban planning, advanced mathematics, and technologies that predate known civilizations by thousands of years. The discovery is rewriting human history.",
+    source: "National Geographic",
+    category: "archaeology"
+  },
+  {
+    title: "Cybersecurity Alert: Quantum Encryption Shields Against Future Cyber Threats",
+    content: "Researchers have successfully deployed quantum encryption networks across major cities, creating unhackable communication systems that protect against even quantum computer attacks. This technology promises to secure financial systems, government communications, and personal data against all known threats.",
+    source: "MIT Technology Review",
+    category: "cybersecurity"
+  },
+  {
+    title: "Ocean Cleanup Success: 90% of Pacific Plastic Waste Removed in Record Time",
+    content: "Revolutionary ocean cleanup technology has successfully removed 90% of plastic waste from the Great Pacific Garbage Patch in just 18 months. The breakthrough system uses AI-guided collection vessels and has sparked a global initiative to clean all ocean plastic by 2030.",
+    source: "Ocean Conservancy",
     category: "environment"
   },
   {
-    title: "Space Exploration: Mars Rover Discovers Signs of Ancient Water Activity",
-    content: "NASA's latest Mars rover has found compelling evidence of ancient water activity on the Red Planet, including mineral formations that could only form in the presence of liquid water. This discovery strengthens the case for potential past life on Mars.",
-    source: "NASA",
-    category: "science"
+    title: "Neuroscience Breakthrough: Brain-Computer Interfaces Restore Memory in Alzheimer's Patients",
+    content: "Advanced brain-computer interfaces have successfully restored lost memories in Alzheimer's patients, offering hope to 55 million people worldwide living with dementia. The non-invasive technology stimulates neural pathways and has shown remarkable results in clinical trials.",
+    source: "The Lancet",
+    category: "neuroscience"
   }
 ];
 
-const generateNewsFromFallback = (): NewsArticle[] => {
-  return FALLBACK_NEWS.map((news, index) => {
-    const hoursAgo = Math.floor(Math.random() * 12) + 1;
+const generateBreakingNews = (): NewsArticle[] => {
+  return BREAKING_NEWS_STORIES.map((news, index) => {
+    const hoursAgo = Math.floor(Math.random() * 6) + 1; // 1-6 hours ago for breaking news
     const publishedAt = new Date();
     publishedAt.setHours(publishedAt.getHours() - hoursAgo);
 
+    const articleId = `breaking-news-${index}`;
+
     return {
-      id: `news-${index}`,
+      id: articleId,
       title: news.title,
       content: news.content,
-      image: NEWS_IMAGES[index % NEWS_IMAGES.length],
+      image: getNewsPlaceholderImage(articleId), // Use placeholder image
       publishedAt: publishedAt.toISOString(),
       source: news.source,
-      url: `https://example.com/news/${index}`,
+      url: `https://example.com/breaking-news/${index}`,
       readTime: Math.ceil(news.content.split(" ").length / 200),
-      views: Math.floor(Math.random() * 50000) + 10000,
+      views: Math.floor(Math.random() * 100000) + 50000, // High view counts for breaking news
       isBreakingNews: true as const
     };
   });
@@ -92,18 +103,17 @@ const generateNewsFromFallback = (): NewsArticle[] => {
 
 export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]> => {
   try {
-    // Try to fetch from a free news API (without API key for demo purposes)
-    // In production, you would need to register for a free API key
-    const fallbackNews = generateNewsFromFallback();
+    // Simulate API delay for breaking news
+    await new Promise(resolve => setTimeout(resolve, 200));
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const breakingNews = generateBreakingNews();
     
-    return fallbackNews.slice(0, count);
+    // Shuffle and return requested count
+    const shuffled = breakingNews.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
   } catch (error) {
-    console.error('Error fetching news:', error);
-    // Return fallback news
-    return generateNewsFromFallback().slice(0, count);
+    console.error('Error fetching breaking news:', error);
+    return generateBreakingNews().slice(0, count);
   }
 };
 
@@ -112,7 +122,7 @@ export const searchNews = async (query: string): Promise<NewsArticle[]> => {
   
   await new Promise(resolve => setTimeout(resolve, 200));
   
-  const allNews = generateNewsFromFallback();
+  const allNews = generateBreakingNews();
   return allNews.filter(article => 
     article.title.toLowerCase().includes(query.toLowerCase()) ||
     article.content.toLowerCase().includes(query.toLowerCase())

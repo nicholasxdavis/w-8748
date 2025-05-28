@@ -1,6 +1,7 @@
 
 import { isNewsArticle } from '../services/contentService';
 import { STOCK_NEWS_IMAGES } from '../constants/images';
+import { getNewsPlaceholderImage } from './newsPlaceholders';
 
 export const getArticleImage = (article: any) => {
   if (article.image && !article.image.includes('placeholder')) {
@@ -8,11 +9,12 @@ export const getArticleImage = (article: any) => {
   }
   
   if (isNewsArticle(article)) {
-    const imageIndex = parseInt(article.id) % STOCK_NEWS_IMAGES.length;
-    return STOCK_NEWS_IMAGES[imageIndex];
+    // Use the dedicated news placeholder system for better quality images
+    return getNewsPlaceholderImage(article.id);
   }
   
-  return article.image;
+  // Fallback to existing system for non-news articles
+  return article.image || STOCK_NEWS_IMAGES[0];
 };
 
 export const formatNewsDate = (dateString: string) => {
