@@ -292,6 +292,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
               <ArticleContent 
                 article={article}
                 displayedText={displayedText}
+                progress={progress}
                 currentIndex={currentIndex}
                 index={index}
                 isVisible={isVisible}

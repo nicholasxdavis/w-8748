@@ -1,6 +1,34 @@
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
-import { transformToArticle } from './articleTransformer';
+
+const transformToArticle = async (page: any): Promise<WikipediaArticle | null> => {
+  if (!page || page.missing || !page.extract || page.extract.length < 100) {
+    return null;
+  }
+
+  const title = page.title;
+  const content = page.extract;
+  const image = page.thumbnail?.source || '';
+  
+  // Generate basic metadata
+  const readTime = Math.ceil(content.length / 1000);
+  const views = Math.floor(Math.random() * 100000) + 1000;
+  
+  // Extract categories as tags
+  const tags = page.categories?.slice(0, 3).map((cat: any) => 
+    cat.title.replace('Category:', '')
+  ) || ['General'];
+
+  return {
+    id: page.pageid,
+    title,
+    content,
+    image,
+    readTime,
+    views,
+    tags
+  };
+};
 
 const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaArticle[]> => {
   try {
