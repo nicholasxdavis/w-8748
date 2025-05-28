@@ -23,7 +23,7 @@ const DisappearingLabel = ({ show, message, className = "" }: DisappearingLabelP
     <AnimatePresence>
       {isVisible && (
         <motion.div 
-          className="absolute top-4 right-4 z-20"
+          className="fixed top-4 right-4 z-50"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 50, opacity: 0 }}
