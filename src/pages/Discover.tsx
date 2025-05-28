@@ -136,17 +136,17 @@ const Discover = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 pt-16 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
-      <div className="absolute top-16 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
-        <div className="px-4 py-4">
+      <div className="fixed top-0 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
+        <div className="px-4 py-4 pt-20">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
           <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategoryChange(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === category.id
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
                     : "bg-gray-800/80 text-gray-300 hover:bg-gray-700/80 hover:scale-105"
@@ -160,7 +160,7 @@ const Discover = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="px-2 mt-32 sm:mt-36">
+      <div className="px-2 pt-44 pb-20">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -205,11 +205,6 @@ const Discover = () => {
                         {article.readTime}m read
                       </span>
                     </div>
-                    {article.views > 50000 && (
-                      <div className="bg-blue-600 rounded-full px-2 py-1 shadow-lg">
-                        <span className="text-white text-xs font-semibold">Trending</span>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="space-y-3">
