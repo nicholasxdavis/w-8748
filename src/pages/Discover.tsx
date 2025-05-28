@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle, searchArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -195,11 +194,11 @@ const Discover = () => {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 
-                {/* Enhanced Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                {/* Enhanced Overlay - Always visible */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
                 
-                {/* Content */}
-                <div className="absolute inset-0 p-3 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-300">
+                {/* Content - Always visible */}
+                <div className="absolute inset-0 p-3 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <div className="bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
                       <span className="text-white text-xs font-semibold">
@@ -207,8 +206,8 @@ const Discover = () => {
                       </span>
                     </div>
                     {article.views > 50000 && (
-                      <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-full p-2 shadow-lg">
-                        <TrendingUp className="w-3 h-3 text-white" />
+                      <div className="bg-blue-600 rounded-full px-2 py-1 shadow-lg">
+                        <span className="text-white text-xs font-semibold">Trending</span>
                       </div>
                     )}
                   </div>
@@ -226,7 +225,6 @@ const Discover = () => {
                         <MessageCircle className="w-4 h-4" />
                         <span className="text-xs font-medium">{Math.floor(Math.random() * 100)}</span>
                       </div>
-                      <Bookmark className="w-4 h-4 ml-auto opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 </div>
