@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { useSaveArticle } from '@/hooks/useSaveArticle';
 import { useAuth } from '@/hooks/useAuth';
-import DisappearingLabel from './DisappearingLabel';
+import DoubleTapHint from './article/DoubleTapHint';
 
 interface SaveButtonProps {
   article: {
@@ -84,7 +84,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         </span>
       </div>
       
-      <DisappearingLabel 
+      <DoubleTapHint 
         show={showAuthPrompt} 
         message="Sign in to save articles" 
       />

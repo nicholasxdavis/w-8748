@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Volume2, VolumeX, Share2, Loader2 } from "lucide-react";
 import SaveButton from "../SaveButton";
 import { useAuth } from '@/hooks/useAuth';
-import DisappearingLabel from '../DisappearingLabel';
+import DoubleTapHint from './DoubleTapHint';
 import { useState } from 'react';
 
 interface ActionButtonsProps {
@@ -95,7 +95,7 @@ const ActionButtons = ({
         )}
       </motion.div>
 
-      <DisappearingLabel 
+      <DoubleTapHint 
         show={showSpeechAuthPrompt} 
         message="Sign in to listen to articles" 
       />
