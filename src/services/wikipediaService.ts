@@ -1,3 +1,4 @@
+
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
@@ -13,6 +14,7 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   // Generate basic metadata
   const readTime = Math.ceil(content.length / 1000);
   const views = Math.floor(Math.random() * 100000) + 1000;
+  const citations = Math.floor(Math.random() * 50) + 5; // Generate random citations count
   
   // Extract categories as tags
   const tags = page.categories?.slice(0, 3).map((cat: any) => 
@@ -24,9 +26,11 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
     title,
     content,
     image,
+    citations,
     readTime,
     views,
-    tags
+    tags,
+    relatedArticles: [] // Initialize empty array, will be populated by getRelatedArticles if needed
   };
 };
 
