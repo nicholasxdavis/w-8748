@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 
 export const useTutorial = () => {
@@ -5,6 +6,16 @@ export const useTutorial = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check if tutorial has been completed before
+    const hasCompletedTutorial = localStorage.getItem('hasCompletedTutorial');
+    
+    if (hasCompletedTutorial) {
+      // If tutorial was already completed, don't show it
+      setShowTutorial(false);
+      setIsLoading(false);
+      return;
+    }
+
     // Check if welcome popup has been seen
     const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
     
@@ -37,9 +48,13 @@ export const useTutorial = () => {
 
   const completeTutorial = () => {
     setShowTutorial(false);
+    // Mark tutorial as completed permanently
+    localStorage.setItem('hasCompletedTutorial', 'true');
   };
 
   const resetTutorial = () => {
+    // Remove the completion flag and show tutorial again
+    localStorage.removeItem('hasCompletedTutorial');
     setShowTutorial(true);
   };
 
