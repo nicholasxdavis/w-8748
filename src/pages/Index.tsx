@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import ArticleViewer from "../components/ArticleViewer";
 import WelcomePopup from "../components/WelcomePopup";
 import InterestSelectionPopup from "../components/InterestSelectionPopup";
+import TutorialOverlay from "../components/tutorial/TutorialOverlay";
 import { getMixedContent, searchMixedContent } from "../services/contentService";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTutorial } from "@/hooks/useTutorial";
 import { motion } from "framer-motion";
 import { Loader2, RefreshCw } from "lucide-react";
 
@@ -19,6 +21,7 @@ const Index = () => {
   const searchQuery = searchParams.get("q");
   const [currentArticle, setCurrentArticle] = useState(null);
   const { user, loading: authLoading } = useAuth();
+  const { showTutorial, isLoading: tutorialLoading, completeTutorial } = useTutorial();
 
   // Memoize query key to prevent unnecessary refetches
   const queryKey = useMemo(() => 
@@ -81,7 +84,7 @@ const Index = () => {
   }, [error, toast, refetch]);
 
   // Loading state with better UX
-  if (isLoading || authLoading) {
+  if (isLoading || authLoading || tutorialLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
         <motion.div 
@@ -166,6 +169,11 @@ const Index = () => {
       />
       <WelcomePopup />
       <InterestSelectionPopup />
+      
+      {/* Tutorial overlay */}
+      {showTutorial && (
+        <TutorialOverlay onComplete={completeTutorial} />
+      )}
       
       {/* Loading indicator for background fetches */}
       {isFetching && !isLoading && (
