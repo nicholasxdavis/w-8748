@@ -8,18 +8,11 @@ export const useTutorial = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if tutorial has been completed
-    const tutorialCompleted = localStorage.getItem(TUTORIAL_STORAGE_KEY);
-    
-    if (!tutorialCompleted) {
-      // Show tutorial after a brief delay for better UX
-      setTimeout(() => {
-        setShowTutorial(true);
-        setIsLoading(false);
-      }, 1000);
-    } else {
+    // Always show tutorial for now (remove localStorage check)
+    setTimeout(() => {
+      setShowTutorial(true);
       setIsLoading(false);
-    }
+    }, 1000);
   }, []);
 
   const completeTutorial = () => {

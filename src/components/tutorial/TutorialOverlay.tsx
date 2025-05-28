@@ -42,6 +42,12 @@ interface TutorialOverlayProps {
 const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Check if device is mobile
+    setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -75,28 +81,30 @@ const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center"
     >
-      {/* Background with animated arrows */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{ y: [-20, 20, -20] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-1/2 transform -translate-x-1/2"
-        >
-          <ChevronUp className="w-12 h-12 text-white/20" />
-        </motion.div>
-        <motion.div
-          animate={{ y: [20, -20, 20] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2"
-        >
-          <ChevronDown className="w-12 h-12 text-white/20" />
-        </motion.div>
+      {/* Background with animated arrows - centered properly */}
+      <div className="absolute inset-0 overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-full max-w-md mx-auto">
+          <motion.div
+            animate={{ y: [-20, 20, -20] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/4 left-1/2 transform -translate-x-1/2"
+          >
+            <ChevronUp className="w-12 h-12 text-white/20" />
+          </motion.div>
+          <motion.div
+            animate={{ y: [20, -20, 20] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2"
+          >
+            <ChevronDown className="w-12 h-12 text-white/20" />
+          </motion.div>
+        </div>
       </div>
 
       {/* Skip button */}
       <button
         onClick={handleSkip}
-        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all"
+        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all z-60"
       >
         <X className="w-5 h-5" />
       </button>
@@ -180,12 +188,14 @@ const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
             transition={{ delay: 1 }}
             className="mt-8"
           >
-            <p className="text-sm text-gray-400">Try swiping up or down now</p>
+            <p className="text-sm text-gray-400">
+              {isMobile ? 'Try swiping up or down now' : 'Try scrolling up or down now'}
+            </p>
           </motion.div>
         )}
       </div>
 
-      {/* Swipe gesture animation for first step */}
+      {/* Gesture animation for first step - different for mobile vs desktop */}
       {currentStep === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -193,17 +203,38 @@ const TutorialOverlay = ({ onComplete }: TutorialOverlayProps) => {
           transition={{ delay: 1.5 }}
           className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
         >
-          <motion.div
-            animate={{ y: [0, -30, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-12 h-20 border-2 border-white/40 rounded-full flex justify-center"
-          >
+          {isMobile ? (
+            // Mobile: Finger swipe gesture
             <motion.div
-              animate={{ y: [5, -10, 5] }}
+              animate={{ y: [0, -30, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-1 h-6 bg-white/60 rounded-full mt-2"
-            />
-          </motion.div>
+              className="flex flex-col items-center"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="w-8 h-8 bg-white/60 rounded-full mb-2"
+              />
+              <motion.div
+                animate={{ height: [20, 40, 20] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="w-1 bg-white/40 rounded-full"
+              />
+            </motion.div>
+          ) : (
+            // Desktop: Mouse scroll gesture
+            <motion.div
+              animate={{ y: [0, -30, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-12 h-20 border-2 border-white/40 rounded-full flex justify-center"
+            >
+              <motion.div
+                animate={{ y: [5, -10, 5] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="w-1 h-6 bg-white/60 rounded-full mt-2"
+              />
+            </motion.div>
+          )}
         </motion.div>
       )}
     </motion.div>
