@@ -25,9 +25,10 @@ const Discover = () => {
   const { ref, inView } = useInView({ threshold: 0.1 });
   const { toast } = useToast();
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ["discover", selectedCategory],
     queryFn: async ({ pageParam = 0 }) => {
+      console.log('Fetching page:', pageParam, 'for category:', selectedCategory);
       let articles: WikipediaArticle[] = [];
       
       if (selectedCategory !== "All") {
@@ -66,11 +67,14 @@ const Discover = () => {
         )
         .slice(0, 12);
       
+      console.log('Fetched articles:', uniqueArticles.length);
       return uniqueArticles;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === 12 ? allPages.length : undefined;
+      // Always return the next page number as long as we got a full page
+      console.log('Last page size:', lastPage.length, 'Total pages:', allPages.length);
+      return lastPage.length > 0 ? allPages.length : undefined;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000,
@@ -78,6 +82,7 @@ const Discover = () => {
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
+      console.log('Loading next page...');
       fetchNextPage();
     }
   }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
@@ -97,6 +102,7 @@ const Discover = () => {
   };
 
   const articles = data?.pages.flat() ?? [];
+  console.log('Total articles loaded:', articles.length);
 
   const getGridItemClass = (index: number) => {
     const patterns = [
