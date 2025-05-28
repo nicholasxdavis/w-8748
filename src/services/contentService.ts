@@ -48,10 +48,10 @@ const getPersonalizedContent = async (userTopics: string[], count: number): Prom
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
-  // Reduced news ratio: 1 news article per 6-8 content items instead of every 4-5
-  const personalizedCount = Math.ceil(count * 0.6);
+  // Reduced to 20% chance: only 1 news article per 10 content items max
+  const personalizedCount = Math.ceil(count * 0.7);
   const randomWikiCount = Math.ceil(count * 0.3);
-  const newsCount = Math.min(2, Math.ceil(count * 0.1)); // Much less news, max 2 articles
+  const newsCount = Math.random() < 0.2 ? 1 : 0; // 20% chance to show 1 news article
   
   let userTopics: string[] = [];
   let personalizedArticles: WikipediaArticle[] = [];
@@ -73,19 +73,19 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
 
   const [randomWikiArticles, newsArticles] = await Promise.all([
     getWikiArticles(remainingWikiCount).catch(() => []),
-    getBreakingNews(newsCount).catch(() => [])
+    newsCount > 0 ? getBreakingNews(newsCount).catch(() => []) : Promise.resolve([])
   ]);
 
   const allWikiArticles = [...personalizedArticles, ...randomWikiArticles];
   const mixedContent: ContentItem[] = [];
   const contentPools = { wiki: [...allWikiArticles], news: [...newsArticles] };
 
-  // Changed pattern: only add news every 6-8 items instead of every 4
+  // Only show news if we have any and randomly (20% chance)
   for (let i = 0; i < count && (contentPools.wiki.length > 0 || contentPools.news.length > 0); i++) {
     let contentType: 'wiki' | 'news';
     
-    // Show news much less frequently (every 6-8 items instead of every 4)
-    if (i > 0 && i % 7 === 0 && contentPools.news.length > 0) {
+    // Show news only if available and at random positions
+    if (contentPools.news.length > 0 && Math.random() < 0.2) {
       contentType = 'news';
     } else if (contentPools.wiki.length > 0) {
       contentType = 'wiki';
