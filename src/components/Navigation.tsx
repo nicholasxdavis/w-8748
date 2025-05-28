@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { searchMixedContent, getMixedContent } from "../services/contentService";
@@ -74,7 +73,7 @@ const Navigation = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+              className="text-blue-400 bg-blue-400/10 hover:text-gray-400 hover:bg-transparent transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -103,10 +102,10 @@ const Navigation = () => {
           <div className="flex items-center space-x-2 flex-shrink-0 ml-auto">
             <button
               onClick={() => setSavedArticlesOpen(true)}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+              className="text-blue-400 bg-blue-400/10 hover:text-gray-400 hover:bg-transparent transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 0 012 2v16l-7-3.5L5 21V5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             </button>
             <UserMenu />

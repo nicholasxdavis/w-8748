@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
@@ -47,6 +46,29 @@ const ArticleViewer = ({
   const {
     toggleSave
   } = useSaveArticle();
+
+  // Stock images for breaking news
+  const stockNewsImages = [
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05', // foggy mountain summit
+    'https://images.unsplash.com/photo-1500375592092-40eb2168fd21', // ocean wave at beach
+    'https://images.unsplash.com/photo-1426604966848-d7adac402bff', // landmark photography of trees
+    'https://images.unsplash.com/photo-1523712999610-f77fbcfc3843', // forest heat by sunbeam
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb'  // body of water surrounded by trees
+  ];
+
+  const getArticleImage = (article) => {
+    if (article.image && !article.image.includes('placeholder')) {
+      return article.image;
+    }
+    
+    if (isNewsArticle(article)) {
+      // Use a consistent stock image based on article ID for breaking news
+      const imageIndex = parseInt(article.id) % stockNewsImages.length;
+      return stockNewsImages[imageIndex];
+    }
+    
+    return article.image;
+  };
 
   // Hide double-tap hint after 3 seconds on first load
   useEffect(() => {
@@ -288,7 +310,7 @@ const ArticleViewer = ({
           duration: 0.3
         }}>
               <div className="absolute inset-0 w-screen h-screen">
-                <img src={article.image} alt={article.title} className="w-full h-full object-cover" loading={index <= currentIndex + 1 ? "eager" : "lazy"} />
+                <img src={getArticleImage(article)} alt={article.title} className="w-full h-full object-cover" loading={index <= currentIndex + 1 ? "eager" : "lazy"} />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
               </div>
 
