@@ -4,7 +4,6 @@ import { Progress } from "../ui/progress";
 import { isNewsArticle } from "../../services/contentService";
 import { getArticleImage } from "../../utils/articleHelpers";
 import BreakingNewsBadge from "./BreakingNewsBadge";
-import DoubleTapHint from "./DoubleTapHint";
 import ArticleContent from "./ArticleContent";
 import FloatingActionButtons from "./FloatingActionButtons";
 
@@ -60,8 +59,6 @@ const ArticleDisplay = ({
     </div>
 
     {isNewsArticle(article) && <BreakingNewsBadge />}
-    
-    <DoubleTapHint show={showDoubleTapHint} />
 
     <FloatingActionButtons
       currentArticle={article}
