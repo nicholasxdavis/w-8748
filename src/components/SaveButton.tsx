@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { useSaveArticle } from '@/hooks/useSaveArticle';
 import { useAuth } from '@/hooks/useAuth';
-import DoubleTapHint from './article/DoubleTapHint';
+import AuthPromptDialog from './AuthPromptDialog';
 
 interface SaveButtonProps {
   article: {
@@ -20,7 +20,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   const { toggleSave, isSaved, isLoading, checkIfSaved } = useSaveArticle();
   const { user } = useAuth();
   const [isArticleSaved, setIsArticleSaved] = useState(false);
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   // Don't show save button for news articles
   if (article.isBreakingNews) {
@@ -46,8 +46,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
 
   const handleClick = async () => {
     if (!user) {
-      setShowAuthPrompt(true);
-      setTimeout(() => setShowAuthPrompt(false), 2000);
+      setShowAuthDialog(true);
       return;
     }
 
@@ -84,9 +83,10 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         </span>
       </div>
       
-      <DoubleTapHint 
-        show={showAuthPrompt} 
-        message="Sign in to save articles" 
+      <AuthPromptDialog 
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        type="save"
       />
     </>
   );

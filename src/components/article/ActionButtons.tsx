@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Volume2, VolumeX, Share2, Loader2 } from "lucide-react";
 import SaveButton from "../SaveButton";
 import { useAuth } from '@/hooks/useAuth';
-import DoubleTapHint from './DoubleTapHint';
+import AuthPromptDialog from '../AuthPromptDialog';
 import { useState } from 'react';
 
 interface ActionButtonsProps {
@@ -24,14 +24,13 @@ const ActionButtons = ({
   isMobile = false 
 }: ActionButtonsProps) => {
   const { user } = useAuth();
-  const [showSpeechAuthPrompt, setShowSpeechAuthPrompt] = useState(false);
+  const [showSpeechAuthDialog, setShowSpeechAuthDialog] = useState(false);
 
   const handleSpeechClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (!user) {
-      setShowSpeechAuthPrompt(true);
-      setTimeout(() => setShowSpeechAuthPrompt(false), 2000);
+      setShowSpeechAuthDialog(true);
       return;
     }
     
@@ -95,9 +94,10 @@ const ActionButtons = ({
         )}
       </motion.div>
 
-      <DoubleTapHint 
-        show={showSpeechAuthPrompt} 
-        message="Sign in to listen to articles" 
+      <AuthPromptDialog 
+        open={showSpeechAuthDialog}
+        onOpenChange={setShowSpeechAuthDialog}
+        type="listen"
       />
     </>
   );
