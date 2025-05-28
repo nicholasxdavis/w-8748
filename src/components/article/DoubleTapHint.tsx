@@ -10,7 +10,7 @@ const DoubleTapHint = ({ show, message = "Double-tap to save" }: DoubleTapHintPr
   <AnimatePresence>
     {show && (
       <motion.div 
-        className="absolute top-20 right-4 z-20"
+        className="fixed top-4 right-4 z-30"
         initial={{ x: 50, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 50, opacity: 0 }}
