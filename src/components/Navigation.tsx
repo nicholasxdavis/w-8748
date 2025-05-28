@@ -7,6 +7,7 @@ import SavedArticlesFullPage from "./SavedArticlesFullPage";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
 import UserMenu from "./navigation/UserMenu";
+import { Compass } from "lucide-react";
 
 const Navigation = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -47,6 +48,10 @@ const Navigation = () => {
     }
   };
 
+  const handleDiscoverClick = () => {
+    navigate('/discover');
+  };
+
   return (
     <>
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center backdrop-blur-lg">
@@ -68,6 +73,12 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-3">
+            <button
+              onClick={handleDiscoverClick}
+              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+            >
+              <Compass className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setSavedArticlesOpen(true)}
               className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
@@ -97,6 +108,12 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-2 flex-shrink-0 ml-auto">
+            <button
+              onClick={handleDiscoverClick}
+              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
+            >
+              <Compass className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setSavedArticlesOpen(true)}
               className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
