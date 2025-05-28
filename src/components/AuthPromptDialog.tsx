@@ -34,7 +34,16 @@ const AuthPromptDialog = ({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800 rounded-xl py-6 px-6 relative">
+      <AlertDialogContent 
+        className="sm:max-w-md bg-zinc-950 border-zinc-800 rounded-xl py-6 px-6 relative"
+        style={{
+          position: 'fixed',
+          top: '50vh',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999
+        }}
+      >
         <button
           onClick={() => onOpenChange(false)}
           className="absolute top-4 right-4 p-1 rounded-full hover:bg-zinc-800 transition-colors"
