@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle, searchArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -140,9 +139,9 @@ const Discover = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
-        <div className="px-4 py-4 pt-20 pb-8">
+        <div className="px-4 py-4 pt-20 pb-12">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
-          <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2">
+          <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2 mb-4">
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -161,7 +160,7 @@ const Discover = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="px-2 pt-56 pb-20">
+      <div className="px-2 pt-64 pb-20">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
             {Array.from({ length: 12 }).map((_, i) => (
