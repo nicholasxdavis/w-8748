@@ -140,7 +140,7 @@ const Discover = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
-        <div className="px-4 py-4 pt-20 pb-6">
+        <div className="px-4 py-4 pt-20 pb-8">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
           <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2">
             {categories.map((category) => (
@@ -161,7 +161,7 @@ const Discover = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="px-2 pt-52 pb-20">
+      <div className="px-2 pt-56 pb-20">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 auto-rows-[200px]">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -188,12 +188,14 @@ const Discover = () => {
                 className={`group relative cursor-pointer rounded-xl overflow-hidden bg-gray-800/50 backdrop-blur-sm border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10 ${getGridItemClass(index)}`}
                 onClick={() => handleArticleClick(article)}
               >
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
+                {article.image && (
+                  <img
+                    src={article.image}
+                    alt={article.title || 'Article image'}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                )}
                 
                 {/* Enhanced Overlay - Always visible */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
@@ -201,16 +203,16 @@ const Discover = () => {
                 {/* Content - Always visible */}
                 <div className="absolute inset-0 p-3 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
-                    <div className="bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
+                    <div className="bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10 flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
-                        {article.readTime}m read
+                        {article.readTime || '5'}m read
                       </span>
                     </div>
                   </div>
                   
                   <div className="space-y-3">
                     <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">
-                      {article.title}
+                      {article.title || 'Untitled Article'}
                     </h3>
                     <div className="flex items-center gap-4 text-white/90">
                       <div className="flex items-center gap-1">
