@@ -1,3 +1,4 @@
+
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
@@ -10,12 +11,10 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   const content = page.extract;
   const image = page.thumbnail?.source || '';
   
-  // Generate basic metadata
   const readTime = Math.ceil(content.length / 1000);
   const views = Math.floor(Math.random() * 100000) + 1000;
-  const citations = Math.floor(Math.random() * 50) + 5; // Generate random citations count
+  const citations = Math.floor(Math.random() * 50) + 5;
   
-  // Extract categories as tags
   const tags = page.categories?.slice(0, 3).map((cat: any) => 
     cat.title.replace('Category:', '')
   ) || ['General'];
@@ -29,7 +28,7 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
     readTime,
     views,
     tags,
-    relatedArticles: [] // Initialize empty array, will be populated by getRelatedArticles if needed
+    relatedArticles: []
   };
 };
 
@@ -42,7 +41,7 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
       origin: '*',
       list: 'categorymembers',
       cmtitle: categoryTitles,
-      cmlimit: '10', // Increased from 5 to ensure we get enough valid articles
+      cmlimit: '10',
       cmtype: 'page'
     });
 
@@ -73,25 +72,50 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
 const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
     let titles: string[] = [];
-    const multiplier = 2; // Reduced multiplier to avoid getting too many similar articles
     
     if (category && category !== "All") {
+      console.log(`Fetching articles for category: ${category}`);
+      
+      // Try to get articles from the specific category
       const params = new URLSearchParams({
         action: 'query',
         format: 'json',
         origin: '*',
         list: 'categorymembers',
         cmtitle: `Category:${category}`,
-        cmlimit: (count * multiplier).toString(),
+        cmlimit: (count * 3).toString(), // Get more to ensure we have enough valid articles
         cmtype: 'page'
       });
 
       const categoryResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
-      if (!categoryResponse.ok) throw new Error('Failed to fetch category articles');
-      
-      const categoryData = await categoryResponse.json() as WikipediaResponse;
-      titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
+      if (categoryResponse.ok) {
+        const categoryData = await categoryResponse.json() as WikipediaResponse;
+        titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
+        console.log(`Found ${titles.length} articles in category ${category}`);
+      }
+
+      // If we don't get enough articles from the category, supplement with search
+      if (titles.length < count) {
+        console.log(`Not enough articles in category, searching for: ${category}`);
+        const searchParams = new URLSearchParams({
+          action: 'query',
+          format: 'json',
+          origin: '*',
+          list: 'search',
+          srsearch: category,
+          srlimit: (count * 2).toString()
+        });
+
+        const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?${searchParams}`);
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json() as WikipediaResponse;
+          const searchTitles = searchData.query?.search?.map(result => result.title) || [];
+          titles = [...titles, ...searchTitles].slice(0, count * 2);
+          console.log(`After search supplement: ${titles.length} articles`);
+        }
+      }
     } else {
+      // Get completely random articles using multiple requests for better variety
       const randomRequests = [];
       const articlesPerRequest = Math.ceil(count / 2);
       
@@ -102,7 +126,7 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
           origin: '*',
           list: 'random',
           rnnamespace: '0',
-          rnlimit: articlesPerRequest.toString()
+          rnlimit: (articlesPerRequest + 2).toString()
         });
 
         randomRequests.push(
@@ -119,12 +143,16 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
 
       const titleBatches = await Promise.all(randomRequests);
       titles = titleBatches.flat();
-      
-      // Shuffle the titles to ensure randomness
       titles = titles.sort(() => Math.random() - 0.5);
     }
 
-    if (!titles.length) throw new Error('No articles found');
+    if (!titles.length) {
+      console.log('No titles found, falling back to random articles');
+      throw new Error('No articles found');
+    }
+
+    // Shuffle titles to ensure randomness
+    titles = titles.sort(() => Math.random() - 0.5);
 
     const data = await fetchWikipediaContent(titles) as WikipediaResponse;
     const pages = Object.values(data.query?.pages || {});
@@ -132,10 +160,13 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
+    console.log(`Transformed ${validArticles.length} valid articles out of ${pages.length} pages`);
+    
     // If we don't have enough articles, fetch more with a different approach
-    if (validArticles.length < count) {
-      const moreArticles = await getRandomArticles(count - validArticles.length, category);
-      return [...validArticles, ...moreArticles].slice(0, count);
+    if (validArticles.length < count && category) {
+      console.log('Not enough valid articles, trying fallback...');
+      const fallbackArticles = await getRandomArticles(count - validArticles.length);
+      return [...validArticles, ...fallbackArticles].slice(0, count);
     }
     
     return validArticles.slice(0, count);
@@ -155,7 +186,7 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
       origin: '*',
       list: 'search',
       srsearch: query,
-      srlimit: '20' // Increased from 10 to ensure we get enough valid articles
+      srlimit: '20'
     });
 
     const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
