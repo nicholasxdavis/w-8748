@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle, searchArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -14,7 +15,6 @@ const categories = [
   { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming", "algorithm", "artificial", "intelligence", "machine"] },
   { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game", "team", "competition", "player", "tournament"] },
   { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species", "forest", "ocean", "bird", "mammal"] },
-  { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory", "wisdom", "consciousness", "existence"] },
 ];
 
 const Discover = () => {
