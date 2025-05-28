@@ -13,7 +13,7 @@ const categories = [
   { id: "Science", name: "Science", keywords: ["science", "physics", "chemistry", "biology", "astronomy", "research", "laboratory", "experiment", "quantum", "molecule", "DNA", "theory", "discovery"] },
   { id: "History", name: "History", keywords: ["history", "ancient", "medieval", "war", "empire", "civilization", "historical", "century", "dynasty", "kingdom", "revolution", "culture", "tradition"] },
   { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming", "algorithm", "artificial", "intelligence", "machine"] },
-  { id: "Arts", name: "Arts", keywords: ["art", "painting", "sculpture", "music", "literature", "artist", "creative", "culture", "museum", "gallery", "design", "aesthetic"] },
+  { id: "Arts", name: "Arts", keywords: ["art", "artist", "painting", "sculpture", "music", "literature", "creative", "culture", "museum", "gallery", "design", "aesthetic", "artistic", "arts"] },
   { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game", "team", "competition", "player", "tournament"] },
   { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species", "forest", "ocean", "bird", "mammal"] },
   { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory", "wisdom", "consciousness", "existence"] },
@@ -21,6 +21,7 @@ const categories = [
 
 const Discover = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [seenArticleIds, setSeenArticleIds] = useState(new Set<number>());
   const navigate = useNavigate();
   const { ref, inView } = useInView({ threshold: 0.1 });
   const { toast } = useToast();
@@ -34,51 +35,71 @@ const Discover = () => {
       if (selectedCategory !== "All") {
         const categoryConfig = categories.find(cat => cat.id === selectedCategory);
         if (categoryConfig?.keywords.length) {
-          // For specific categories, search using category keywords to get more relevant results
-          const searchPromises = categoryConfig.keywords.slice(0, 3).map(keyword => 
-            searchArticles(keyword).then(results => results.slice(0, 4))
+          // For specific categories, use different keywords for different pages to get variety
+          const keywordOffset = pageParam % categoryConfig.keywords.length;
+          const selectedKeywords = [
+            ...categoryConfig.keywords.slice(keywordOffset, keywordOffset + 3),
+            ...categoryConfig.keywords.slice(0, Math.max(0, 3 - (categoryConfig.keywords.length - keywordOffset)))
+          ].slice(0, 3);
+          
+          console.log('Using keywords for page', pageParam, ':', selectedKeywords);
+          
+          const searchPromises = selectedKeywords.map(keyword => 
+            searchArticles(keyword).then(results => results.slice(pageParam * 2, (pageParam * 2) + 5))
           );
           
           const searchResults = await Promise.all(searchPromises);
           articles = searchResults.flat();
           
           // If we don't have enough articles from search, get random ones and filter
-          if (articles.length < 12) {
+          if (articles.length < 8) {
             const randomArticles = await getRandomArticles(20);
             const filteredRandom = randomArticles.filter(article => {
               const titleLower = article.title.toLowerCase();
               const contentLower = article.content?.toLowerCase() || "";
+              const tagsLower = article.tags.join(' ').toLowerCase();
               return categoryConfig.keywords.some(keyword => 
-                titleLower.includes(keyword) || contentLower.includes(keyword)
+                titleLower.includes(keyword.toLowerCase()) || 
+                contentLower.includes(keyword.toLowerCase()) ||
+                tagsLower.includes(keyword.toLowerCase())
               );
             });
             articles = [...articles, ...filteredRandom];
           }
         }
       } else {
-        articles = await getRandomArticles(12);
+        // For "All" category, get random articles with offset to avoid duplicates
+        articles = await getRandomArticles(15);
       }
       
-      // Remove duplicates and ensure we have images
-      const uniqueArticles = articles
+      // Remove articles we've already seen and ensure we have images
+      const newArticles = articles
         .filter(article => article.image && !article.image.includes('placeholder'))
-        .filter((article, index, self) => 
-          index === self.findIndex(a => a.id === article.id)
-        )
+        .filter(article => !seenArticleIds.has(article.id))
         .slice(0, 12);
       
-      console.log('Fetched articles:', uniqueArticles.length);
-      return uniqueArticles;
+      // Update seen articles
+      const newSeenIds = new Set(seenArticleIds);
+      newArticles.forEach(article => newSeenIds.add(article.id));
+      setSeenArticleIds(newSeenIds);
+      
+      console.log('Fetched new articles:', newArticles.length, 'Total seen:', newSeenIds.size);
+      return newArticles;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      // Always return the next page number as long as we got a full page
+      // Continue loading if we got articles
       console.log('Last page size:', lastPage.length, 'Total pages:', allPages.length);
       return lastPage.length > 0 ? allPages.length : undefined;
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000,
   });
+
+  // Reset seen articles when category changes
+  useEffect(() => {
+    setSeenArticleIds(new Set());
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
@@ -89,6 +110,7 @@ const Discover = () => {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    setSeenArticleIds(new Set()); // Reset seen articles when changing category
     toast({
       title: `Exploring ${category === "All" ? "trending content" : category.toLowerCase()}`,
       variant: "default",
