@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { getRandomArticles, WikipediaArticle, searchArticles } from "@/services/wikipediaService";
 import { useInView } from "react-intersection-observer";
@@ -13,7 +12,6 @@ const categories = [
   { id: "Science", name: "Science", keywords: ["science", "physics", "chemistry", "biology", "astronomy", "research", "laboratory", "experiment", "quantum", "molecule", "DNA", "theory", "discovery"] },
   { id: "History", name: "History", keywords: ["history", "ancient", "medieval", "war", "empire", "civilization", "historical", "century", "dynasty", "kingdom", "revolution", "culture", "tradition"] },
   { id: "Technology", name: "Tech", keywords: ["technology", "computer", "software", "internet", "digital", "innovation", "tech", "programming", "algorithm", "artificial", "intelligence", "machine"] },
-  { id: "Arts", name: "Arts", keywords: ["art", "artist", "painting", "sculpture", "music", "literature", "creative", "culture", "museum", "gallery", "design", "aesthetic", "artistic", "arts"] },
   { id: "Sports", name: "Sports", keywords: ["sport", "football", "basketball", "soccer", "athlete", "olympic", "championship", "game", "team", "competition", "player", "tournament"] },
   { id: "Nature", name: "Nature", keywords: ["nature", "animal", "plant", "environment", "wildlife", "ecosystem", "conservation", "species", "forest", "ocean", "bird", "mammal"] },
   { id: "Philosophy", name: "Philosophy", keywords: ["philosophy", "philosopher", "ethics", "logic", "metaphysics", "philosophical", "thought", "theory", "wisdom", "consciousness", "existence"] },
@@ -144,7 +142,7 @@ const Discover = () => {
       <div className="absolute top-16 left-0 right-0 z-30 bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-lg border-b border-gray-800/50">
         <div className="px-4 py-4">
           <h1 className="text-2xl font-bold text-white mb-4">Discover</h1>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+          <div className="grid grid-cols-4 gap-2 md:flex md:gap-2 md:overflow-x-auto md:scrollbar-hide pb-2">
             {categories.map((category) => (
               <button
                 key={category.id}
