@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "./ui/progress";
-import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2 } from "lucide-react";
+import { Volume2, VolumeX, Share2, Calendar, Globe, Menu, X, ExternalLink, Loader2, Compass } from "lucide-react";
 import { getMixedContent } from "../services/contentService";
 import { isNewsArticle } from "../services/contentService";
 import SaveButton from "./SaveButton";
@@ -9,6 +10,7 @@ import ShareModal from "./ShareModal";
 import { useToast } from "@/hooks/use-toast";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useSaveArticle } from "@/hooks/useSaveArticle";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ArticleViewer = ({
   articles: initialArticles,
@@ -30,6 +32,9 @@ const ArticleViewer = ({
   const doubleClickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentArticle = articles[currentIndex];
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
   const {
     toast
   } = useToast();
@@ -50,6 +55,7 @@ const ArticleViewer = ({
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
   const loadMoreArticles = useCallback(async () => {
     if (isLoading) return;
     try {
@@ -62,6 +68,7 @@ const ArticleViewer = ({
       setIsLoading(false);
     }
   }, [isLoading]);
+
   const showFullText = useCallback(() => {
     if (currentArticle?.content && !isTextFullyLoaded) {
       // Clear any ongoing typing animation
@@ -77,6 +84,7 @@ const ArticleViewer = ({
       setIsTypingPaused(false);
     }
   }, [currentArticle?.content, isTextFullyLoaded]);
+
   const handleContentClick = useCallback(() => {
     clickCountRef.current += 1;
     if (doubleClickTimeoutRef.current) {
@@ -102,6 +110,7 @@ const ArticleViewer = ({
       clickCountRef.current = 0;
     }
   }, [currentArticle, toggleSave, showFullText]);
+
   const handleTextToSpeech = useCallback(() => {
     if (!currentArticle?.content) {
       toast({
@@ -113,6 +122,7 @@ const ArticleViewer = ({
     }
     speak(currentArticle.content);
   }, [currentArticle?.content, speak, toast]);
+
   const formatNewsDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -121,11 +131,16 @@ const ArticleViewer = ({
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return date.toLocaleDateString();
   }, []);
+
   const handleWikipediaRedirect = useCallback(() => {
     const baseUrl = "https://en.wikipedia.org/wiki/";
     const articleTitle = encodeURIComponent(currentArticle.title);
     window.open(`${baseUrl}${articleTitle}`, '_blank');
   }, [currentArticle?.title]);
+
+  const handleDiscoverClick = () => {
+    navigate('/discover');
+  };
 
   // Memoized action buttons to prevent unnecessary re-renders
   const ActionButtons = useMemo(() => ({
@@ -259,6 +274,7 @@ const ArticleViewer = ({
       }
     };
   }, [stop]);
+
   return <>
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
         <AnimatePresence>
@@ -312,6 +328,23 @@ const ArticleViewer = ({
                     </div>
                   </motion.div>}
               </AnimatePresence>
+
+              {/* Discover Button - Only show on home page and as part of the card interface */}
+              {isHomePage && <motion.div className="absolute bottom-20 left-4 z-30" initial={{
+            scale: 0
+          }} animate={{
+            scale: 1
+          }} transition={{
+            delay: 0.3,
+            duration: 0.3
+          }}>
+                  <button onClick={e => {
+                e.stopPropagation();
+                handleDiscoverClick();
+              }} className="p-3 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105 shadow-lg">
+                    <Compass className="w-5 h-5" />
+                  </button>
+                </motion.div>}
 
               {/* Action Buttons Toggle */}
               <motion.div className="absolute bottom-20 right-4 z-30" initial={{

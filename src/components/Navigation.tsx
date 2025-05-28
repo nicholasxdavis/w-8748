@@ -7,7 +7,6 @@ import SavedArticlesFullPage from "./SavedArticlesFullPage";
 import SearchButton from "./search/SearchButton";
 import SearchInterface from "./search/SearchInterface";
 import UserMenu from "./navigation/UserMenu";
-import { Compass } from "lucide-react";
 
 const Navigation = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -103,32 +102,16 @@ const Navigation = () => {
           
           <div className="flex items-center space-x-2 flex-shrink-0 ml-auto">
             <button
-              onClick={handleDiscoverClick}
-              className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
-            >
-              <Compass className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => setSavedArticlesOpen(true)}
               className="text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all p-2 rounded-full w-10 h-10 flex items-center justify-center"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             </button>
             <UserMenu />
           </div>
         </div>
-      </div>
-
-      {/* Mobile Discover Button - Bottom Left */}
-      <div className="fixed bottom-20 left-4 z-40 sm:hidden">
-        <button
-          onClick={handleDiscoverClick}
-          className="bg-black/40 backdrop-blur-md text-white p-3 rounded-full border border-white/20 hover:bg-black/60 transition-all duration-200 hover:scale-105 shadow-lg"
-        >
-          <Compass className="w-5 h-5" />
-        </button>
       </div>
 
       <SearchInterface
