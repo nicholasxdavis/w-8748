@@ -104,77 +104,77 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
-          <h3 className="font-bold text-white text-lg flex items-center gap-2">
-            <Settings className="w-5 h-5 text-blue-400" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/40 rounded-xl shadow-xl w-full max-w-sm max-h-[70vh] overflow-hidden">
+        <div className="p-3 border-b border-gray-700/30 flex items-center justify-between">
+          <h3 className="font-medium text-white text-base flex items-center gap-2">
+            <Settings className="w-4 h-4 text-blue-400" />
             Settings
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-800/60 transition-colors"
+            className="p-1 rounded-lg hover:bg-gray-800/60 transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-4 h-4 text-gray-400" />
           </button>
         </div>
 
         <div className="flex border-b border-gray-700/30">
           <button
             onClick={() => setActiveTab("profile")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "profile"
                 ? "text-blue-400 border-b-2 border-blue-400"
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            <User className="w-4 h-4 inline mr-2" />
+            <User className="w-3 h-3 inline mr-1" />
             Profile
           </button>
           <button
             onClick={() => setActiveTab("topics")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "topics"
                 ? "text-blue-400 border-b-2 border-blue-400"
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            <Tags className="w-4 h-4 inline mr-2" />
+            <Tags className="w-3 h-3 inline mr-1" />
             Topics
           </button>
         </div>
 
-        <div className="p-4 max-h-96 overflow-y-auto">
+        <div className="p-3 max-h-80 overflow-y-auto">
           {activeTab === "profile" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   First Name
                 </label>
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-600/50 rounded-md text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Enter your first name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-300 mb-1">
                   Last Name
                 </label>
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 bg-gray-800/50 border border-gray-600/50 rounded-md text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   placeholder="Enter your last name"
                 />
               </div>
               <Button
                 onClick={handleSaveProfile}
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-2"
               >
                 {isLoading ? "Saving..." : "Save Profile"}
               </Button>
@@ -182,22 +182,22 @@ const SettingsPopup = ({ isOpen, onClose }: SettingsPopupProps) => {
           )}
 
           {activeTab === "topics" && (
-            <div className="space-y-4">
-              <p className="text-gray-400 text-sm">
-                Select topics you're interested in to personalize your content:
+            <div className="space-y-3">
+              <p className="text-gray-400 text-xs">
+                Select topics to personalize your content:
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {topics.map((topic) => (
                   <button
                     key={topic.id}
                     onClick={() => handleTopicToggle(topic.id)}
-                    className={`p-3 rounded-lg text-sm font-medium transition-all ${
+                    className={`p-2 rounded-md text-xs font-medium transition-all text-center ${
                       selectedTopics.includes(topic.id)
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 text-white"
+                        : "bg-gray-800/50 text-gray-300 hover:bg-gray-700/50"
                     }`}
                   >
-                    <span className="mr-2">{topic.icon}</span>
+                    <span className="block text-sm mb-0.5">{topic.icon}</span>
                     {topic.name}
                   </button>
                 ))}

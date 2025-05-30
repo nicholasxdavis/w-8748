@@ -83,9 +83,9 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
         variant="ghost"
         size="sm"
         onClick={() => navigate('/auth')}
-        className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10"
+        className="text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-8 h-8"
       >
-        <Bookmark className="w-4 h-4" />
+        <Bookmark className="w-3.5 h-3.5" />
       </Button>
     );
   }
@@ -96,57 +96,55 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(true)}
-        className={`text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-10 h-10 ${
+        className={`text-gray-400 hover:text-blue-400 transition-all p-2 hover:bg-gray-800/50 rounded-xl hover:scale-105 w-8 h-8 ${
           isAnimating ? 'animate-pulse text-blue-400' : ''
         }`}
       >
-        <Bookmark className={`w-4 h-4 transition-colors duration-300 ${
+        <Bookmark className={`w-3.5 h-3.5 transition-colors duration-300 ${
           isAnimating ? 'text-blue-400' : ''
         }`} />
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
-            <div className="p-4 border-b border-gray-700/30 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-white text-lg flex items-center gap-2">
-                  <Bookmark className="w-5 h-5 text-blue-400" />
-                  Saved Articles
-                </h3>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-gray-900/95 backdrop-blur-xl border border-gray-700/40 rounded-xl shadow-xl w-full max-w-sm max-h-[70vh] overflow-hidden">
+            <div className="p-3 border-b border-gray-700/30 flex items-center justify-between">
+              <h3 className="font-medium text-white text-base flex items-center gap-2">
+                <Bookmark className="w-4 h-4 text-blue-400" />
+                Saved
+              </h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-800/60 transition-colors"
+                className="p-1 rounded-lg hover:bg-gray-800/60 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
             
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto">
               {isLoading ? (
                 <div className="p-6 text-center">
-                  <div className="animate-spin w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-3"></div>
-                  <p className="text-gray-400 text-sm">Loading saved articles...</p>
+                  <div className="animate-spin w-6 h-6 border-2 border-gray-600 border-t-blue-500 rounded-full mx-auto mb-2"></div>
+                  <p className="text-gray-400 text-xs">Loading...</p>
                 </div>
               ) : savedArticles.length === 0 ? (
                 <div className="p-6 text-center">
-                  <Bookmark className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <h4 className="font-medium text-white mb-2">No saved articles yet</h4>
-                  <p className="text-gray-400 text-sm">
-                    Articles you save will appear here for easy access
+                  <Bookmark className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                  <h4 className="font-medium text-white text-sm mb-1">No saved articles</h4>
+                  <p className="text-gray-400 text-xs">
+                    Save articles to access them later
                   </p>
                 </div>
               ) : (
-                <div className="p-2">
+                <div className="p-1">
                   {savedArticles.map((article) => (
                     <div
                       key={article.id}
                       onClick={() => handleArticleClick(article)}
-                      className="flex items-start gap-3 p-3 rounded-xl cursor-pointer hover:bg-gray-800/60 transition-all duration-200 group"
+                      className="flex items-start gap-2 p-2 rounded-lg cursor-pointer hover:bg-gray-800/50 transition-all duration-200 group"
                     >
                       {article.article_image ? (
-                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-800">
+                        <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 bg-gray-800">
                           <img 
                             src={article.article_image} 
                             alt={article.article_title}
@@ -154,19 +152,19 @@ const SavedArticlesPopup = ({ onSaveAnimation = false }: SavedArticlesPopupProps
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0">
-                          <span className="text-gray-300 font-bold text-sm">
+                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center flex-shrink-0">
+                          <span className="text-gray-300 font-medium text-xs">
                             {article.article_title[0]}
                           </span>
                         </div>
                       )}
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors line-clamp-2 leading-snug">
+                        <h4 className="font-medium text-white text-xs group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
                           {article.article_title}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Saved {new Date(article.saved_at).toLocaleDateString()}
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {new Date(article.saved_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
