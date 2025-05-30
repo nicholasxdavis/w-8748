@@ -1,29 +1,35 @@
 
-interface SpeechConfig {
-  rate: number;
-  pitch: number;
-  volume: number;
-  voice?: SpeechSynthesisVoice;
+interface ElevenLabsConfig {
+  apiKey: string;
+  voiceId: string;
+  model: string;
 }
 
+const config: ElevenLabsConfig = {
+  apiKey: 'sk_a18c9fb46e43f32e5b3364dd7df27ae2fbb9c4854febb64a',
+  voiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah voice
+  model: 'eleven_turbo_v2_5'
+};
+
 export class ElevenLabsService {
-  private synthesis: SpeechSynthesis;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private audioContext: AudioContext | null = null;
+  private currentSource: AudioBufferSourceNode | null = null;
   private isPlaying = false;
   private onStartCallback?: () => void;
   private onEndCallback?: () => void;
   private onErrorCallback?: (error: Error) => void;
-  private config: SpeechConfig = {
-    rate: 1,
-    pitch: 1,
-    volume: 1
-  };
 
   constructor() {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.synthesis = window.speechSynthesis;
-    } else {
-      throw new Error('Speech synthesis not supported in this browser');
+    if (typeof window !== 'undefined') {
+      this.initAudioContext();
+    }
+  }
+
+  private async initAudioContext() {
+    try {
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error);
     }
   }
 
@@ -33,50 +39,15 @@ export class ElevenLabsService {
     }
 
     try {
-      // Stop any current speech
+      // Always stop any current playback first
       this.stop();
       
-      // Create new utterance
-      this.currentUtterance = new SpeechSynthesisUtterance(text);
-      
-      // Configure utterance
-      this.currentUtterance.rate = this.config.rate;
-      this.currentUtterance.pitch = this.config.pitch;
-      this.currentUtterance.volume = this.config.volume;
-      
-      // Set voice if available
-      if (this.config.voice) {
-        this.currentUtterance.voice = this.config.voice;
+      if (this.onStartCallback) {
+        this.onStartCallback();
       }
 
-      // Set up event listeners
-      this.currentUtterance.onstart = () => {
-        this.isPlaying = true;
-        if (this.onStartCallback) {
-          this.onStartCallback();
-        }
-      };
-
-      this.currentUtterance.onend = () => {
-        this.isPlaying = false;
-        this.currentUtterance = null;
-        if (this.onEndCallback) {
-          this.onEndCallback();
-        }
-      };
-
-      this.currentUtterance.onerror = (event) => {
-        this.isPlaying = false;
-        this.currentUtterance = null;
-        const error = new Error(`Speech synthesis error: ${event.error}`);
-        if (this.onErrorCallback) {
-          this.onErrorCallback(error);
-        }
-      };
-
-      // Start speaking
-      this.synthesis.speak(this.currentUtterance);
-      
+      const audioBuffer = await this.generateSpeech(text);
+      await this.playAudio(audioBuffer);
     } catch (error) {
       console.error('Speech synthesis error:', error);
       if (this.onErrorCallback) {
@@ -86,11 +57,75 @@ export class ElevenLabsService {
     }
   }
 
-  stop(): void {
-    if (this.synthesis && this.isPlaying) {
-      this.synthesis.cancel();
+  private async generateSpeech(text: string): Promise<ArrayBuffer> {
+    const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + config.voiceId, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': config.apiKey
+      },
+      body: JSON.stringify({
+        text,
+        model_id: config.model,
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.8,
+          style: 0.5,
+          use_speaker_boost: true
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
+    }
+
+    return await response.arrayBuffer();
+  }
+
+  private async playAudio(audioData: ArrayBuffer): Promise<void> {
+    if (!this.audioContext) {
+      await this.initAudioContext();
+    }
+
+    if (!this.audioContext) {
+      throw new Error('Audio context not available');
+    }
+
+    try {
+      const audioBuffer = await this.audioContext.decodeAudioData(audioData);
+      
+      this.currentSource = this.audioContext.createBufferSource();
+      this.currentSource.buffer = audioBuffer;
+      this.currentSource.connect(this.audioContext.destination);
+      
+      this.currentSource.onended = () => {
+        this.isPlaying = false;
+        this.currentSource = null;
+        if (this.onEndCallback) {
+          this.onEndCallback();
+        }
+      };
+
+      this.isPlaying = true;
+      this.currentSource.start(0);
+    } catch (error) {
       this.isPlaying = false;
-      this.currentUtterance = null;
+      throw new Error(`Audio playback error: ${error}`);
+    }
+  }
+
+  stop(): void {
+    if (this.currentSource && this.isPlaying) {
+      try {
+        this.currentSource.stop();
+      } catch (error) {
+        // Ignore errors when stopping (might already be stopped)
+      }
+      this.currentSource = null;
+      this.isPlaying = false;
       if (this.onEndCallback) {
         this.onEndCallback();
       }
@@ -99,26 +134,6 @@ export class ElevenLabsService {
 
   getIsPlaying(): boolean {
     return this.isPlaying;
-  }
-
-  getAvailableVoices(): SpeechSynthesisVoice[] {
-    return this.synthesis.getVoices();
-  }
-
-  setVoice(voice: SpeechSynthesisVoice): void {
-    this.config.voice = voice;
-  }
-
-  setRate(rate: number): void {
-    this.config.rate = Math.max(0.1, Math.min(2, rate));
-  }
-
-  setPitch(pitch: number): void {
-    this.config.pitch = Math.max(0, Math.min(2, pitch));
-  }
-
-  setVolume(volume: number): void {
-    this.config.volume = Math.max(0, Math.min(1, volume));
   }
 
   onStart(callback: () => void): void {
