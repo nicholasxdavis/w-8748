@@ -28,7 +28,7 @@ const ArticleContent = ({
   duration: 0.5,
   ease: "easeOut"
 }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
-    <div className="w-[350px] sm:w-[80px] max-w-none mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 xl:p-12 border border-white/10 space-y-3 sm:space-y-4 lg:space-y-6 xl:space-y-8 min-h-[calc(20vh+30px)] lg:min-h-[calc(40vh+60px)]">
+    <div className="w-[800px] max-sm:w-[350px] max-w-none mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 xl:p-12 border border-white/10 space-y-3 sm:space-y-4 lg:space-y-6 xl:space-y-8 min-h-[calc(20vh+30px)] lg:min-h-[calc(40vh+60px)]">
       <div className="flex items-start justify-center">
         <h1 className="text-lg sm:text-xl lg:text-3xl xl:text-4xl font-bold leading-tight drop-shadow-lg text-center break-words hyphens-auto max-w-full">
           {article?.title || 'Loading...'}
