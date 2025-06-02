@@ -1,6 +1,6 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, PanInfo } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ArticleDisplay from "./ArticleDisplay";
 import { isNewsArticle } from "../../services/contentService";
 import { getArticleImage } from "../../utils/articleHelpers";
@@ -175,7 +175,23 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     setTimeout(() => setSwipeDirection(null), 300);
   };
 
-  // ... keep existing code (getCurrentContent, getCurrentImage, getCurrentTitle, getAnimationVariants functions)
+  // Handle desktop arrow navigation
+  const handlePreviousSection = () => {
+    if (currentSection > 0) {
+      setSwipeDirection('right');
+      setCurrentSection(prev => prev - 1);
+      setTimeout(() => setSwipeDirection(null), 300);
+    }
+  };
+
+  const handleNextSection = () => {
+    if (currentSection < totalSections - 1) {
+      setSwipeDirection('left');
+      setCurrentSection(prev => prev + 1);
+      setTimeout(() => setSwipeDirection(null), 300);
+    }
+  };
+
   const getCurrentContent = () => {
     if (loadedSections.length === 0) return props.article.content;
     const section = loadedSections[currentSection];
@@ -250,6 +266,31 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </motion.div>
+
+        {/* Desktop Navigation Arrows - only show on desktop and for Wikipedia articles with multiple sections */}
+        {isWikipediaArticle && totalSections > 1 && (
+          <>
+            {/* Left Arrow - Previous Section */}
+            {currentSection > 0 && (
+              <button
+                onClick={handlePreviousSection}
+                className="hidden lg:flex absolute left-6 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/50 hover:scale-110 transition-all duration-200"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* Right Arrow - Next Section */}
+            {currentSection < totalSections - 1 && (
+              <button
+                onClick={handleNextSection}
+                className="hidden lg:flex absolute right-6 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/50 hover:scale-110 transition-all duration-200"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </>
+        )}
 
         {/* Swipe hint using loading popup style */}
         {showSwipeHint && isWikipediaArticle && (
