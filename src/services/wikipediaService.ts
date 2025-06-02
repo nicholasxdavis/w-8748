@@ -11,8 +11,8 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   const content = page.extract;
   const image = page.thumbnail?.source || '';
   
-  // Simplified section fetching - only get 2-3 sections max to improve performance
-  const sections = await getSimplifiedSections(page.pageid, title);
+  // No sections on initial load - they'll be loaded lazily
+  const sections: WikipediaSection[] = [];
   
   const readTime = Math.ceil(content.length / 1000);
   const views = Math.floor(Math.random() * 100000) + 1000;
@@ -36,12 +36,12 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   };
 };
 
-// Simplified and faster section fetching
-const getSimplifiedSections = async (pageId: number, title: string): Promise<WikipediaSection[]> => {
+// New function for lazy loading all sections with full content and images
+export const getFullSections = async (pageId: number, title: string): Promise<WikipediaSection[]> => {
   try {
-    console.log(`Fetching simplified sections for: ${title}`);
+    console.log(`Fetching all sections for: ${title}`);
     
-    // Get only section list first
+    // Get complete section list
     const parseParams = new URLSearchParams({
       action: 'parse',
       format: 'json',
@@ -61,15 +61,14 @@ const getSimplifiedSections = async (pageId: number, title: string): Promise<Wik
       return [];
     }
 
-    // Get basic article images once
-    const articleImages = await getBasicImages(pageId);
+    // Get all article images at once
+    const articleImages = await getAllImages(pageId);
     
     const sections: WikipediaSection[] = [];
-    // Limit to first 3 sections only for performance
-    const sectionsToFetch = parseData.parse.sections.slice(0, 3);
     
-    for (let i = 0; i < sectionsToFetch.length; i++) {
-      const section = sectionsToFetch[i];
+    // Process ALL sections (no limit)
+    for (let i = 0; i < parseData.parse.sections.length; i++) {
+      const section = parseData.parse.sections[i];
       
       // Skip common non-content sections
       if (section.line.toLowerCase().includes('contents') || 
@@ -81,32 +80,26 @@ const getSimplifiedSections = async (pageId: number, title: string): Promise<Wik
       }
 
       try {
-        // Get section content with timeout
-        const sectionContent = await Promise.race([
-          getSectionContent(title, section.index),
-          new Promise<string>((_, reject) => 
-            setTimeout(() => reject(new Error('Section timeout')), 3000)
-          )
-        ]);
+        const sectionContent = await getSectionContent(title, section.index);
         
-        if (sectionContent && sectionContent.length > 100) {
+        if (sectionContent && sectionContent.length > 50) {
           sections.push({
             title: section.line,
             content: sectionContent,
-            image: articleImages[i] || articleImages[0] || ''
+            image: articleImages[i % articleImages.length] || articleImages[0] || ''
           });
         }
       } catch (error) {
-        console.warn(`Skipping section ${section.line} due to timeout`);
+        console.warn(`Skipping section ${section.line} due to error:`, error);
         continue;
       }
     }
     
     console.log(`Processed ${sections.length} sections for ${title}`);
-    return sections.slice(0, 2); // Max 2 sections for performance
+    return sections;
     
   } catch (error) {
-    console.error('Error fetching sections:', error);
+    console.error('Error fetching full sections:', error);
     return [];
   }
 };
@@ -131,8 +124,8 @@ const getSectionContent = async (title: string, sectionIndex: string): Promise<s
   return htmlContent ? extractTextFromHtml(htmlContent) : '';
 };
 
-// Simplified image fetching
-const getBasicImages = async (pageId: number): Promise<string[]> => {
+// Enhanced image fetching to get ALL available images
+const getAllImages = async (pageId: number): Promise<string[]> => {
   try {
     const imagesParams = new URLSearchParams({
       action: 'query',
@@ -140,7 +133,7 @@ const getBasicImages = async (pageId: number): Promise<string[]> => {
       origin: '*',
       pageids: pageId.toString(),
       prop: 'images',
-      imlimit: '5' // Reduced from 20
+      imlimit: '50' // Get up to 50 images
     });
 
     const response = await fetch(`https://en.wikipedia.org/w/api.php?${imagesParams}`);
@@ -151,43 +144,59 @@ const getBasicImages = async (pageId: number): Promise<string[]> => {
     
     if (!page?.images?.length) return [];
 
-    // Get first 3 image files only
+    // Get ALL image files (no limit)
     const imageFiles = page.images
       .filter((img: any) => {
         const title = img.title.toLowerCase();
-        return (title.includes('.jpg') || title.includes('.jpeg') || title.includes('.png'));
+        return (title.includes('.jpg') || title.includes('.jpeg') || 
+                title.includes('.png') || title.includes('.gif') || 
+                title.includes('.webp'));
       })
-      .slice(0, 3)
       .map((img: any) => img.title);
 
     if (!imageFiles.length) return [];
 
-    // Get URLs for these images
-    const imageUrlsParams = new URLSearchParams({
-      action: 'query',
-      format: 'json',
-      origin: '*',
-      titles: imageFiles.join('|'),
-      prop: 'imageinfo',
-      iiprop: 'url',
-      iiurlwidth: '600' // Reduced size
-    });
+    // Process images in batches to avoid URL length limits
+    const batchSize = 10;
+    const allImageUrls: string[] = [];
 
-    const imageUrlsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imageUrlsParams}`);
-    if (!imageUrlsResponse.ok) return [];
-    
-    const imageUrlsData = await imageUrlsResponse.json();
-    return Object.values(imageUrlsData.query?.pages || {})
-      .map((page: any) => page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url)
-      .filter(Boolean) as string[];
+    for (let i = 0; i < imageFiles.length; i += batchSize) {
+      const batch = imageFiles.slice(i, i + batchSize);
+      
+      const imageUrlsParams = new URLSearchParams({
+        action: 'query',
+        format: 'json',
+        origin: '*',
+        titles: batch.join('|'),
+        prop: 'imageinfo',
+        iiprop: 'url',
+        iiurlwidth: '800'
+      });
+
+      try {
+        const imageUrlsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imageUrlsParams}`);
+        if (imageUrlsResponse.ok) {
+          const imageUrlsData = await imageUrlsResponse.json();
+          const batchUrls = Object.values(imageUrlsData.query?.pages || {})
+            .map((page: any) => page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url)
+            .filter(Boolean) as string[];
+          
+          allImageUrls.push(...batchUrls);
+        }
+      } catch (error) {
+        console.warn('Error fetching image batch:', error);
+      }
+    }
+
+    return allImageUrls;
   } catch (error) {
-    console.warn('Error fetching images:', error);
+    console.warn('Error fetching all images:', error);
     return [];
   }
 };
 
-// Improved text extraction
-const extractTextFromHtml = (html: string): string => {
+// Improved and more thorough text extraction
+const extractTextFromHtml = (html: string): string => => {
   let text = html;
   
   // Remove scripts, styles, and common Wikipedia elements
@@ -195,25 +204,38 @@ const extractTextFromHtml = (html: string): string => {
   text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   text = text.replace(/\.mw-parser-output[^}]*}/g, '');
   text = text.replace(/@media[^}]*{[^}]*}/g, '');
-  text = text.replace(/\.(reflist|citation|navbox|infobox)[^}]*{[^}]*}/gi, '');
+  text = text.replace(/\.(reflist|citation|navbox|infobox|ambox|dmbox|ombox|tmbox)[^}]*{[^}]*}/gi, '');
   
-  // Remove edit links and citations
+  // Remove edit links, citations, and reference markers
   text = text.replace(/\[edit\]/gi, '');
   text = text.replace(/\[citation needed\]/gi, '');
   text = text.replace(/\[\d+\]/g, '');
+  text = text.replace(/\^[a-z\d]+/gi, '');
+  
+  // Remove Wikipedia-specific CSS classes and styling
+  text = text.replace(/class="[^"]*"/gi, '');
+  text = text.replace(/style="[^"]*"/gi, '');
+  text = text.replace(/id="[^"]*"/gi, '');
   
   // Remove HTML tags and entities
   text = text.replace(/<[^>]*>/g, ' ');
   text = text.replace(/&[^;]+;/g, ' ');
   
-  // Remove CSS and MediaWiki markup
+  // Remove CSS, MediaWiki markup, and template syntax
   text = text.replace(/\{[^}]*\}/g, '');
   text = text.replace(/\[\[[^\]]*\]\]/g, '');
   text = text.replace(/\{\{[^}]*\}\}/g, '');
+  text = text.replace(/<!--[^>]*-->/g, '');
   
-  // Clean whitespace
+  // Remove common Wikipedia metadata
+  text = text.replace(/Category:[^|]+/gi, '');
+  text = text.replace(/File:[^|]+/gi, '');
+  text = text.replace(/Template:[^|]+/gi, '');
+  
+  // Clean whitespace and formatting
   text = text.replace(/\s+/g, ' ');
   text = text.replace(/\n+/g, ' ');
+  text = text.replace(/\t+/g, ' ');
   
   return text.trim();
 };
@@ -221,7 +243,6 @@ const extractTextFromHtml = (html: string): string => {
 // Simplified related articles
 const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaArticle[]> => {
   try {
-    // Simplified - just get random articles instead of complex category search
     return getRandomArticles(3);
   } catch (error) {
     console.error('Error fetching related articles:', error);
@@ -229,19 +250,18 @@ const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaA
   }
 };
 
-// Optimized random articles function
+// Fast random articles function - minimal processing for initial load
 const getRandomArticles = async (count: number = 3, category?: string): Promise<WikipediaArticle[]> => {
   try {
     let titles: string[] = [];
     
-    // Simplified random article fetching
     const params = new URLSearchParams({
       action: 'query',
       format: 'json',
       origin: '*',
       list: 'random',
       rnnamespace: '0',
-      rnlimit: (count * 2).toString() // Get extra to filter
+      rnlimit: (count * 2).toString()
     });
 
     const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
@@ -258,7 +278,7 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
-    console.log(`Got ${validArticles.length} valid articles`);
+    console.log(`Got ${validArticles.length} valid articles (fast load)`);
     return validArticles.slice(0, count);
   } catch (error) {
     console.error('Error fetching articles:', error);
@@ -276,7 +296,7 @@ const searchArticles = async (query: string): Promise<WikipediaArticle[]> => {
       origin: '*',
       list: 'search',
       srsearch: query,
-      srlimit: '10' // Reduced from 20
+      srlimit: '15'
     });
 
     const searchResponse = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);

@@ -1,9 +1,10 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, PanInfo } from "framer-motion";
 import ArticleDisplay from "./ArticleDisplay";
 import { isNewsArticle } from "../../services/contentService";
 import { getArticleImage } from "../../utils/articleHelpers";
+import { getFullSections } from "../../services/wikipediaService";
 
 interface SwipeableArticleWithSectionsProps {
   article: any;
@@ -26,15 +27,37 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const [isDragging, setIsDragging] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [fullSections, setFullSections] = useState<any[]>([]);
+  const [sectionsLoaded, setSectionsLoaded] = useState(false);
+  const [loadingSections, setLoadingSections] = useState(false);
   const constraintsRef = useRef(null);
 
   const isWikipediaArticle = !isNewsArticle(props.article);
-  const hasSections = isWikipediaArticle && 
-    props.article.sections && 
-    props.article.sections.length > 0;
+  const hasSections = isWikipediaArticle;
+  
+  // Use full sections if loaded, otherwise fall back to basic sections
+  const sectionsToUse = sectionsLoaded ? fullSections : (props.article.sections || []);
+  const totalSections = hasSections ? 1 + sectionsToUse.length : 1;
 
-  // Total sections = main article + additional sections
-  const totalSections = hasSections ? 1 + props.article.sections.length : 1;
+  // Lazy load full sections when user first swipes
+  const loadFullSections = async () => {
+    if (!isWikipediaArticle || loadingSections || sectionsLoaded) return;
+    
+    try {
+      setLoadingSections(true);
+      console.log(`Loading full sections for: ${props.article.title}`);
+      const sections = await getFullSections(props.article.id, props.article.title);
+      setFullSections(sections);
+      setSectionsLoaded(true);
+      console.log(`Loaded ${sections.length} full sections`);
+    } catch (error) {
+      console.error('Failed to load full sections:', error);
+      setFullSections(props.article.sections || []);
+      setSectionsLoaded(true);
+    } finally {
+      setLoadingSections(false);
+    }
+  };
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
@@ -44,6 +67,11 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     const swipeThreshold = 100;
     
     if (info.offset.x < -swipeThreshold && currentSection < totalSections - 1) {
+      // Load sections on first swipe attempt
+      if (!sectionsLoaded && !loadingSections) {
+        loadFullSections();
+      }
+      
       // Swipe left - next section
       setSwipeDirection('left');
       setIsTransitioning(true);
@@ -70,7 +98,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
       return props.article.content;
     }
     
-    const section = props.article.sections[currentSection - 1];
+    const section = sectionsToUse[currentSection - 1];
     return section?.content || props.article.content;
   };
 
@@ -79,7 +107,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
       return getArticleImage(props.article);
     }
     
-    const section = props.article.sections[currentSection - 1];
+    const section = sectionsToUse[currentSection - 1];
     return section?.image || getArticleImage(props.article);
   };
 
@@ -88,7 +116,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
       return props.article.title;
     }
     
-    const section = props.article.sections[currentSection - 1];
+    const section = sectionsToUse[currentSection - 1];
     return section?.title || `${props.article.title} - Section ${currentSection}`;
   };
 
@@ -157,9 +185,16 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         </motion.div>
 
         {/* Swipe hint for Wikipedia articles */}
-        {hasSections && totalSections > 1 && currentSection === 0 && props.showDoubleTapHint && (
+        {hasSections && props.showDoubleTapHint && (
           <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs">
             ← Swipe left for more content
+          </div>
+        )}
+
+        {/* Loading indicator for sections */}
+        {loadingSections && (
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs">
+            Loading sections...
           </div>
         )}
 
