@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, WikipediaResponse, WikipediaSection } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
@@ -37,14 +36,9 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
 };
 
 // Lazy loading function for sections - only called when needed
-export const getFullSections = async (pageId: number, title: string, signal?: AbortSignal): Promise<WikipediaSection[]> => {
+export const getFullSections = async (pageId: number, title: string): Promise<WikipediaSection[]> => {
   try {
     console.log(`Lazy loading sections for: ${title}`);
-    
-    // Check if request was aborted
-    if (signal?.aborted) {
-      throw new Error('Request aborted');
-    }
     
     // Get section list
     const parseParams = new URLSearchParams({
@@ -56,7 +50,7 @@ export const getFullSections = async (pageId: number, title: string, signal?: Ab
       disabletoc: '1'
     });
 
-    const parseResponse = await fetch(`https://en.wikipedia.org/w/api.php?${parseParams}`, { signal });
+    const parseResponse = await fetch(`https://en.wikipedia.org/w/api.php?${parseParams}`);
     if (!parseResponse.ok) return [];
     
     const parseData = await parseResponse.json();
@@ -66,23 +60,13 @@ export const getFullSections = async (pageId: number, title: string, signal?: Ab
       return [];
     }
 
-    // Check if request was aborted
-    if (signal?.aborted) {
-      throw new Error('Request aborted');
-    }
-
     // Get article images once
-    const articleImages = await getArticleImages(pageId, signal);
+    const articleImages = await getArticleImages(pageId);
     
     const sections: WikipediaSection[] = [];
     
-    // Process ALL sections with better filtering
+    // Process ALL sections (removed cap) with better filtering
     for (let i = 0; i < parseData.parse.sections.length; i++) {
-      // Check if request was aborted
-      if (signal?.aborted) {
-        throw new Error('Request aborted');
-      }
-      
       const section = parseData.parse.sections[i];
       
       // Skip non-content sections more thoroughly
@@ -99,7 +83,7 @@ export const getFullSections = async (pageId: number, title: string, signal?: Ab
       }
 
       try {
-        const sectionContent = await getSectionContent(title, section.index, signal);
+        const sectionContent = await getSectionContent(title, section.index);
         
         if (sectionContent && sectionContent.length > 100) {
           sections.push({
@@ -109,9 +93,6 @@ export const getFullSections = async (pageId: number, title: string, signal?: Ab
           });
         }
       } catch (error) {
-        if (error.name === 'AbortError') {
-          throw error;
-        }
         console.warn(`Skipping section ${section.line}:`, error);
         continue;
       }
@@ -121,16 +102,12 @@ export const getFullSections = async (pageId: number, title: string, signal?: Ab
     return sections;
     
   } catch (error) {
-    if (error.name === 'AbortError' || error.message === 'Request aborted') {
-      console.log('Section loading was cancelled');
-      throw error;
-    }
     console.error('Error loading sections:', error);
     return [];
   }
 };
 
-const getSectionContent = async (title: string, sectionIndex: string, signal?: AbortSignal): Promise<string> => {
+const getSectionContent = async (title: string, sectionIndex: string): Promise<string> => {
   const sectionParams = new URLSearchParams({
     action: 'parse',
     format: 'json',
@@ -141,7 +118,7 @@ const getSectionContent = async (title: string, sectionIndex: string, signal?: A
     disabletoc: '1'
   });
 
-  const response = await fetch(`https://en.wikipedia.org/w/api.php?${sectionParams}`, { signal });
+  const response = await fetch(`https://en.wikipedia.org/w/api.php?${sectionParams}`);
   if (!response.ok) throw new Error('Section fetch failed');
   
   const data = await response.json();
@@ -150,7 +127,7 @@ const getSectionContent = async (title: string, sectionIndex: string, signal?: A
   return htmlContent ? extractTextFromHtml(htmlContent) : '';
 };
 
-const getArticleImages = async (pageId: number, signal?: AbortSignal): Promise<string[]> => {
+const getArticleImages = async (pageId: number): Promise<string[]> => {
   try {
     const imagesParams = new URLSearchParams({
       action: 'query',
@@ -161,7 +138,7 @@ const getArticleImages = async (pageId: number, signal?: AbortSignal): Promise<s
       imlimit: '20'
     });
 
-    const response = await fetch(`https://en.wikipedia.org/w/api.php?${imagesParams}`, { signal });
+    const response = await fetch(`https://en.wikipedia.org/w/api.php?${imagesParams}`);
     if (!response.ok) return [];
     
     const data = await response.json();
@@ -196,7 +173,7 @@ const getArticleImages = async (pageId: number, signal?: AbortSignal): Promise<s
       iiurlwidth: '800'
     });
 
-    const imageUrlsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imageUrlsParams}`, { signal });
+    const imageUrlsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imageUrlsParams}`);
     if (!imageUrlsResponse.ok) return [];
     
     const imageUrlsData = await imageUrlsResponse.json();
@@ -206,9 +183,6 @@ const getArticleImages = async (pageId: number, signal?: AbortSignal): Promise<s
 
     return imageUrls;
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw error;
-    }
     console.warn('Error fetching images:', error);
     return [];
   }
