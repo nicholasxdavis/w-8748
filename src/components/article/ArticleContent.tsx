@@ -1,9 +1,7 @@
-
 import { motion } from "framer-motion";
 import { Calendar, Globe, ExternalLink } from "lucide-react";
 import { isNewsArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
-
 interface ArticleContentProps {
   article: any;
   displayedText: string;
@@ -13,7 +11,6 @@ interface ArticleContentProps {
   isVisible: boolean;
   onWikipediaRedirect: () => void;
 }
-
 const ArticleContent = ({
   article,
   displayedText,
@@ -31,7 +28,7 @@ const ArticleContent = ({
   duration: 0.5,
   ease: "easeOut"
 }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
-    <div className="w-full max-w-sm sm:max-w-md mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 space-y-3 sm:space-y-4 min-h-[calc(20vh+30px)]">
+    <div className="w-80 max-w-sm sm:max-w-md mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 space-y-3 sm:space-y-4 min-h-[calc(20vh+30px)]">
       <div className="flex items-start justify-center">
         <h1 className="text-lg sm:text-xl font-bold leading-tight drop-shadow-lg text-center break-words hyphens-auto max-w-full">
           {article?.title || 'Loading...'}
@@ -81,5 +78,4 @@ const ArticleContent = ({
       </div>
     </div>
   </motion.div>;
-
 export default ArticleContent;
