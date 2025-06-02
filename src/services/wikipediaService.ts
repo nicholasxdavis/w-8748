@@ -76,7 +76,8 @@ const getAllSections = async (pageId: number, title: string): Promise<WikipediaS
       if (section.line.toLowerCase().includes('contents') || 
           section.line.toLowerCase().includes('references') ||
           section.line.toLowerCase().includes('external links') ||
-          section.line.toLowerCase().includes('see also')) {
+          section.line.toLowerCase().includes('see also') ||
+          section.line.toLowerCase().includes('notes')) {
         continue;
       }
 
@@ -187,12 +188,55 @@ const getArticleImages = async (pageId: number): Promise<string[]> => {
 };
 
 const extractTextFromHtml = (html: string): string => {
-  // Remove HTML tags and clean up the text
-  return html
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&[^;]+;/g, ' ') // Remove HTML entities
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .trim();
+  // Create a more comprehensive cleaning function
+  let text = html;
+  
+  // Remove script and style elements completely
+  text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  
+  // Remove MediaWiki parser output and CSS
+  text = text.replace(/\.mw-parser-output[^}]*}/g, '');
+  text = text.replace(/@media[^}]*{[^}]*}/g, '');
+  text = text.replace(/\.(reflist|citation|navbox)[^}]*{[^}]*}/g, '');
+  
+  // Remove edit links and brackets
+  text = text.replace(/\[edit\]/g, '');
+  text = text.replace(/\[citation needed\]/g, '');
+  text = text.replace(/\[clarification needed\]/g, '');
+  
+  // Remove reference markers like [1], [2], etc.
+  text = text.replace(/\[\d+\]/g, '');
+  text = text.replace(/\[[\w\s]+\]/g, '');
+  
+  // Remove HTML tags
+  text = text.replace(/<[^>]*>/g, ' ');
+  
+  // Remove HTML entities
+  text = text.replace(/&[^;]+;/g, ' ');
+  
+  // Remove CSS-like content
+  text = text.replace(/\{[^}]*\}/g, '');
+  text = text.replace(/:[^;]*;/g, '');
+  
+  // Remove MediaWiki specific markup
+  text = text.replace(/\{\{[^}]*\}\}/g, '');
+  text = text.replace(/\[\[[^\]]*\]\]/g, '');
+  
+  // Remove extra whitespace and normalize
+  text = text.replace(/\s+/g, ' ');
+  text = text.replace(/\n+/g, ' ');
+  
+  // Remove common Wikipedia artifacts
+  text = text.replace(/Notes\s*$/i, '');
+  text = text.replace(/References\s*$/i, '');
+  text = text.replace(/External links\s*$/i, '');
+  text = text.replace(/See also\s*$/i, '');
+  
+  // Clean up any remaining punctuation artifacts
+  text = text.replace(/\s*[.,:;]\s*$/, '');
+  
+  return text.trim();
 };
 
 const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaArticle[]> => {
