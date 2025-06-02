@@ -1,7 +1,9 @@
+
 import { motion } from "framer-motion";
 import { Calendar, Globe, ExternalLink } from "lucide-react";
 import { isNewsArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
+
 interface ArticleContentProps {
   article: any;
   displayedText: string;
@@ -11,6 +13,7 @@ interface ArticleContentProps {
   isVisible: boolean;
   onWikipediaRedirect: () => void;
 }
+
 const ArticleContent = ({
   article,
   displayedText,
@@ -28,29 +31,29 @@ const ArticleContent = ({
   duration: 0.5,
   ease: "easeOut"
 }} className="relative z-10 text-white p-4 sm:p-6 max-w-4xl mx-auto h-full flex flex-col justify-center items-center">
-    <div className="w-full max-w-2xl mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/10 space-y-4 min-h-[calc(20vh+30px)]">
-      <div className="flex items-start justify-between">
-        <h1 className="text-xl sm:text-3xl font-bold leading-tight drop-shadow-lg text-center">
+    <div className="w-full max-w-sm sm:max-w-md mx-auto bg-black/20 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10 space-y-3 sm:space-y-4 min-h-[calc(20vh+30px)]">
+      <div className="flex items-start justify-center">
+        <h1 className="text-lg sm:text-xl font-bold leading-tight drop-shadow-lg text-center break-words hyphens-auto max-w-full">
           {article?.title || 'Loading...'}
         </h1>
       </div>
       
-      <div className="max-h-60 sm:max-h-96 overflow-y-auto scrollbar-hide">
-        <p className="text-sm sm:text-base leading-relaxed opacity-95 break-words text-center">
+      <div className="max-h-48 sm:max-h-64 overflow-y-auto scrollbar-hide">
+        <p className="text-xs sm:text-sm leading-relaxed opacity-95 break-words hyphens-auto text-center max-w-full">
           {article?.content || 'Loading content...'}
         </p>
       </div>
       
-      <div className="flex items-center justify-center space-x-4 text-xs sm:text-sm text-white/80">
+      <div className="flex items-center justify-center flex-wrap gap-2 text-xs text-white/80">
         {article && isNewsArticle(article) ? <>
             <div className="flex items-center gap-1">
-              <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{article.source || 'Unknown'}</span>
+              <Globe className="w-3 h-3" />
+              <span className="truncate max-w-20">{article.source || 'Unknown'}</span>
             </div>
             <span>•</span>
             <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{article.publishedAt ? formatNewsDate(article.publishedAt) : 'Recent'}</span>
+              <Calendar className="w-3 h-3" />
+              <span className="truncate">{article.publishedAt ? formatNewsDate(article.publishedAt) : 'Recent'}</span>
             </div>
             <span>•</span>
             <button onClick={e => {
@@ -59,23 +62,24 @@ const ArticleContent = ({
             window.open(article.url, '_blank', 'noopener,noreferrer');
           }
         }} className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Read Full Story</span>
+              <ExternalLink className="w-3 h-3" />
+              <span className="text-xs">Read Full</span>
             </button>
           </> : article ? <>
-            <span>{article.readTime || 5} min read</span>
+            <span className="truncate">{article.readTime || 5} min read</span>
             <span>•</span>
-            <span>{article.views?.toLocaleString() || '0'} views</span>
+            <span className="truncate">{article.views?.toLocaleString() || '0'} views</span>
             <span>•</span>
             <button onClick={e => {
           e.stopPropagation();
           onWikipediaRedirect();
         }} className="flex items-center gap-1 hover:text-blue-400 transition-colors">
-              <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Wikipedia</span>
+              <ExternalLink className="w-3 h-3" />
+              <span className="text-xs">Wikipedia</span>
             </button>
           </> : null}
       </div>
     </div>
   </motion.div>;
+
 export default ArticleContent;
