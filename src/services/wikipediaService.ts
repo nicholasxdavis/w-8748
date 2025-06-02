@@ -1,3 +1,4 @@
+
 import { WikipediaArticle, WikipediaResponse, WikipediaSection } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
