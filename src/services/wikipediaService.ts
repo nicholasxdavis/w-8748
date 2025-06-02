@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, WikipediaResponse } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
@@ -10,6 +9,9 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   const title = page.title;
   const content = page.extract;
   const image = page.thumbnail?.source || '';
+  
+  // Try to get additional sections and images
+  const additionalData = await getAdditionalSections(page.pageid, title);
   
   const readTime = Math.ceil(content.length / 1000);
   const views = Math.floor(Math.random() * 100000) + 1000;
@@ -28,8 +30,97 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
     readTime,
     views,
     tags,
-    relatedArticles: []
+    relatedArticles: [],
+    // Add additional sections and images
+    additionalSections: additionalData.sections,
+    additionalImages: additionalData.images
   };
+};
+
+const getAdditionalSections = async (pageId: number, title: string) => {
+  try {
+    // Get full page content with sections
+    const sectionsParams = new URLSearchParams({
+      action: 'parse',
+      format: 'json',
+      origin: '*',
+      page: title,
+      prop: 'sections|text',
+      section: '0' // Get first few sections
+    });
+
+    const sectionsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${sectionsParams}`);
+    if (!sectionsResponse.ok) throw new Error('Failed to fetch sections');
+    
+    const sectionsData = await sectionsResponse.json();
+    
+    // Get additional images
+    const imagesParams = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      origin: '*',
+      pageids: pageId.toString(),
+      prop: 'images',
+      imlimit: '10'
+    });
+
+    const imagesResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imagesParams}`);
+    let additionalImages: string[] = [];
+    
+    if (imagesResponse.ok) {
+      const imagesData = await imagesResponse.json();
+      const page = Object.values(imagesData.query?.pages || {})[0] as any;
+      
+      if (page?.images) {
+        // Get actual image URLs
+        const imageFiles = page.images.slice(0, 5).map((img: any) => img.title);
+        const imageUrlsParams = new URLSearchParams({
+          action: 'query',
+          format: 'json',
+          origin: '*',
+          titles: imageFiles.join('|'),
+          prop: 'imageinfo',
+          iiprop: 'url',
+          iiurlwidth: '800'
+        });
+
+        const imageUrlsResponse = await fetch(`https://en.wikipedia.org/w/api.php?${imageUrlsParams}`);
+        if (imageUrlsResponse.ok) {
+          const imageUrlsData = await imageUrlsResponse.json();
+          additionalImages = Object.values(imageUrlsData.query?.pages || {})
+            .map((page: any) => page.imageinfo?.[0]?.thumburl)
+            .filter(Boolean)
+            .slice(0, 3);
+        }
+      }
+    }
+
+    // Parse sections from the content
+    const sections = [];
+    if (sectionsData.parse?.text?.['*']) {
+      const htmlContent = sectionsData.parse.text['*'];
+      // Extract paragraphs that could serve as additional sections
+      const paragraphs = htmlContent.match(/<p[^>]*>(.*?)<\/p>/g) || [];
+      
+      sections.push(...paragraphs
+        .slice(1, 4) // Skip first paragraph (intro), take next 3
+        .map(p => p.replace(/<[^>]*>/g, '').trim()) // Strip HTML tags
+        .filter(text => text.length > 100) // Only substantial content
+        .slice(0, 2) // Limit to 2 additional sections
+      );
+    }
+
+    return {
+      sections: sections.length > 0 ? sections : ['Additional content not available for this article.'],
+      images: additionalImages
+    };
+  } catch (error) {
+    console.error('Error fetching additional sections:', error);
+    return {
+      sections: ['Additional content not available for this article.'],
+      images: []
+    };
+  }
 };
 
 const getRelatedArticles = async (article: WikipediaArticle): Promise<WikipediaArticle[]> => {

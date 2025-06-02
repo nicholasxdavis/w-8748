@@ -5,7 +5,7 @@ import { useArticleViewer } from "../hooks/useArticleViewer";
 import { useArticleNavigation } from "../hooks/useArticleNavigation";
 import { useArticleInteractions } from "../hooks/useArticleInteractions";
 import { useTypingAnimation } from "../hooks/useTypingAnimation";
-import SwipeableArticle from "./article/SwipeableArticle";
+import SwipeableArticleWithSections from "./article/SwipeableArticleWithSections";
 import LoadingArticle from "./article/LoadingArticle";
 import { markContentAsViewed } from "../services/contentService";
 
@@ -117,7 +117,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
         <AnimatePresence>
           {articles.map((article, index) => (
-            <SwipeableArticle
+            <SwipeableArticleWithSections
               key={`article-${article.id}-${index}`}
               article={article}
               index={index}
