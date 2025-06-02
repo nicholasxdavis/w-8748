@@ -65,8 +65,8 @@ export const getFullSections = async (pageId: number, title: string): Promise<Wi
     
     const sections: WikipediaSection[] = [];
     
-    // Process sections with better filtering
-    for (let i = 0; i < parseData.parse.sections.length && sections.length < 8; i++) {
+    // Process ALL sections (removed cap) with better filtering
+    for (let i = 0; i < parseData.parse.sections.length; i++) {
       const section = parseData.parse.sections[i];
       
       // Skip non-content sections more thoroughly

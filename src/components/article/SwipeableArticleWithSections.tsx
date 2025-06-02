@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { motion, PanInfo } from "framer-motion";
 import ArticleDisplay from "./ArticleDisplay";
@@ -27,12 +28,13 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [loadedSections, setLoadedSections] = useState<any[]>([]);
   const [isLoadingSections, setIsLoadingSections] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const constraintsRef = useRef(null);
 
   const isWikipediaArticle = !isNewsArticle(props.article);
   const isCurrentlyViewed = props.index === props.currentIndex;
 
-  // Initialize with main article content
+  // Initialize with main article content and show swipe hint
   useEffect(() => {
     if (isWikipediaArticle && isCurrentlyViewed && loadedSections.length === 0) {
       // Start with main article as section 0
@@ -41,6 +43,11 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         content: props.article.content,
         image: getArticleImage(props.article)
       }]);
+      
+      // Show swipe hint on load for Wikipedia articles
+      setShowSwipeHint(true);
+      // Hide hint after 3 seconds
+      setTimeout(() => setShowSwipeHint(false), 3000);
     }
   }, [isWikipediaArticle, isCurrentlyViewed, props.article, loadedSections.length]);
 
@@ -190,10 +197,11 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </motion.div>
 
-        {/* Swipe hint for Wikipedia articles */}
-        {isWikipediaArticle && totalSections > 1 && currentSection === 0 && props.showDoubleTapHint && (
-          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs">
-            ← Swipe for more content
+        {/* Swipe hint using loading popup style */}
+        {showSwipeHint && isWikipediaArticle && (
+          <div className="absolute top-20 right-4 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm flex items-center gap-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            Swipe for more content
           </div>
         )}
 
