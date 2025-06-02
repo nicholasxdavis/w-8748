@@ -13,7 +13,7 @@ export interface NewsArticle {
   lastShown?: string;
 }
 
-// RSS feed sources
+// RSS feed sources with more reliable feeds
 const RSS_FEEDS = [
   {
     name: 'BBC',
@@ -21,8 +21,13 @@ const RSS_FEEDS = [
     category: 'general'
   },
   {
+    name: 'CNN',
+    url: 'http://rss.cnn.com/rss/edition.rss',
+    category: 'general'
+  },
+  {
     name: 'Reuters',
-    url: 'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best',
+    url: 'https://feeds.reuters.com/reuters/topNews',
     category: 'business'
   },
   {
@@ -31,21 +36,17 @@ const RSS_FEEDS = [
     category: 'technology'
   },
   {
-    name: 'CNN',
-    url: 'http://rss.cnn.com/rss/edition.rss',
+    name: 'NPR',
+    url: 'https://feeds.npr.org/1001/rss.xml',
     category: 'general'
-  },
-  {
-    name: 'The Guardian',
-    url: 'https://www.theguardian.com/world/rss',
-    category: 'world'
   }
 ];
 
-// Cache to store fetched articles and prevent duplicates
+// Cache to store fetched articles and track views
 const articleCache = new Map<string, NewsArticle>();
-const usedArticleIds = new Set<string>();
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const viewedArticles = new Set<string>();
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+let lastCacheTime = 0;
 
 // Helper function to extract image from content or use placeholder
 const extractImageFromContent = (content: string, title: string): string => {
@@ -56,36 +57,87 @@ const extractImageFromContent = (content: string, title: string): string => {
   }
   
   // Generate a placeholder image based on category/title
-  const categories = ['technology', 'business', 'world', 'science', 'health'];
+  const categories = ['technology', 'business', 'world', 'science', 'health', 'sports'];
   const category = categories[Math.floor(Math.random() * categories.length)];
   return `https://picsum.photos/800/600?random=${Math.abs(title.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}&category=${category}`;
 };
 
-// Function to parse RSS XML
+// Function to parse RSS XML with better error handling
 const parseRSSFeed = async (feedUrl: string, sourceName: string): Promise<NewsArticle[]> => {
   try {
-    // Use a CORS proxy to fetch RSS feeds
-    const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+    console.log(`Attempting to fetch from ${sourceName}: ${feedUrl}`);
     
-    const response = await fetch(proxyUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch RSS feed: ${response.statusText}`);
+    // Try multiple proxy services for better reliability
+    const proxies = [
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
+      `https://cors-anywhere.herokuapp.com/${feedUrl}`,
+      `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`
+    ];
+    
+    let data = null;
+    let lastError = null;
+    
+    for (const proxyUrl of proxies) {
+      try {
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json, application/xml, text/xml',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        if (proxyUrl.includes('rss2json')) {
+          data = await response.json();
+          if (data.status === 'ok' && data.items) break;
+        } else if (proxyUrl.includes('allorigins')) {
+          const result = await response.json();
+          // Parse XML manually for allorigins
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(result.contents, 'text/xml');
+          const items = xmlDoc.querySelectorAll('item');
+          
+          data = {
+            status: 'ok',
+            items: Array.from(items).map(item => ({
+              title: item.querySelector('title')?.textContent || '',
+              link: item.querySelector('link')?.textContent || '',
+              description: item.querySelector('description')?.textContent || '',
+              pubDate: item.querySelector('pubDate')?.textContent || new Date().toISOString(),
+              enclosure: item.querySelector('enclosure') ? {
+                link: item.querySelector('enclosure')?.getAttribute('url') || ''
+              } : null
+            }))
+          };
+          if (data.items.length > 0) break;
+        }
+        
+        data = null; // Reset if we didn't get good data
+      } catch (error) {
+        console.warn(`Failed to fetch from ${proxyUrl}:`, error);
+        lastError = error;
+        continue;
+      }
     }
     
-    const data = await response.json();
-    
-    if (!data.items || !Array.isArray(data.items)) {
-      throw new Error('Invalid RSS feed format');
+    if (!data || !data.items || !Array.isArray(data.items)) {
+      throw lastError || new Error('No valid data from any proxy');
     }
     
-    return data.items.slice(0, 15).map((item: any, index: number) => {
-      // Create unique ID based on title and source to avoid duplicates
-      const titleHash = item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-      const articleId = `${sourceName.toLowerCase()}-${titleHash}-${index}`;
+    console.log(`Successfully fetched ${data.items.length} items from ${sourceName}`);
+    
+    return data.items.slice(0, 10).map((item: any, index: number) => {
+      // Create unique ID with timestamp to avoid duplicates
+      const timestamp = Date.now();
+      const titleHash = item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '').substring(0, 20);
+      const articleId = `${sourceName.toLowerCase()}-${titleHash}-${timestamp}-${index}`;
       
       // Clean content and extract text
       const cleanContent = item.description 
-        ? item.description.replace(/<[^>]*>/g, '').substring(0, 500) + '...'
+        ? item.description.replace(/<[^>]*>/g, '').substring(0, 400) + '...'
         : item.title;
       
       // Extract image
@@ -104,7 +156,7 @@ const parseRSSFeed = async (feedUrl: string, sourceName: string): Promise<NewsAr
         readTime: Math.ceil((cleanContent.split(' ').length || 200) / 200),
         views: Math.floor(Math.random() * 1000000) + 100000,
         isBreakingNews: true as const,
-        lastShown: Date.now().toString()
+        lastShown: timestamp.toString()
       };
       
       return article;
@@ -115,14 +167,28 @@ const parseRSSFeed = async (feedUrl: string, sourceName: string): Promise<NewsAr
   }
 };
 
-// Main function to get breaking news
+// Main function to get breaking news with better caching
 export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]> => {
   try {
-    console.log('Fetching breaking news from RSS feeds...');
+    const now = Date.now();
     
-    // Fetch from multiple RSS feeds
+    // Check if we have fresh cached data
+    if (now - lastCacheTime < CACHE_DURATION && articleCache.size > 0) {
+      console.log('Using cached news articles');
+      const cachedArticles = Array.from(articleCache.values());
+      return getRandomizedArticles(cachedArticles, count);
+    }
+    
+    console.log('Fetching fresh breaking news from RSS feeds...');
+    
+    // Fetch from RSS feeds with timeout
     const feedPromises = RSS_FEEDS.map(feed => 
-      parseRSSFeed(feed.url, feed.name).catch(error => {
+      Promise.race([
+        parseRSSFeed(feed.url, feed.name),
+        new Promise<NewsArticle[]>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]).catch(error => {
         console.error(`Failed to fetch from ${feed.name}:`, error);
         return [];
       })
@@ -131,48 +197,69 @@ export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]>
     const allResults = await Promise.all(feedPromises);
     const allArticles = allResults.flat();
     
-    // Remove duplicates based on title similarity and ensure we haven't used these articles
+    console.log(`Total articles fetched: ${allArticles.length}`);
+    
+    if (allArticles.length === 0) {
+      console.log('No articles fetched, returning fallback news');
+      return getFallbackNews(count);
+    }
+    
+    // Remove duplicates and filter viewed articles for lower probability
     const uniqueArticles = allArticles.filter((article, index, array) => {
       const titleWords = article.title.toLowerCase().split(' ');
       const isDuplicate = array.slice(0, index).some(prevArticle => {
         const prevTitleWords = prevArticle.title.toLowerCase().split(' ');
-        const commonWords = titleWords.filter(word => prevTitleWords.includes(word));
-        return commonWords.length > titleWords.length * 0.6; // 60% similarity threshold
+        const commonWords = titleWords.filter(word => prevTitleWords.includes(word) && word.length > 3);
+        return commonWords.length > Math.min(titleWords.length, prevTitleWords.length) * 0.5;
       });
       
-      // Also check if we've already used this article
-      const alreadyUsed = usedArticleIds.has(article.id);
-      
-      if (!isDuplicate && !alreadyUsed) {
-        usedArticleIds.add(article.id);
-        return true;
-      }
-      return false;
+      return !isDuplicate;
     });
-    
-    // Shuffle articles multiple times for better randomization
-    const shuffledArticles = uniqueArticles
-      .sort(() => Math.random() - 0.5)
-      .sort(() => Math.random() - 0.5)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, count);
     
     // Update cache
-    shuffledArticles.forEach(article => {
+    articleCache.clear();
+    uniqueArticles.forEach(article => {
       articleCache.set(article.id, article);
     });
+    lastCacheTime = now;
     
-    // Clean old cache entries
-    cleanupCache();
+    console.log(`Cached ${uniqueArticles.length} unique articles`);
+    return getRandomizedArticles(uniqueArticles, count);
     
-    console.log(`Fetched ${shuffledArticles.length} unique articles from RSS feeds`);
-    return shuffledArticles;
   } catch (error) {
     console.error('Error fetching breaking news:', error);
-    
-    // Return fallback articles if all else fails
     return getFallbackNews(count);
   }
+};
+
+// Function to get randomized articles with viewed article preference
+const getRandomizedArticles = (articles: NewsArticle[], count: number): NewsArticle[] => {
+  // Separate viewed and unviewed articles
+  const unviewedArticles = articles.filter(article => !viewedArticles.has(article.id));
+  const viewedArticles = articles.filter(article => viewedArticles.has(article.id));
+  
+  // Prefer unviewed articles, but include some viewed ones if needed
+  const selectedArticles: NewsArticle[] = [];
+  
+  // First, add unviewed articles
+  const shuffledUnviewed = unviewedArticles.sort(() => Math.random() - 0.5);
+  selectedArticles.push(...shuffledUnviewed.slice(0, Math.min(count, shuffledUnviewed.length)));
+  
+  // If we need more articles, add some viewed ones with lower probability
+  if (selectedArticles.length < count && viewedArticles.length > 0) {
+    const shuffledViewed = viewedArticles.sort(() => Math.random() - 0.5);
+    const remainingCount = count - selectedArticles.length;
+    selectedArticles.push(...shuffledViewed.slice(0, remainingCount));
+  }
+  
+  // Final shuffle
+  return selectedArticles.sort(() => Math.random() - 0.5);
+};
+
+// Track when an article is viewed (call this from the UI)
+export const markArticleAsViewed = (articleId: string) => {
+  viewedArticles.add(articleId);
+  console.log(`Marked article ${articleId} as viewed`);
 };
 
 // Search function for news
@@ -196,23 +283,33 @@ export const searchNews = async (query: string): Promise<NewsArticle[]> => {
   }
 };
 
-// Fallback news in case RSS feeds fail
+// Enhanced fallback news with more variety
 const getFallbackNews = (count: number): NewsArticle[] => {
   const fallbackArticles = [
     {
       title: "Global Markets Show Strong Performance Amid Economic Recovery",
-      content: "Financial markets across the globe are experiencing significant growth as economies continue to recover from recent challenges...",
+      content: "Financial markets across the globe are experiencing significant growth as economies continue to recover from recent challenges. Investors are showing renewed confidence in emerging markets and technology sectors...",
       source: "REUTERS"
     },
     {
       title: "Breakthrough in Renewable Energy Technology Announced",
-      content: "Scientists have announced a major breakthrough in solar panel efficiency that could revolutionize the renewable energy sector...",
+      content: "Scientists have announced a major breakthrough in solar panel efficiency that could revolutionize the renewable energy sector. The new technology promises to reduce costs and increase adoption rates...",
       source: "TECHCRUNCH"
     },
     {
       title: "International Climate Summit Reaches Historic Agreement",
-      content: "World leaders have reached a historic agreement on climate action at the international summit, setting ambitious targets...",
+      content: "World leaders have reached a historic agreement on climate action at the international summit, setting ambitious targets for carbon reduction and sustainable development goals...",
       source: "BBC"
+    },
+    {
+      title: "Major Advancement in Artificial Intelligence Research",
+      content: "Researchers have made significant progress in developing more efficient AI models that require less computational power while maintaining high accuracy rates...",
+      source: "NPR"
+    },
+    {
+      title: "Space Exploration Mission Discovers New Findings",
+      content: "A recent space mission has returned with unprecedented data about distant galaxies, providing new insights into the formation of the universe and potential for life...",
+      source: "CNN"
     }
   ];
   
@@ -230,18 +327,3 @@ const getFallbackNews = (count: number): NewsArticle[] => {
     lastShown: Date.now().toString()
   }));
 };
-
-// Clean up old cache entries
-const cleanupCache = () => {
-  const now = Date.now();
-  for (const [articleId, article] of articleCache.entries()) {
-    const lastShown = parseInt(article.lastShown || '0');
-    if (now - lastShown > CACHE_DURATION) {
-      articleCache.delete(articleId);
-      usedArticleIds.delete(articleId);
-    }
-  }
-};
-
-// Clean up cache every 30 minutes
-setInterval(cleanupCache, 30 * 60 * 1000);

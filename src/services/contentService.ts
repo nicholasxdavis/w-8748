@@ -1,12 +1,24 @@
 
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
-import { NewsArticle, getBreakingNews, searchNews } from './rssNewsService';
+import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
+};
+
+// Track viewed articles for better randomization
+const viewedWikiArticles = new Set<string>();
+
+// Mark article as viewed to reduce future appearance probability
+export const markContentAsViewed = (item: ContentItem) => {
+  if (isNewsArticle(item)) {
+    markArticleAsViewed(item.id);
+  } else {
+    viewedWikiArticles.add(item.id);
+  }
 };
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
@@ -22,165 +34,178 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Determine news count (20-30% of content should be news)
-  const newsPercentage = Math.random() * 0.1 + 0.2; // 20-30%
+  // Randomize news percentage between 25-40% for more variety
+  const newsPercentage = Math.random() * 0.15 + 0.25; // 25-40%
   const newsCount = Math.max(1, Math.floor(count * newsPercentage));
   const wikiCount = count - newsCount;
 
   console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
 
-  // If user has interests, prioritize content based on those interests
-  if (userInterests.length > 0) {
-    const interestBasedCount = Math.floor(wikiCount * 0.8); // 80% based on interests
-    const randomCount = wikiCount - interestBasedCount;
-
-    console.log(`Interest-based: ${interestBasedCount}, Random: ${randomCount}, News: ${newsCount}`);
-
-    // Create category mappings for better Wikipedia searches
-    const categoryMap: { [key: string]: string[] } = {
-      'Technology': ['Technology', 'Computing', 'Software', 'Internet', 'Electronics'],
-      'Science': ['Science', 'Physics', 'Chemistry', 'Biology', 'Medicine'],
-      'Sports': ['Sports', 'Football', 'Basketball', 'Soccer', 'Olympics'],
-      'Movies': ['Films', 'Cinema', 'Actors', 'Directors', 'Hollywood'],
-      'Music': ['Music', 'Musicians', 'Albums', 'Songs', 'Bands'],
-      'Games': ['Video games', 'Gaming', 'Nintendo', 'PlayStation', 'Xbox'],
-      'Travel': ['Travel', 'Tourism', 'Countries', 'Cities', 'Geography'],
-      'Food': ['Food', 'Cooking', 'Cuisine', 'Restaurants', 'Recipes'],
-      'History': ['History', 'Ancient history', 'World War', 'Historical figures'],
-      'Art': ['Art', 'Painting', 'Sculpture', 'Artists', 'Museums'],
-      'Business': ['Business', 'Economics', 'Companies', 'Finance', 'Entrepreneurship'],
-      'Health': ['Health', 'Medicine', 'Fitness', 'Nutrition', 'Healthcare']
-    };
-
-    // Get Wikipedia categories based on user interests
-    const wikiCategories: string[] = [];
-    userInterests.forEach(interest => {
-      const mappedCategories = categoryMap[interest] || [interest];
-      wikiCategories.push(...mappedCategories);
-    });
+  try {
+    // Always fetch some content regardless of user interests for variety
+    const baseWikiCount = Math.floor(wikiCount * 0.3); // 30% random content
+    const interestBasedCount = wikiCount - baseWikiCount;
 
     const requests = [];
 
-    // Fetch interest-based articles
-    if (interestBasedCount > 0) {
-      const articlesPerInterest = Math.ceil(interestBasedCount / Math.min(wikiCategories.length, 3));
+    // Fetch news articles
+    requests.push(getBreakingNews(newsCount + 2)); // Get extra for filtering
+
+    // If user has interests, fetch interest-based content
+    if (userInterests.length > 0 && interestBasedCount > 0) {
+      console.log(`Interest-based: ${interestBasedCount}, Random: ${baseWikiCount}, News: ${newsCount}`);
+
+      // Create category mappings for better Wikipedia searches
+      const categoryMap: { [key: string]: string[] } = {
+        'Technology': ['Technology', 'Computing', 'Software', 'Internet', 'Electronics', 'Programming'],
+        'Science': ['Science', 'Physics', 'Chemistry', 'Biology', 'Medicine', 'Research'],
+        'Sports': ['Sports', 'Football', 'Basketball', 'Soccer', 'Olympics', 'Athletes'],
+        'Movies': ['Films', 'Cinema', 'Actors', 'Directors', 'Hollywood', 'Entertainment'],
+        'Music': ['Music', 'Musicians', 'Albums', 'Songs', 'Bands', 'Artists'],
+        'Games': ['Video games', 'Gaming', 'Nintendo', 'PlayStation', 'Xbox', 'Esports'],
+        'Travel': ['Travel', 'Tourism', 'Countries', 'Cities', 'Geography', 'Culture'],
+        'Food': ['Food', 'Cooking', 'Cuisine', 'Restaurants', 'Recipes', 'Nutrition'],
+        'History': ['History', 'Ancient history', 'World War', 'Historical figures', 'Archaeology'],
+        'Art': ['Art', 'Painting', 'Sculpture', 'Artists', 'Museums', 'Design'],
+        'Business': ['Business', 'Economics', 'Companies', 'Finance', 'Entrepreneurship', 'Markets'],
+        'Health': ['Health', 'Medicine', 'Fitness', 'Nutrition', 'Healthcare', 'Wellness']
+      };
+
+      // Get Wikipedia categories based on user interests
+      const wikiCategories: string[] = [];
+      userInterests.forEach(interest => {
+        const mappedCategories = categoryMap[interest] || [interest];
+        wikiCategories.push(...mappedCategories);
+      });
+
+      // Randomize which interests to focus on each session
+      const shuffledCategories = wikiCategories.sort(() => Math.random() - 0.5);
+      const selectedCategories = shuffledCategories.slice(0, Math.min(3, shuffledCategories.length));
       
-      for (let i = 0; i < Math.min(wikiCategories.length, 3); i++) {
-        const category = wikiCategories[i];
+      // Fetch interest-based articles with randomized categories
+      for (let i = 0; i < selectedCategories.length; i++) {
+        const category = selectedCategories[i];
+        const articlesPerCategory = Math.ceil(interestBasedCount / selectedCategories.length);
         requests.push(
-          getWikiArticles(articlesPerInterest + 1, category).catch(() => [])
+          getWikiArticles(articlesPerCategory + 2, category).catch(() => [])
         );
+      }
+    } else {
+      // No user interests or fallback - get random content
+      const totalWikiCount = wikiCount + interestBasedCount;
+      const articlesPerRequest = Math.ceil(totalWikiCount / 3);
+      
+      for (let i = 0; i < 3; i++) {
+        requests.push(getWikiArticles(articlesPerRequest + 2).catch(() => []));
       }
     }
 
-    // Add some random articles for variety
-    if (randomCount > 0) {
-      requests.push(getWikiArticles(randomCount + 1).catch(() => []));
+    // Add some completely random content for serendipity
+    if (baseWikiCount > 0) {
+      requests.push(getWikiArticles(baseWikiCount + 2).catch(() => []));
     }
-
-    // Add news
-    requests.push(getBreakingNews(newsCount).catch(() => []));
 
     const results = await Promise.all(requests);
     
-    // Combine all articles
-    const allArticles = results.flat().filter(article => 
-      article && article.image && !article.image.includes('placeholder')
+    // Separate news and wiki results
+    const newsArticles = results[0] as NewsArticle[] || [];
+    const wikiResults = results.slice(1).flat() as WikipediaArticle[];
+    
+    // Filter and prioritize unviewed articles
+    const unviewedWiki = wikiResults.filter(article => 
+      !viewedWikiArticles.has(article.id) && 
+      article.image && 
+      !article.image.includes('placeholder')
+    );
+    
+    const viewedWiki = wikiResults.filter(article => 
+      viewedWikiArticles.has(article.id) && 
+      article.image && 
+      !article.image.includes('placeholder')
     );
 
-    // Shuffle and select final articles
-    const shuffledArticles = allArticles
-      .sort(() => Math.random() - 0.5)
-      .sort(() => Math.random() - 0.5);
-
-    const selectedArticles = [];
-    const usedIds = new Set();
-
-    // Ensure we get diverse content
-    for (const article of shuffledArticles) {
-      if (selectedArticles.length >= count) break;
+    // Combine with preference for unviewed content
+    const availableWiki = [...unviewedWiki, ...viewedWiki];
+    
+    // Ultra-random selection process
+    const selectedWiki: WikipediaArticle[] = [];
+    const usedIndices = new Set<number>();
+    
+    // First pass: select unviewed articles randomly
+    while (selectedWiki.length < wikiCount && selectedWiki.length < unviewedWiki.length) {
+      const randomIndex = Math.floor(Math.random() * unviewedWiki.length);
+      if (!usedIndices.has(randomIndex)) {
+        usedIndices.add(randomIndex);
+        selectedWiki.push(unviewedWiki[randomIndex]);
+      }
+    }
+    
+    // Second pass: fill remaining slots with any articles
+    const remainingCount = wikiCount - selectedWiki.length;
+    if (remainingCount > 0 && availableWiki.length > 0) {
+      const remainingArticles = availableWiki.filter(article => 
+        !selectedWiki.some(selected => selected.id === article.id)
+      );
       
-      const articleId = isNewsArticle(article) ? article.id : `wiki-${article.id}`;
-      if (!usedIds.has(articleId)) {
-        usedIds.add(articleId);
-        selectedArticles.push(article);
+      const shuffledRemaining = remainingArticles.sort(() => Math.random() - 0.5);
+      selectedWiki.push(...shuffledRemaining.slice(0, remainingCount));
+    }
+
+    // Create final mixed content with ultra-randomization
+    const mixedContent: ContentItem[] = [];
+    
+    // Create random positions for content insertion
+    const positions = Array.from({ length: count }, (_, i) => i);
+    positions.sort(() => Math.random() - 0.5);
+    
+    // Randomly interleave news and wiki content
+    const newsPool = [...newsArticles.slice(0, newsCount)];
+    const wikiPool = [...selectedWiki];
+    
+    for (let i = 0; i < count && (newsPool.length > 0 || wikiPool.length > 0); i++) {
+      // Random decision with slight preference for the type we have more of
+      const useNews = newsPool.length > 0 && (
+        wikiPool.length === 0 || 
+        (Math.random() < 0.4 && newsPool.length > 0)
+      );
+      
+      if (useNews) {
+        const randomIndex = Math.floor(Math.random() * newsPool.length);
+        const item = newsPool.splice(randomIndex, 1)[0];
+        if (item) mixedContent.push(item);
+      } else if (wikiPool.length > 0) {
+        const randomIndex = Math.floor(Math.random() * wikiPool.length);
+        const item = wikiPool.splice(randomIndex, 1)[0];
+        if (item) mixedContent.push(item);
       }
     }
 
-    // If we don't have enough articles, fill with random ones
-    if (selectedArticles.length < count) {
-      const additionalArticles = await getWikiArticles(count - selectedArticles.length);
-      const filteredAdditional = additionalArticles.filter(article => {
-        const articleId = `wiki-${article.id}`;
-        return !usedIds.has(articleId) && article.image && !article.image.includes('placeholder');
-      });
-      selectedArticles.push(...filteredAdditional.slice(0, count - selectedArticles.length));
-    }
+    // Final ultra-randomization with multiple shuffle passes
+    const finalContent = mixedContent
+      .sort(() => Math.random() - 0.5)
+      .sort(() => Math.random() - 0.5)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, count);
 
-    return selectedArticles.slice(0, count);
-  }
-
-  // Fallback: No user interests, use original random logic
-  const randomRequests = [];
-  const articlesPerRequest = Math.ceil(wikiCount / 3);
-  
-  for (let i = 0; i < 3; i++) {
-    randomRequests.push(getWikiArticles(articlesPerRequest + 2));
-  }
-  
-  const [randomBatch1, randomBatch2, randomBatch3, newsArticles] = await Promise.all([
-    ...randomRequests.map(req => req.catch(() => [])),
-    getBreakingNews(newsCount).catch(() => [])
-  ]);
-
-  const allRandomWiki = [...randomBatch1, ...randomBatch2, ...randomBatch3]
-    .filter(article => article && article.image && !article.image.includes('placeholder'))
-    .sort(() => Math.random() - 0.5)
-    .sort(() => Math.random() - 0.5)
-    .sort(() => Math.random() - 0.5);
-
-  const selectedWiki = [];
-  const usedIndices = new Set();
-  
-  while (selectedWiki.length < wikiCount && selectedWiki.length < allRandomWiki.length) {
-    const randomIndex = Math.floor(Math.random() * allRandomWiki.length);
-    if (!usedIndices.has(randomIndex)) {
-      usedIndices.add(randomIndex);
-      selectedWiki.push(allRandomWiki[randomIndex]);
-    }
-  }
-
-  const mixedContent: ContentItem[] = [];
-  const wikiPool = [...selectedWiki];
-  const newsPool = [...newsArticles];
-
-  const positions = Array.from({ length: count }, (_, i) => i);
-  positions.sort(() => Math.random() - 0.5);
-
-  for (let i = 0; i < count && (wikiPool.length > 0 || newsPool.length > 0); i++) {
-    const useNews = newsPool.length > 0 && Math.random() < newsPercentage;
+    console.log(`Final content mix: ${finalContent.filter(isNewsArticle).length} news, ${finalContent.filter(item => !isNewsArticle(item)).length} wiki`);
     
-    if (useNews) {
-      const randomNewsIndex = Math.floor(Math.random() * newsPool.length);
-      const newsItem = newsPool.splice(randomNewsIndex, 1)[0];
-      if (newsItem) mixedContent.push(newsItem);
-    } else if (wikiPool.length > 0) {
-      const randomWikiIndex = Math.floor(Math.random() * wikiPool.length);
-      const wikiItem = wikiPool.splice(randomWikiIndex, 1)[0];
-      if (wikiItem) mixedContent.push(wikiItem);
-    } else if (newsPool.length > 0) {
-      const randomNewsIndex = Math.floor(Math.random() * newsPool.length);
-      const newsItem = newsPool.splice(randomNewsIndex, 1)[0];
-      if (newsItem) mixedContent.push(newsItem);
-    }
+    return finalContent;
+
+  } catch (error) {
+    console.error('Error in getMixedContent:', error);
+    
+    // Fallback: return basic content
+    const [fallbackWiki, fallbackNews] = await Promise.all([
+      getWikiArticles(wikiCount).catch(() => []),
+      getBreakingNews(newsCount).catch(() => [])
+    ]);
+    
+    const fallbackContent = [...fallbackWiki, ...fallbackNews]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, count);
+    
+    return fallbackContent;
   }
-
-  const finalContent = mixedContent
-    .sort(() => Math.random() - 0.5)
-    .sort(() => Math.random() - 0.5)
-    .sort(() => Math.random() - 0.5);
-
-  return finalContent.filter(item => item.image && !item.image.includes('placeholder'));
 };
 
 export const searchMixedContent = async (query: string): Promise<ContentItem[]> => {

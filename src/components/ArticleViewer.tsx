@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
@@ -8,6 +7,7 @@ import { useArticleInteractions } from "../hooks/useArticleInteractions";
 import { useTypingAnimation } from "../hooks/useTypingAnimation";
 import SwipeableArticle from "./article/SwipeableArticle";
 import LoadingArticle from "./article/LoadingArticle";
+import { markContentAsViewed } from "../services/contentService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const {
@@ -71,9 +71,14 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     return () => clearTimeout(timer);
   }, [setShowDoubleTapHint]);
 
-  // Reset states when article changes - immediately show full content
+  // Enhanced article change effect with view tracking
   useEffect(() => {
     setIsVisible(true);
+    
+    // Mark current article as viewed for better future randomization
+    if (currentArticle) {
+      markContentAsViewed(currentArticle);
+    }
     
     // Immediately show full content without typing animation
     if (currentArticle?.content) {
