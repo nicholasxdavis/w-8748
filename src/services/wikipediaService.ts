@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, WikipediaResponse, WikipediaSection } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
 
@@ -196,7 +195,7 @@ const getAllImages = async (pageId: number): Promise<string[]> => {
 };
 
 // Improved and more thorough text extraction
-const extractTextFromHtml = (html: string): string => => {
+const extractTextFromHtml = (html: string): string => {
   let text = html;
   
   // Remove scripts, styles, and common Wikipedia elements
