@@ -15,16 +15,16 @@ export interface ContentDistribution {
 
 export const calculateContentDistribution = (totalCount: number, position: number): ContentDistribution => {
   // Every 15-20 posts should be topic-based
-  const isTopicPosition = position > 0 && (position % 17 === 0); // Average of 15-20
+  const isTopicPosition = position > 0 && (position % 17 === 0);
   
-  // News should be 15% but actually distributed
-  const newsCount = Math.floor(totalCount * 0.15);
+  // News should be 20% and actually guaranteed
+  const newsCount = Math.max(1, Math.floor(totalCount * 0.20));
   
   // Recommended content based on saved articles (10%)
   const recommendedCount = Math.floor(totalCount * 0.1);
   
   // Topic-based content when at topic position
-  const topicCount = isTopicPosition ? Math.min(2, totalCount * 0.2) : 0;
+  const topicCount = isTopicPosition ? Math.min(2, Math.floor(totalCount * 0.2)) : 0;
   
   // Regular content fills the rest
   const regularCount = Math.max(1, totalCount - newsCount - recommendedCount - topicCount);
@@ -46,62 +46,61 @@ export const getAlgorithmicContent = async (
   
   console.log('Content distribution:', distribution);
 
-  const contentPromises: Promise<ContentItem[]>[] = [];
-
-  // Get news articles
-  if (distribution.news > 0) {
-    const { getBreakingNews } = await import('../rssNewsService');
-    contentPromises.push(
-      getBreakingNews(distribution.news + 1).catch(() => [])
-    );
-  }
-
-  // Get recommended content based on saved articles
-  if (distribution.recommended > 0 && userId) {
-    contentPromises.push(
-      getRecommendedContent(userId, distribution.recommended + 1).catch(() => [])
-    );
-  }
-
-  // Get topic-based content
-  if (distribution.topicBased > 0 && userId) {
-    try {
-      const interests = await getUserInterests(userId);
-      const userTopics = interests.map(interest => interest.topic?.name || '').filter(Boolean);
-      
-      if (userTopics.length > 0) {
-        const { getRandomArticles } = await import('../wikipediaService');
-        const wikiCategories = getWikipediaCategories(userTopics);
-        const randomCategory = wikiCategories[Math.floor(Math.random() * wikiCategories.length)];
-        
-        contentPromises.push(
-          getRandomArticles(distribution.topicBased + 1, randomCategory).catch(() => [])
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching topic-based content:', error);
-    }
-  }
-
-  // Get regular content
-  if (distribution.regular > 0) {
-    const { getRandomArticles } = await import('../wikipediaService');
-    contentPromises.push(
-      getRandomArticles(distribution.regular + 2).catch(() => [])
-    );
-  }
-
   try {
-    const results = await Promise.all(contentPromises);
-    const allContent = results.flat();
+    // Always fetch news first to ensure we get them
+    const { getBreakingNews } = await import('../rssNewsService');
+    const newsArticles = await getBreakingNews(distribution.news + 3).catch(error => {
+      console.error('Failed to fetch news:', error);
+      return [];
+    });
+    
+    console.log(`Fetched ${newsArticles.length} news articles`);
+
+    // Get regular content
+    const { getRandomArticles } = await import('../wikipediaService');
+    const regularArticles = await getRandomArticles(distribution.regular + 2).catch(() => []);
+
+    // Get recommended content if user exists
+    let recommendedArticles: WikipediaArticle[] = [];
+    if (distribution.recommended > 0 && userId) {
+      recommendedArticles = await getRecommendedContent(userId, distribution.recommended + 1).catch(() => []);
+    }
+
+    // Get topic-based content if needed
+    let topicArticles: WikipediaArticle[] = [];
+    if (distribution.topicBased > 0 && userId) {
+      try {
+        const interests = await getUserInterests(userId);
+        const userTopics = interests.map(interest => interest.topic?.name || '').filter(Boolean);
+        
+        if (userTopics.length > 0) {
+          const wikiCategories = getWikipediaCategories(userTopics);
+          const randomCategory = wikiCategories[Math.floor(Math.random() * wikiCategories.length)];
+          topicArticles = await getRandomArticles(distribution.topicBased + 1, randomCategory).catch(() => []);
+        }
+      } catch (error) {
+        console.error('Error fetching topic-based content:', error);
+      }
+    }
+
+    // Combine all content
+    const allContent = [
+      ...newsArticles.slice(0, distribution.news),
+      ...regularArticles.slice(0, distribution.regular),
+      ...recommendedArticles.slice(0, distribution.recommended),
+      ...topicArticles.slice(0, distribution.topicBased)
+    ];
     
     // Filter valid content
     const validContent = allContent.filter(item => 
       item.image && !item.image.includes('placeholder')
     );
 
-    // Mix content strategically
-    return mixContentStrategically(validContent, distribution);
+    console.log(`Valid content breakdown: ${validContent.filter(isNewsArticle).length} news, ${validContent.filter(item => !isNewsArticle(item)).length} wiki`);
+
+    // Mix content strategically to ensure news is distributed
+    return mixContentStrategically(validContent, distribution, count);
+    
   } catch (error) {
     console.error('Error in getAlgorithmicContent:', error);
     
@@ -114,37 +113,52 @@ export const getAlgorithmicContent = async (
 
 const mixContentStrategically = (
   content: ContentItem[], 
-  distribution: ContentDistribution
+  distribution: ContentDistribution,
+  targetCount: number
 ): ContentItem[] => {
   const news = content.filter(isNewsArticle);
   const wiki = content.filter(item => !isNewsArticle(item));
   
-  const mixed: ContentItem[] = [];
-  const totalItems = Object.values(distribution).reduce((a, b) => a + b, 0);
+  console.log(`Mixing: ${news.length} news articles available, need ${distribution.news}`);
   
-  // Create positions for news (spread them out)
+  const mixed: ContentItem[] = [];
+  
+  // Ensure we have news articles to place
+  if (news.length === 0 || distribution.news === 0) {
+    // If no news, just return wiki articles
+    return wiki.slice(0, targetCount);
+  }
+  
+  // Calculate positions for news articles (spread them evenly)
   const newsPositions = new Set<number>();
-  if (news.length > 0 && distribution.news > 0) {
-    const spacing = Math.floor(totalItems / (distribution.news + 1));
-    for (let i = 0; i < Math.min(distribution.news, news.length); i++) {
-      const position = spacing * (i + 1) + Math.floor(Math.random() * Math.max(1, spacing / 2));
-      newsPositions.add(Math.min(position, totalItems - 1));
+  const spacing = Math.floor(targetCount / distribution.news);
+  
+  for (let i = 0; i < Math.min(distribution.news, news.length); i++) {
+    const position = (i + 1) * spacing - 1;
+    if (position < targetCount) {
+      newsPositions.add(position);
     }
   }
   
-  // Fill content with strategic placement
+  console.log('News positions:', Array.from(newsPositions));
+  
+  // Fill content array
   let newsIndex = 0;
   let wikiIndex = 0;
   
-  for (let i = 0; i < totalItems && (newsIndex < news.length || wikiIndex < wiki.length); i++) {
+  for (let i = 0; i < targetCount && (newsIndex < news.length || wikiIndex < wiki.length); i++) {
     if (newsPositions.has(i) && newsIndex < news.length) {
       mixed.push(news[newsIndex++]);
+      console.log(`Placed news at position ${i}: ${news[newsIndex-1]?.title?.substring(0, 50)}`);
     } else if (wikiIndex < wiki.length) {
       mixed.push(wiki[wikiIndex++]);
+    } else if (newsIndex < news.length) {
+      // Fill remaining with news if wiki is exhausted
+      mixed.push(news[newsIndex++]);
     }
   }
   
-  console.log(`Strategic mix: ${mixed.filter(isNewsArticle).length} news, ${mixed.filter(item => !isNewsArticle(item)).length} wiki`);
+  console.log(`Final strategic mix: ${mixed.filter(isNewsArticle).length} news, ${mixed.filter(item => !isNewsArticle(item)).length} wiki out of ${mixed.length} total`);
   
-  return mixed.slice(0, totalItems);
+  return mixed.slice(0, targetCount);
 };

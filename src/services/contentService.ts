@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
@@ -25,9 +24,13 @@ let contentPosition = 0;
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
   try {
+    console.log(`Getting mixed content: count=${count}, userId=${userId}, position=${contentPosition}`);
+    
     // Use the new algorithmic approach
     const content = await getAlgorithmicContent(count, userId, contentPosition);
     contentPosition += count;
+    
+    console.log(`Algorithmic content returned: ${content.length} items`);
     
     // Ensure we have valid content with images
     const validContent = content.filter(item => 
@@ -35,21 +38,25 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     );
     
     if (validContent.length === 0) {
+      console.log('No valid content from algorithm, falling back');
       throw new Error('No valid content found');
     }
     
-    // Final shuffle while maintaining news distribution
-    return validContent.sort(() => Math.random() - 0.5).slice(0, count);
+    console.log(`Final valid content: ${validContent.filter(isNewsArticle).length} news, ${validContent.filter(item => !isNewsArticle(item)).length} wiki`);
+    
+    return validContent.slice(0, count);
     
   } catch (error) {
     console.error('Error in getMixedContent:', error);
     
-    // Fallback to original approach but fixed
+    // Fallback to original approach but with guaranteed news
     return getFallbackContent(count, userId);
   }
 };
 
 const getFallbackContent = async (count: number, userId?: string): Promise<ContentItem[]> => {
+  console.log('Using fallback content generation');
+  
   // Get user interests if userId is provided
   let userInterests: string[] = [];
   if (userId) {
@@ -62,40 +69,39 @@ const getFallbackContent = async (count: number, userId?: string): Promise<Conte
     }
   }
 
-  // Fixed news distribution - ensure news actually appears
-  const newsPercentage = 0.15;
-  const newsCount = Math.max(1, Math.floor(count * newsPercentage)); // Ensure at least 1 news
+  // Guaranteed news distribution - 20%
+  const newsCount = Math.max(1, Math.floor(count * 0.20));
   const wikiCount = count - newsCount;
 
   console.log(`Fallback: Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
 
   try {
-    const requests = [];
-
-    // Fetch news articles - ensure they're actually fetched
-    requests.push(getBreakingNews(newsCount + 2));
+    // Fetch news articles first and ensure they're valid
+    const newsArticles = await getBreakingNews(newsCount + 3);
+    console.log(`Fetched ${newsArticles.length} news articles in fallback`);
 
     // Fetch Wikipedia content
+    let wikiArticles;
     if (userInterests.length > 0) {
       const wikiCategories = getWikipediaCategories(userInterests);
       const selectedCategory = wikiCategories[Math.floor(Math.random() * wikiCategories.length)];
-      requests.push(getWikiArticles(wikiCount + 2, selectedCategory));
+      wikiArticles = await getWikiArticles(wikiCount + 2, selectedCategory);
     } else {
-      requests.push(getWikiArticles(wikiCount + 2));
+      wikiArticles = await getWikiArticles(wikiCount + 2);
     }
 
-    const [newsArticles, wikiArticles] = await Promise.all(requests);
-    
-    console.log(`Fetched ${newsArticles.length} news and ${wikiArticles.length} wiki articles`);
+    console.log(`Fetched ${wikiArticles.length} wiki articles in fallback`);
     
     // Filter valid content
-    const validNews = (newsArticles as NewsArticle[]).filter(article => 
+    const validNews = newsArticles.filter(article => 
       article.image && !article.image.includes('placeholder')
     ).slice(0, newsCount);
     
-    const validWiki = (wikiArticles as WikipediaArticle[]).filter(article => 
+    const validWiki = wikiArticles.filter(article => 
       article.image && !article.image.includes('placeholder')
     ).slice(0, wikiCount);
+
+    console.log(`Valid fallback content: ${validNews.length} news, ${validWiki.length} wiki`);
 
     // Create mixed content ensuring news is included
     const mixedContent = createMixedContent(validWiki, validNews, count);
