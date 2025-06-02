@@ -1,9 +1,11 @@
+
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
 import { getWikipediaCategories } from './content/categoryMapping';
 import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
 import { createMixedContent } from './content/contentMixer';
+import { getAlgorithmicContent } from './content/algorithmService';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
 
@@ -19,7 +21,35 @@ export const markContentAsViewed = (item: ContentItem) => {
   }
 };
 
+let contentPosition = 0;
+
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
+  try {
+    // Use the new algorithmic approach
+    const content = await getAlgorithmicContent(count, userId, contentPosition);
+    contentPosition += count;
+    
+    // Ensure we have valid content with images
+    const validContent = content.filter(item => 
+      item.image && !item.image.includes('placeholder')
+    );
+    
+    if (validContent.length === 0) {
+      throw new Error('No valid content found');
+    }
+    
+    // Final shuffle while maintaining news distribution
+    return validContent.sort(() => Math.random() - 0.5).slice(0, count);
+    
+  } catch (error) {
+    console.error('Error in getMixedContent:', error);
+    
+    // Fallback to original approach but fixed
+    return getFallbackContent(count, userId);
+  }
+};
+
+const getFallbackContent = async (count: number, userId?: string): Promise<ContentItem[]> => {
   // Get user interests if userId is provided
   let userInterests: string[] = [];
   if (userId) {
@@ -32,75 +62,53 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Calculate content distribution - 15% news
-  const newsPercentage = 0.15; // Fixed 15%
-  const newsCount = Math.max(0, Math.min(2, Math.floor(count * newsPercentage)));
+  // Fixed news distribution - ensure news actually appears
+  const newsPercentage = 0.15;
+  const newsCount = Math.max(1, Math.floor(count * newsPercentage)); // Ensure at least 1 news
   const wikiCount = count - newsCount;
 
-  console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
+  console.log(`Fallback: Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
 
   try {
-    const baseWikiCount = Math.floor(wikiCount * 0.3); // 30% random content
-    const interestBasedCount = wikiCount - baseWikiCount;
-
     const requests = [];
 
-    // Fetch news articles
+    // Fetch news articles - ensure they're actually fetched
     requests.push(getBreakingNews(newsCount + 2));
 
-    // Fetch Wikipedia content based on user interests
-    if (userInterests.length > 0 && interestBasedCount > 0) {
-      console.log(`Interest-based: ${interestBasedCount}, Random: ${baseWikiCount}, News: ${newsCount}`);
-
+    // Fetch Wikipedia content
+    if (userInterests.length > 0) {
       const wikiCategories = getWikipediaCategories(userInterests);
-      const shuffledCategories = wikiCategories.sort(() => Math.random() - 0.5);
-      const selectedCategories = shuffledCategories.slice(0, Math.min(3, shuffledCategories.length));
-      
-      for (let i = 0; i < selectedCategories.length; i++) {
-        const category = selectedCategories[i];
-        const articlesPerCategory = Math.ceil(interestBasedCount / selectedCategories.length);
-        requests.push(
-          getWikiArticles(articlesPerCategory + 2, category).catch(() => [])
-        );
-      }
+      const selectedCategory = wikiCategories[Math.floor(Math.random() * wikiCategories.length)];
+      requests.push(getWikiArticles(wikiCount + 2, selectedCategory));
     } else {
-      const totalWikiCount = wikiCount + interestBasedCount;
-      const articlesPerRequest = Math.ceil(totalWikiCount / 3);
-      
-      for (let i = 0; i < 3; i++) {
-        requests.push(getWikiArticles(articlesPerRequest + 2).catch(() => []));
-      }
+      requests.push(getWikiArticles(wikiCount + 2));
     }
 
-    // Add random content for serendipity
-    if (baseWikiCount > 0) {
-      requests.push(getWikiArticles(baseWikiCount + 2).catch(() => []));
-    }
-
-    const results = await Promise.all(requests);
+    const [newsArticles, wikiArticles] = await Promise.all(requests);
     
-    const newsArticles = results[0] as NewsArticle[] || [];
-    const wikiResults = results.slice(1).flat() as WikipediaArticle[];
+    console.log(`Fetched ${newsArticles.length} news and ${wikiArticles.length} wiki articles`);
     
-    const { unviewedWiki, viewedWiki } = filterArticlesByViewed(wikiResults);
-    const availableWiki = [...unviewedWiki, ...viewedWiki];
-    const selectedWiki = selectRandomWikiArticles(unviewedWiki, availableWiki, wikiCount);
+    // Filter valid content
+    const validNews = (newsArticles as NewsArticle[]).filter(article => 
+      article.image && !article.image.includes('placeholder')
+    ).slice(0, newsCount);
+    
+    const validWiki = (wikiArticles as WikipediaArticle[]).filter(article => 
+      article.image && !article.image.includes('placeholder')
+    ).slice(0, wikiCount);
 
-    return createMixedContent(selectedWiki, newsArticles.slice(0, newsCount), count);
+    // Create mixed content ensuring news is included
+    const mixedContent = createMixedContent(validWiki, validNews, count);
+    
+    console.log(`Final fallback mix: ${mixedContent.filter(isNewsArticle).length} news, ${mixedContent.filter(item => !isNewsArticle(item)).length} wiki`);
+    
+    return mixedContent;
 
   } catch (error) {
-    console.error('Error in getMixedContent:', error);
+    console.error('Error in fallback content:', error);
     
-    const [fallbackWiki, fallbackNews] = await Promise.all([
-      getWikiArticles(wikiCount).catch(() => []),
-      getBreakingNews(newsCount).catch(() => [])
-    ]);
-    
-    const fallbackContent = [...fallbackWiki, ...fallbackNews]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, count);
-    
-    return fallbackContent;
+    const fallbackWiki = await getWikiArticles(count).catch(() => []);
+    return fallbackWiki.slice(0, count);
   }
 };
 
