@@ -72,6 +72,19 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     }
   }, [isCurrentlyViewed, loadedSections.length]);
 
+  // Auto-start reading new section content when swiping if already reading
+  useEffect(() => {
+    if (!isCurrentlyViewed || !isWikipediaArticle) return;
+    
+    // If user was listening and swiped to a new section, auto-start reading the new content
+    if (props.isReading && currentSection > 0 && loadedSections[currentSection]?.content) {
+      // Small delay to ensure the swipe animation completes
+      setTimeout(() => {
+        props.handleTextToSpeech();
+      }, 300);
+    }
+  }, [currentSection, props.isReading, isCurrentlyViewed, isWikipediaArticle, loadedSections, props.handleTextToSpeech]);
+
   // Load sections when user swipes or is about to swipe
   useEffect(() => {
     if (!isWikipediaArticle || !isCurrentlyViewed) return;
