@@ -1,4 +1,3 @@
-
 export interface NewsArticle {
   id: string;
   title: string;
@@ -236,7 +235,7 @@ export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]>
 const getRandomizedArticles = (articles: NewsArticle[], count: number): NewsArticle[] => {
   // Separate viewed and unviewed articles
   const unviewedArticles = articles.filter(article => !viewedArticles.has(article.id));
-  const viewedArticles = articles.filter(article => viewedArticles.has(article.id));
+  const viewedArticlesList = articles.filter(article => viewedArticles.has(article.id));
   
   // Prefer unviewed articles, but include some viewed ones if needed
   const selectedArticles: NewsArticle[] = [];
@@ -246,8 +245,8 @@ const getRandomizedArticles = (articles: NewsArticle[], count: number): NewsArti
   selectedArticles.push(...shuffledUnviewed.slice(0, Math.min(count, shuffledUnviewed.length)));
   
   // If we need more articles, add some viewed ones with lower probability
-  if (selectedArticles.length < count && viewedArticles.length > 0) {
-    const shuffledViewed = viewedArticles.sort(() => Math.random() - 0.5);
+  if (selectedArticles.length < count && viewedArticlesList.length > 0) {
+    const shuffledViewed = viewedArticlesList.sort(() => Math.random() - 0.5);
     const remainingCount = count - selectedArticles.length;
     selectedArticles.push(...shuffledViewed.slice(0, remainingCount));
   }

@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
@@ -34,9 +33,9 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Randomize news percentage between 25-40% for more variety
-  const newsPercentage = Math.random() * 0.15 + 0.25; // 25-40%
-  const newsCount = Math.max(1, Math.floor(count * newsPercentage));
+  // Reduced news percentage to about 15-20% (2 news per 10-13 posts)
+  const newsPercentage = Math.random() * 0.05 + 0.15; // 15-20%
+  const newsCount = Math.max(1, Math.min(2, Math.floor(count * newsPercentage))); // Cap at 2 news articles
   const wikiCount = count - newsCount;
 
   console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
@@ -151,39 +150,39 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       selectedWiki.push(...shuffledRemaining.slice(0, remainingCount));
     }
 
-    // Create final mixed content with ultra-randomization
+    // Create final mixed content with strategic placement of news
     const mixedContent: ContentItem[] = [];
     
-    // Create random positions for content insertion
-    const positions = Array.from({ length: count }, (_, i) => i);
-    positions.sort(() => Math.random() - 0.5);
+    // Create news placement positions - spread them out more evenly
+    const newsPositions = new Set<number>();
+    if (newsCount > 0) {
+      const spacing = Math.floor(count / (newsCount + 1));
+      for (let i = 0; i < newsCount; i++) {
+        const basePosition = spacing * (i + 1) + Math.floor(Math.random() * Math.max(1, spacing / 2));
+        newsPositions.add(Math.min(basePosition, count - 1));
+      }
+    }
     
-    // Randomly interleave news and wiki content
+    // Fill content with strategic news placement
     const newsPool = [...newsArticles.slice(0, newsCount)];
     const wikiPool = [...selectedWiki];
     
     for (let i = 0; i < count && (newsPool.length > 0 || wikiPool.length > 0); i++) {
-      // Random decision with slight preference for the type we have more of
-      const useNews = newsPool.length > 0 && (
-        wikiPool.length === 0 || 
-        (Math.random() < 0.4 && newsPool.length > 0)
-      );
-      
-      if (useNews) {
+      if (newsPositions.has(i) && newsPool.length > 0) {
+        // Place news at designated positions
         const randomIndex = Math.floor(Math.random() * newsPool.length);
         const item = newsPool.splice(randomIndex, 1)[0];
         if (item) mixedContent.push(item);
       } else if (wikiPool.length > 0) {
+        // Fill with wiki articles
         const randomIndex = Math.floor(Math.random() * wikiPool.length);
         const item = wikiPool.splice(randomIndex, 1)[0];
         if (item) mixedContent.push(item);
       }
     }
 
-    // Final ultra-randomization with multiple shuffle passes
+    // Final randomization pass
     const finalContent = mixedContent
-      .sort(() => Math.random() - 0.5)
-      .sort(() => Math.random() - 0.5)
       .sort(() => Math.random() - 0.5)
       .slice(0, count);
 
