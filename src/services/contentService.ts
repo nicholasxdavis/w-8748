@@ -32,9 +32,9 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Calculate content distribution - 10% news
-  const newsPercentage = 0.1; // Fixed 10%
-  const newsCount = Math.max(0, Math.min(1, Math.floor(count * newsPercentage)));
+  // Calculate content distribution - 15% news
+  const newsPercentage = 0.15; // Fixed 15%
+  const newsCount = Math.max(0, Math.min(2, Math.floor(count * newsPercentage)));
   const wikiCount = count - newsCount;
 
   console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
