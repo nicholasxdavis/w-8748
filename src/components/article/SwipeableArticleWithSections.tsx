@@ -24,6 +24,7 @@ interface SwipeableArticleWithSectionsProps {
 const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) => {
   const [currentSection, setCurrentSection] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const constraintsRef = useRef(null);
 
   const isWikipediaArticle = !isNewsArticle(props.article);
@@ -43,11 +44,16 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     
     if (info.offset.x < -swipeThreshold && currentSection < totalSections - 1) {
       // Swipe left - next section
+      setSwipeDirection('left');
       setCurrentSection(prev => prev + 1);
     } else if (info.offset.x > swipeThreshold && currentSection > 0) {
       // Swipe right - previous section
+      setSwipeDirection('right');
       setCurrentSection(prev => prev - 1);
     }
+
+    // Reset direction after animation
+    setTimeout(() => setSwipeDirection(null), 300);
   };
 
   const getCurrentContent = () => {
@@ -77,6 +83,26 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     return section?.title || `${props.article.title} - Section ${currentSection}`;
   };
 
+  // Animation variants for smooth transitions
+  const getAnimationVariants = () => {
+    if (!swipeDirection) return {};
+    
+    return {
+      initial: {
+        y: swipeDirection === 'left' ? 20 : -20,
+        opacity: 0.8
+      },
+      animate: {
+        y: 0,
+        opacity: 1,
+        transition: {
+          duration: 0.3,
+          ease: "easeOut"
+        }
+      }
+    };
+  };
+
   return (
     <div 
       ref={constraintsRef}
@@ -91,6 +117,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         whileDrag={{ cursor: "grabbing" }}
+        {...getAnimationVariants()}
       >
         {/* Background Image */}
         <div className="absolute inset-0 w-screen h-screen">
@@ -102,20 +129,6 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </div>
-
-        {/* Section indicators for Wikipedia articles with multiple sections */}
-        {hasSections && totalSections > 1 && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
-            {Array.from({ length: totalSections }).map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentSection ? 'bg-white' : 'bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-        )}
 
         {/* Swipe hint for Wikipedia articles */}
         {hasSections && totalSections > 1 && currentSection === 0 && props.showDoubleTapHint && (
@@ -133,6 +146,20 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
             image: getCurrentImage()
           }}
         />
+
+        {/* Section indicators for Wikipedia articles with multiple sections - moved to bottom */}
+        {hasSections && totalSections > 1 && (
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+            {Array.from({ length: totalSections }).map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentSection ? 'bg-white scale-110' : 'bg-white/40 scale-100'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </motion.div>
     </div>
   );
