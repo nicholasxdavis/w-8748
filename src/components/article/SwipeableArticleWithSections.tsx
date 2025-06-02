@@ -25,6 +25,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const [currentSection, setCurrentSection] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const constraintsRef = useRef(null);
 
   const isWikipediaArticle = !isNewsArticle(props.article);
@@ -38,22 +39,30 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
     
-    if (!hasSections) return;
+    if (!hasSections || isTransitioning) return;
 
     const swipeThreshold = 100;
     
     if (info.offset.x < -swipeThreshold && currentSection < totalSections - 1) {
       // Swipe left - next section
       setSwipeDirection('left');
-      setCurrentSection(prev => prev + 1);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentSection(prev => prev + 1);
+        setIsTransitioning(false);
+      }, 150);
     } else if (info.offset.x > swipeThreshold && currentSection > 0) {
       // Swipe right - previous section
       setSwipeDirection('right');
-      setCurrentSection(prev => prev - 1);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentSection(prev => prev - 1);
+        setIsTransitioning(false);
+      }, 150);
     }
 
     // Reset direction after animation
-    setTimeout(() => setSwipeDirection(null), 300);
+    setTimeout(() => setSwipeDirection(null), 400);
   };
 
   const getCurrentContent = () => {
@@ -83,21 +92,32 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     return section?.title || `${props.article.title} - Section ${currentSection}`;
   };
 
-  // Animation variants for smooth transitions
+  // Enhanced animation variants for slide-out effect
   const getAnimationVariants = () => {
-    if (!swipeDirection) return {};
+    if (!swipeDirection || !isTransitioning) return {};
     
     return {
       initial: {
-        y: swipeDirection === 'left' ? 20 : -20,
-        opacity: 0.8
+        x: swipeDirection === 'left' ? '100%' : '-100%',
+        opacity: 0,
+        scale: 0.95
       },
       animate: {
-        y: 0,
+        x: 0,
         opacity: 1,
+        scale: 1,
+        transition: {
+          duration: 0.4,
+          ease: "easeOut"
+        }
+      },
+      exit: {
+        x: swipeDirection === 'left' ? '-100%' : '100%',
+        opacity: 0,
+        scale: 0.95,
         transition: {
           duration: 0.3,
-          ease: "easeOut"
+          ease: "easeIn"
         }
       }
     };
@@ -111,16 +131,22 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     >
       <motion.div
         className="w-full h-full relative"
-        drag={hasSections ? "x" : false}
+        drag={hasSections && !isTransitioning ? "x" : false}
         dragConstraints={constraintsRef}
         dragElastic={0.2}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         whileDrag={{ cursor: "grabbing" }}
+        key={`section-${currentSection}`}
         {...getAnimationVariants()}
       >
-        {/* Background Image */}
-        <div className="absolute inset-0 w-screen h-screen">
+        {/* Background Image with smoother transition */}
+        <motion.div 
+          className="absolute inset-0 w-screen h-screen"
+          initial={swipeDirection ? { scale: 1.1 } : {}}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <img 
             src={getCurrentImage()} 
             alt={getCurrentTitle()} 
@@ -128,7 +154,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
             loading={props.index <= props.currentIndex + 1 ? "eager" : "lazy"} 
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-        </div>
+        </motion.div>
 
         {/* Swipe hint for Wikipedia articles */}
         {hasSections && totalSections > 1 && currentSection === 0 && props.showDoubleTapHint && (
@@ -147,15 +173,17 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           }}
         />
 
-        {/* Section indicators for Wikipedia articles with multiple sections - moved to bottom */}
+        {/* Section indicators - positioned at bottom with improved styling */}
         {hasSections && totalSections > 1 && (
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
             {Array.from({ length: totalSections }).map((_, index) => (
-              <div
+              <motion.div
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentSection ? 'bg-white scale-110' : 'bg-white/40 scale-100'
+                  index === currentSection ? 'bg-white scale-125' : 'bg-white/40 scale-100'
                 }`}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
               />
             ))}
           </div>
