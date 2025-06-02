@@ -1,3 +1,4 @@
+
 export interface WikipediaResponse {
   batchcomplete: boolean;
   query?: {
@@ -42,7 +43,41 @@ export interface WikipediaResponse {
       title: string;
       type: string;
     }[];
+    random?: {
+      id: number;
+      ns: number;
+      title: string;
+    }[];
   };
+}
+
+export interface WikipediaPage {
+  pageid: number;
+  ns: number;
+  title: string;
+  extract?: string;
+  thumbnail?: {
+    source: string;
+    width: number;
+    height: number;
+  };
+  categories?: {
+    ns: number;
+    title: string;
+  }[];
+  links?: {
+    ns: number;
+    title: string;
+  }[];
+  images?: {
+    ns: number;
+    title: string;
+  }[];
+  imageinfo?: [{
+    url: string;
+    descriptionurl: string;
+    descriptionshorturl: string;
+  }]
 }
 
 export interface NewsArticle {
@@ -68,6 +103,12 @@ export interface UserInterest {
   };
 }
 
+export interface WikipediaSection {
+  title: string;
+  content: string;
+  image?: string;
+}
+
 export interface WikipediaArticle {
   id: number;
   title: string;
@@ -78,7 +119,5 @@ export interface WikipediaArticle {
   views: number;
   tags: string[];
   relatedArticles: WikipediaArticle[];
-  // Add new fields for additional content
-  additionalSections?: string[];
-  additionalImages?: string[];
+  sections?: WikipediaSection[];
 }

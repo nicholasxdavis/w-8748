@@ -27,17 +27,17 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const constraintsRef = useRef(null);
 
   const isWikipediaArticle = !isNewsArticle(props.article);
-  const hasAdditionalSections = isWikipediaArticle && 
-    props.article.additionalSections && 
-    props.article.additionalSections.length > 0;
+  const hasSections = isWikipediaArticle && 
+    props.article.sections && 
+    props.article.sections.length > 0;
 
-  const totalSections = hasAdditionalSections ? 
-    1 + props.article.additionalSections.length : 1;
+  // Total sections = main article + additional sections
+  const totalSections = hasSections ? 1 + props.article.sections.length : 1;
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
     
-    if (!hasAdditionalSections) return;
+    if (!hasSections) return;
 
     const swipeThreshold = 100;
     
@@ -51,28 +51,30 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   };
 
   const getCurrentContent = () => {
-    if (!hasAdditionalSections || currentSection === 0) {
+    if (!hasSections || currentSection === 0) {
       return props.article.content;
     }
     
-    return props.article.additionalSections[currentSection - 1];
+    const section = props.article.sections[currentSection - 1];
+    return section?.content || props.article.content;
   };
 
   const getCurrentImage = () => {
-    if (!hasAdditionalSections || currentSection === 0) {
+    if (!hasSections || currentSection === 0) {
       return getArticleImage(props.article);
     }
     
-    const additionalImages = props.article.additionalImages || [];
-    return additionalImages[currentSection - 1] || getArticleImage(props.article);
+    const section = props.article.sections[currentSection - 1];
+    return section?.image || getArticleImage(props.article);
   };
 
-  const getSectionTitle = () => {
-    if (currentSection === 0) {
+  const getCurrentTitle = () => {
+    if (!hasSections || currentSection === 0) {
       return props.article.title;
     }
     
-    return `${props.article.title} - Section ${currentSection + 1}`;
+    const section = props.article.sections[currentSection - 1];
+    return section?.title || `${props.article.title} - Section ${currentSection}`;
   };
 
   return (
@@ -83,7 +85,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     >
       <motion.div
         className="w-full h-full relative"
-        drag="x"
+        drag={hasSections ? "x" : false}
         dragConstraints={constraintsRef}
         dragElastic={0.2}
         onDragStart={() => setIsDragging(true)}
@@ -94,15 +96,15 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         <div className="absolute inset-0 w-screen h-screen">
           <img 
             src={getCurrentImage()} 
-            alt={getSectionTitle()} 
+            alt={getCurrentTitle()} 
             className="w-full h-full object-cover" 
             loading={props.index <= props.currentIndex + 1 ? "eager" : "lazy"} 
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </div>
 
-        {/* Section indicators for Wikipedia articles */}
-        {hasAdditionalSections && (
+        {/* Section indicators for Wikipedia articles with multiple sections */}
+        {hasSections && totalSections > 1 && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
             {Array.from({ length: totalSections }).map((_, index) => (
               <div
@@ -116,9 +118,9 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         )}
 
         {/* Swipe hint for Wikipedia articles */}
-        {hasAdditionalSections && currentSection === 0 && props.showDoubleTapHint && (
+        {hasSections && totalSections > 1 && currentSection === 0 && props.showDoubleTapHint && (
           <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs">
-            ← Swipe left for more sections
+            ← Swipe left for more content
           </div>
         )}
 
@@ -126,7 +128,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           {...props}
           article={{
             ...props.article,
-            title: getSectionTitle(),
+            title: getCurrentTitle(),
             content: getCurrentContent(),
             image: getCurrentImage()
           }}
