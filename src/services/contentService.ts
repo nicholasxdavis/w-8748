@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
@@ -38,15 +37,24 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       }
     }
 
-    // Reduced news distribution to 15%
-    const newsCount = Math.max(1, Math.floor(count * 0.15));
+    // Calculate if we should include news in this batch based on position
+    // News should appear every 15-20 posts
+    const shouldIncludeNews = contentPosition > 0 && (
+      (contentPosition % 17 === 0) || // Every 17th post
+      (contentPosition % 19 === 0)    // Or every 19th post (creates variation)
+    );
+    
+    const newsCount = shouldIncludeNews ? 1 : 0; // Only 1 news article when included
     const wikiCount = count - newsCount;
 
-    console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
+    console.log(`Position ${contentPosition}: including ${newsCount} news, ${wikiCount} wiki articles`);
 
-    // Fetch news articles first to ensure they're valid
-    const newsArticles = await getBreakingNews(newsCount + 3);
-    console.log(`Fetched ${newsArticles.length} news articles`);
+    // Fetch news articles only if needed
+    let newsArticles: NewsArticle[] = [];
+    if (newsCount > 0) {
+      newsArticles = await getBreakingNews(3); // Get a few to choose from
+      console.log(`Fetched ${newsArticles.length} news articles`);
+    }
 
     // Fetch Wikipedia content
     let wikiArticles;
@@ -71,7 +79,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
 
     console.log(`Valid content: ${validNews.length} news, ${validWiki.length} wiki`);
 
-    // Create mixed content ensuring news is included
+    // Create mixed content
     const mixedContent = createMixedContent(validWiki, validNews, count);
     
     console.log(`Final mix: ${mixedContent.filter(isNewsArticle).length} news, ${mixedContent.filter(item => !isNewsArticle(item)).length} wiki`);
