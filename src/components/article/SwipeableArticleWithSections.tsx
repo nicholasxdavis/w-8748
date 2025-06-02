@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { motion, PanInfo } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -29,6 +30,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   const [loadedSections, setLoadedSections] = useState<any[]>([]);
   const [isLoadingSections, setIsLoadingSections] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [hasMoreSections, setHasMoreSections] = useState(true);
   const constraintsRef = useRef(null);
   const loadingAbortController = useRef<AbortController | null>(null);
   
@@ -38,16 +40,12 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   // Initialize with main article content and show swipe hint
   useEffect(() => {
     if (isWikipediaArticle && isCurrentlyViewed && loadedSections.length === 0) {
-      // Start with main article as section 0
       setLoadedSections([{
         title: props.article.title,
         content: props.article.content,
         image: getArticleImage(props.article)
       }]);
-
-      // Show swipe hint on load for Wikipedia articles
       setShowSwipeHint(true);
-      // Hide hint after 3 seconds
       setTimeout(() => setShowSwipeHint(false), 3000);
     }
   }, [isWikipediaArticle, isCurrentlyViewed, props.article, loadedSections.length]);
@@ -55,19 +53,15 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   // Cancel loading and clean up when leaving this article
   useEffect(() => {
     if (!isCurrentlyViewed) {
-      // Cancel any ongoing loading
       if (loadingAbortController.current) {
         loadingAbortController.current.abort();
         loadingAbortController.current = null;
       }
-
-      // Reset loading state
       setIsLoadingSections(false);
-
-      // Clean up sections - keep only the main article section
       if (loadedSections.length > 1) {
         setLoadedSections(prev => prev.slice(0, 1));
         setCurrentSection(0);
+        setHasMoreSections(true);
       }
     }
   }, [isCurrentlyViewed, loadedSections.length]);
@@ -76,9 +70,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   useEffect(() => {
     if (!isCurrentlyViewed || !isWikipediaArticle) return;
     
-    // If user was listening and swiped to a new section, auto-start reading the new content
     if (props.isReading && currentSection > 0 && loadedSections[currentSection]?.content) {
-      // Small delay to ensure the swipe animation completes
       setTimeout(() => {
         props.handleTextToSpeech();
       }, 300);
@@ -87,25 +79,26 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
 
   // Load sections when user swipes or is about to swipe
   useEffect(() => {
-    if (!isWikipediaArticle || !isCurrentlyViewed) return;
+    if (!isWikipediaArticle || !isCurrentlyViewed || !hasMoreSections) return;
     
     const loadSectionsIfNeeded = async () => {
-      // Load first additional section when on main article (section 0)
       if (currentSection === 0 && loadedSections.length === 1 && !isLoadingSections) {
         setIsLoadingSections(true);
-
-        // Create new abort controller for this loading operation
         loadingAbortController.current = new AbortController();
+        
         try {
           const sections = await getFullSections(props.article.id, props.article.title, loadingAbortController.current.signal);
 
-          // Check if we're still on the same article after loading
           if (isCurrentlyViewed && sections.length > 0) {
-            setLoadedSections(prev => [...prev, sections[0]]); // Add first section only
+            setLoadedSections(prev => [...prev, sections[0]]);
+            setHasMoreSections(sections.length > 1);
+          } else if (isCurrentlyViewed && sections.length === 0) {
+            setHasMoreSections(false);
           }
         } catch (error) {
           if (error.name !== 'AbortError') {
             console.error('Error loading sections:', error);
+            setHasMoreSections(false);
           }
         } finally {
           if (isCurrentlyViewed) {
@@ -115,23 +108,24 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         }
       }
 
-      // Load next section when approaching current section boundary
       if (currentSection > 0 && currentSection === loadedSections.length - 1 && !isLoadingSections) {
         setIsLoadingSections(true);
-
-        // Create new abort controller for this loading operation
         loadingAbortController.current = new AbortController();
+        
         try {
           const sections = await getFullSections(props.article.id, props.article.title, loadingAbortController.current.signal);
-          const nextSectionIndex = loadedSections.length - 1; // -1 because first is main article
+          const nextSectionIndex = loadedSections.length - 1;
 
-          // Check if we're still on the same article after loading
           if (isCurrentlyViewed && sections[nextSectionIndex]) {
             setLoadedSections(prev => [...prev, sections[nextSectionIndex]]);
+            setHasMoreSections(sections.length > nextSectionIndex + 1);
+          } else if (isCurrentlyViewed) {
+            setHasMoreSections(false);
           }
         } catch (error) {
           if (error.name !== 'AbortError') {
             console.error('Error loading next section:', error);
+            setHasMoreSections(false);
           }
         } finally {
           if (isCurrentlyViewed) {
@@ -143,7 +137,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     };
     
     loadSectionsIfNeeded();
-  }, [currentSection, loadedSections.length, isWikipediaArticle, isCurrentlyViewed, props.article.id, props.article.title, isLoadingSections]);
+  }, [currentSection, loadedSections.length, isWikipediaArticle, isCurrentlyViewed, props.article.id, props.article.title, isLoadingSections, hasMoreSections]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -155,27 +149,24 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   }, []);
 
   const totalSections = loadedSections.length;
+  const canGoNext = currentSection < totalSections - 1 || (hasMoreSections && !isLoadingSections);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
     if (!isWikipediaArticle || totalSections <= 1) return;
 
     const swipeThreshold = 100;
-    if (info.offset.x < -swipeThreshold && currentSection < totalSections - 1) {
-      // Swipe left - next section
+    if (info.offset.x < -swipeThreshold && canGoNext) {
       setSwipeDirection('left');
       setCurrentSection(prev => prev + 1);
     } else if (info.offset.x > swipeThreshold && currentSection > 0) {
-      // Swipe right - previous section
       setSwipeDirection('right');
       setCurrentSection(prev => prev - 1);
     }
 
-    // Reset direction after animation
     setTimeout(() => setSwipeDirection(null), 300);
   };
 
-  // Handle desktop arrow navigation
   const handlePreviousSection = () => {
     if (currentSection > 0) {
       setSwipeDirection('right');
@@ -185,7 +176,7 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
   };
 
   const handleNextSection = () => {
-    if (currentSection < totalSections - 1) {
+    if (canGoNext) {
       setSwipeDirection('left');
       setCurrentSection(prev => prev + 1);
       setTimeout(() => setSwipeDirection(null), 300);
@@ -210,7 +201,6 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     return section?.title || props.article.title;
   };
 
-  // Animation variants for smooth transitions
   const getAnimationVariants = () => {
     if (!swipeDirection) return {};
     return {
@@ -229,10 +219,8 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
     };
   };
 
-  // Create main article reference for saving (always use the original article data)
   const mainArticleForSaving = {
     ...props.article,
-    // Always use the main article content and image for saving
     content: props.article.content,
     image: getArticleImage(props.article),
     title: props.article.title
@@ -250,7 +238,6 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         whileDrag={{ cursor: "grabbing" }} 
         {...getAnimationVariants()}
       >
-        {/* Background Image with smooth transition */}
         <motion.div 
           key={`${props.article.id}-${currentSection}`} 
           className="absolute inset-0 w-screen h-screen" 
@@ -267,32 +254,29 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </motion.div>
 
-        {/* Desktop Navigation Arrows - only show on desktop and for Wikipedia articles with multiple sections */}
-        {isWikipediaArticle && totalSections > 1 && (
+        {/* Desktop Navigation Arrows - smaller size with better centering */}
+        {isWikipediaArticle && (totalSections > 1 || hasMoreSections) && (
           <>
-            {/* Left Arrow - Previous Section */}
             {currentSection > 0 && (
               <button
                 onClick={handlePreviousSection}
-                className="hidden lg:flex absolute left-6 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/50 hover:scale-110 transition-all duration-200"
+                className="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-black/40 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/60 hover:scale-110 transition-all duration-200 shadow-lg"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
             )}
 
-            {/* Right Arrow - Next Section */}
-            {currentSection < totalSections - 1 && (
+            {canGoNext && (
               <button
                 onClick={handleNextSection}
-                className="hidden lg:flex absolute right-6 top-1/2 transform -translate-y-1/2 z-30 w-12 h-12 bg-black/30 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/50 hover:scale-110 transition-all duration-200"
+                className="hidden lg:flex absolute right-4 top-1/2 transform -translate-y-1/2 z-30 w-10 h-10 bg-black/40 backdrop-blur-sm border border-white/20 rounded-full items-center justify-center text-white hover:bg-black/60 hover:scale-110 transition-all duration-200 shadow-lg"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             )}
           </>
         )}
 
-        {/* Swipe hint using loading popup style */}
         {showSwipeHint && isWikipediaArticle && (
           <div className="hidden absolute top-20 right-4 z-30 bg-black/50 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm flex items-center gap-2">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -300,7 +284,6 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
           </div>
         )}
 
-        {/* Loading indicator for sections */}
         {isLoadingSections && (
           <div className="absolute top-20 right-4 z-30 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
@@ -311,15 +294,14 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
         <ArticleDisplay 
           {...props} 
           article={{
-            ...mainArticleForSaving, // Use main article for saving
+            ...mainArticleForSaving,
             title: getCurrentTitle(),
             content: getCurrentContent(),
             image: getCurrentImage()
           }} 
         />
 
-        {/* Section indicators for Wikipedia articles with multiple sections */}
-        {isWikipediaArticle && totalSections > 1 && (
+        {isWikipediaArticle && (totalSections > 1 || hasMoreSections) && (
           <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
             {Array.from({ length: totalSections }).map((_, index) => (
               <div 
@@ -329,9 +311,11 @@ const SwipeableArticleWithSections = (props: SwipeableArticleWithSectionsProps) 
                 }`} 
               />
             ))}
-            {/* Show loading dot if more sections are being loaded */}
             {isLoadingSections && (
               <div className="w-2 h-2 rounded-full bg-white/20 animate-pulse scale-90" />
+            )}
+            {hasMoreSections && !isLoadingSections && currentSection === totalSections - 1 && (
+              <div className="w-2 h-2 rounded-full bg-white/60 scale-90" />
             )}
           </div>
         )}

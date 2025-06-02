@@ -20,12 +20,16 @@ interface SwipeableArticleProps {
 
 const SwipeableArticle = (props: SwipeableArticleProps) => {
   return (
-    <div 
+    <motion.div 
       className="article-section h-screen w-screen snap-start snap-always relative flex items-center justify-center overflow-hidden"
       data-index={props.index}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
     >
       <ArticleDisplay {...props} />
-    </div>
+    </motion.div>
   );
 };
 

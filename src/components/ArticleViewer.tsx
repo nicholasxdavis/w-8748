@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
@@ -6,8 +7,9 @@ import { useArticleNavigation } from "../hooks/useArticleNavigation";
 import { useArticleInteractions } from "../hooks/useArticleInteractions";
 import { useTypingAnimation } from "../hooks/useTypingAnimation";
 import SwipeableArticleWithSections from "./article/SwipeableArticleWithSections";
+import SwipeableArticle from "./article/SwipeableArticle";
 import LoadingArticle from "./article/LoadingArticle";
-import { markContentAsViewed } from "../services/contentService";
+import { markContentAsViewed, isNewsArticle } from "../services/contentService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const {
@@ -38,7 +40,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
 
   const [showShare, setShowShare] = useState(false);
 
-  // Use custom hooks
   useArticleNavigation(articles, currentIndex, setCurrentIndex, setIsVisible, containerRef);
   
   const {
@@ -60,27 +61,22 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     typingIntervalRef
   );
 
-  // Enhanced content click handler
   const handleContentClick = useCallback(() => {
     baseHandleContentClick(clickCountRef, doubleClickTimeoutRef);
   }, [baseHandleContentClick]);
 
-  // Hide double-tap hint after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowDoubleTapHint(false), 3000);
     return () => clearTimeout(timer);
   }, [setShowDoubleTapHint]);
 
-  // Enhanced article change effect with view tracking
   useEffect(() => {
     setIsVisible(true);
     
-    // Mark current article as viewed for better future randomization
     if (currentArticle) {
       markContentAsViewed(currentArticle);
     }
     
-    // Immediately show full content without typing animation
     if (currentArticle?.content) {
       setDisplayedText(currentArticle.content);
       setProgress(100);
@@ -103,7 +99,6 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     if (currentIndex >= articles.length - 2) loadMoreArticles();
   }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop, setIsVisible, setDisplayedText, setProgress, setIsTextFullyLoaded, setIsTypingPaused]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stop();
@@ -112,28 +107,35 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     };
   }, [stop]);
 
+  const ArticleComponent = useCallback((article: any) => {
+    return isNewsArticle(article) ? SwipeableArticle : SwipeableArticleWithSections;
+  }, []);
+
   return (
     <>
       <main ref={containerRef} className="h-screen w-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth overflow-x-hidden">
-        <AnimatePresence>
-          {articles.map((article, index) => (
-            <SwipeableArticleWithSections
-              key={`article-${article.id}-${index}`}
-              article={article}
-              index={index}
-              currentIndex={currentIndex}
-              displayedText={displayedText}
-              progress={progress}
-              isVisible={isVisible}
-              showDoubleTapHint={showDoubleTapHint}
-              handleContentClick={handleContentClick}
-              handleWikipediaRedirect={handleWikipediaRedirect}
-              handleTextToSpeech={handleTextToSpeech}
-              isReading={isReading}
-              speechLoading={speechLoading}
-              setShowShare={setShowShare}
-            />
-          ))}
+        <AnimatePresence mode="wait">
+          {articles.map((article, index) => {
+            const Component = ArticleComponent(article);
+            return (
+              <Component
+                key={`article-${article.id}-${index}`}
+                article={article}
+                index={index}
+                currentIndex={currentIndex}
+                displayedText={displayedText}
+                progress={progress}
+                isVisible={isVisible}
+                showDoubleTapHint={showDoubleTapHint}
+                handleContentClick={handleContentClick}
+                handleWikipediaRedirect={handleWikipediaRedirect}
+                handleTextToSpeech={handleTextToSpeech}
+                isReading={isReading}
+                speechLoading={speechLoading}
+                setShowShare={setShowShare}
+              />
+            );
+          })}
         </AnimatePresence>
         
         {isLoading && <LoadingArticle />}

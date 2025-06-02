@@ -1,5 +1,9 @@
+
 import { WikipediaArticle, WikipediaResponse, WikipediaSection } from './types';
 import { fetchWikipediaContent } from './wikipediaApi';
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const sectionCache = new Map<string, { sections: WikipediaSection[], timestamp: number }>();
 
 const transformToArticle = async (page: any): Promise<WikipediaArticle | null> => {
   if (!page || page.missing || !page.extract || page.extract.length < 100) {
@@ -9,8 +13,6 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   const title = page.title;
   const content = page.extract;
   const image = page.thumbnail?.source || '';
-  
-  // No sections on initial load - they'll be loaded lazily
   const sections: WikipediaSection[] = [];
   
   const readTime = Math.ceil(content.length / 1000);
@@ -35,17 +37,19 @@ const transformToArticle = async (page: any): Promise<WikipediaArticle | null> =
   };
 };
 
-// Lazy loading function for sections - only called when needed
 export const getFullSections = async (pageId: number, title: string, abortSignal?: AbortSignal): Promise<WikipediaSection[]> => {
   try {
-    console.log(`Lazy loading sections for: ${title}`);
+    const cacheKey = `${pageId}-${title}`;
+    const cached = sectionCache.get(cacheKey);
     
-    // Check if request was aborted
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.sections;
+    }
+
     if (abortSignal?.aborted) {
       throw new DOMException('Request aborted', 'AbortError');
     }
     
-    // Get section list
     const parseParams = new URLSearchParams({
       action: 'parse',
       format: 'json',
@@ -64,37 +68,33 @@ export const getFullSections = async (pageId: number, title: string, abortSignal
     const parseData = await parseResponse.json();
     
     if (!parseData.parse?.sections?.length) {
-      console.log('No sections found');
       return [];
     }
 
-    // Get article images once
     const articleImages = await getArticleImages(pageId, abortSignal);
-    
     const sections: WikipediaSection[] = [];
     
-    // Process ALL sections with better filtering
-    for (let i = 0; i < parseData.parse.sections.length; i++) {
-      // Check if request was aborted
+    const filteredSections = parseData.parse.sections.filter((section: any) => {
+      const sectionTitle = section.line.toLowerCase();
+      return !sectionTitle.includes('contents') && 
+             !sectionTitle.includes('references') &&
+             !sectionTitle.includes('external') &&
+             !sectionTitle.includes('see also') &&
+             !sectionTitle.includes('notes') &&
+             !sectionTitle.includes('bibliography') &&
+             !sectionTitle.includes('sources') &&
+             !sectionTitle.includes('further reading');
+    });
+
+    const maxSections = Math.min(filteredSections.length, 10);
+    
+    for (let i = 0; i < maxSections; i++) {
       if (abortSignal?.aborted) {
         throw new DOMException('Request aborted', 'AbortError');
       }
       
-      const section = parseData.parse.sections[i];
+      const section = filteredSections[i];
       
-      // Skip non-content sections more thoroughly
-      const sectionTitle = section.line.toLowerCase();
-      if (sectionTitle.includes('contents') || 
-          sectionTitle.includes('references') ||
-          sectionTitle.includes('external') ||
-          sectionTitle.includes('see also') ||
-          sectionTitle.includes('notes') ||
-          sectionTitle.includes('bibliography') ||
-          sectionTitle.includes('sources') ||
-          sectionTitle.includes('further reading')) {
-        continue;
-      }
-
       try {
         const sectionContent = await getSectionContent(title, section.index, abortSignal);
         
@@ -109,17 +109,15 @@ export const getFullSections = async (pageId: number, title: string, abortSignal
         if (error.name === 'AbortError') {
           throw error;
         }
-        console.warn(`Skipping section ${section.line}:`, error);
         continue;
       }
     }
     
-    console.log(`Loaded ${sections.length} sections for ${title}`);
+    sectionCache.set(cacheKey, { sections, timestamp: Date.now() });
     return sections;
     
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.log(`Section loading aborted for: ${title}`);
       throw error;
     }
     console.error('Error loading sections:', error);
@@ -158,7 +156,7 @@ const getArticleImages = async (pageId: number, abortSignal?: AbortSignal): Prom
       origin: '*',
       pageids: pageId.toString(),
       prop: 'images',
-      imlimit: '20'
+      imlimit: '10'
     });
 
     const response = await fetch(`https://en.wikipedia.org/w/api.php?${imagesParams}`, {
@@ -172,7 +170,6 @@ const getArticleImages = async (pageId: number, abortSignal?: AbortSignal): Prom
     
     if (!page?.images?.length) return [];
 
-    // Filter for actual images
     const imageFiles = page.images
       .filter((img: any) => {
         const title = img.title.toLowerCase();
@@ -183,12 +180,11 @@ const getArticleImages = async (pageId: number, abortSignal?: AbortSignal): Prom
                 title.includes('.png') || title.includes('.gif') || 
                 title.includes('.webp'));
       })
-      .slice(0, 10)
+      .slice(0, 5)
       .map((img: any) => img.title);
 
     if (!imageFiles.length) return [];
 
-    // Get image URLs
     const imageUrlsParams = new URLSearchParams({
       action: 'query',
       format: 'json',
@@ -215,12 +211,10 @@ const getArticleImages = async (pageId: number, abortSignal?: AbortSignal): Prom
     if (error.name === 'AbortError') {
       throw error;
     }
-    console.warn('Error fetching images:', error);
     return [];
   }
 };
 
-// Improved text extraction to remove title repetition and edit links
 const extractTextFromHtml = (html: string): string => {
   let text = html;
   
@@ -231,17 +225,13 @@ const extractTextFromHtml = (html: string): string => {
   text = text.replace(/@media[^}]*{[^}]*}/g, '');
   text = text.replace(/\.(reflist|citation|navbox|infobox|ambox|dmbox|ombox|tmbox)[^}]*{[^}]*}/gi, '');
   
-  // Remove edit links and section headers that repeat the title
+  // Remove edit links and citations
   text = text.replace(/\[edit\]/gi, '');
   text = text.replace(/\[citation needed\]/gi, '');
   text = text.replace(/\[\d+\]/g, '');
   text = text.replace(/\^[a-z\d]+/gi, '');
   
-  // Remove repeated section titles at the beginning
-  text = text.replace(/^[^.!?]*\[\s*edit\s*\]/gi, '');
-  text = text.replace(/^[^.!?]*edit\s*\]/gi, '');
-  
-  // Remove Wikipedia-specific CSS and styling
+  // Remove Wikipedia-specific elements
   text = text.replace(/class="[^"]*"/gi, '');
   text = text.replace(/style="[^"]*"/gi, '');
   text = text.replace(/id="[^"]*"/gi, '');
@@ -250,25 +240,21 @@ const extractTextFromHtml = (html: string): string => {
   text = text.replace(/<[^>]*>/g, ' ');
   text = text.replace(/&[^;]+;/g, ' ');
   
-  // Remove CSS, MediaWiki markup, and template syntax
+  // Remove MediaWiki markup
   text = text.replace(/\{[^}]*\}/g, '');
   text = text.replace(/\[\[[^\]]*\]\]/g, '');
   text = text.replace(/\{\{[^}]*\}\}/g, '');
   text = text.replace(/<!--[^>]*-->/g, '');
   
-  // Remove common Wikipedia metadata
+  // Remove metadata
   text = text.replace(/Category:[^|]+/gi, '');
   text = text.replace(/File:[^|]+/gi, '');
   text = text.replace(/Template:[^|]+/gi, '');
   
-  // Clean whitespace and formatting
+  // Clean whitespace
   text = text.replace(/\s+/g, ' ');
   text = text.replace(/\n+/g, ' ');
   text = text.replace(/\t+/g, ' ');
-  
-  // Remove any leading/trailing section titles or edit artifacts
-  text = text.replace(/^[^.!?]*\s*edit\s*/gi, '');
-  text = text.replace(/^\s*[^.!?]*\[\s*/gi, '');
   
   return text.trim();
 };
@@ -315,8 +301,6 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     let titles: string[] = [];
     
     if (category && category !== "All") {
-      console.log(`Fetching articles for category: ${category}`);
-      
       const params = new URLSearchParams({
         action: 'query',
         format: 'json',
@@ -331,11 +315,9 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
       if (categoryResponse.ok) {
         const categoryData = await categoryResponse.json() as WikipediaResponse;
         titles = categoryData.query?.categorymembers?.map(article => article.title) || [];
-        console.log(`Found ${titles.length} articles in category ${category}`);
       }
 
       if (titles.length < count) {
-        console.log(`Not enough articles in category, searching for: ${category}`);
         const searchParams = new URLSearchParams({
           action: 'query',
           format: 'json',
@@ -350,7 +332,6 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
           const searchData = await searchResponse.json() as WikipediaResponse;
           const searchTitles = searchData.query?.search?.map(result => result.title) || [];
           titles = [...titles, ...searchTitles].slice(0, count * 2);
-          console.log(`After search supplement: ${titles.length} articles`);
         }
       }
     } else {
@@ -385,7 +366,6 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     }
 
     if (!titles.length) {
-      console.log('No titles found, falling back to random articles');
       throw new Error('No articles found');
     }
 
@@ -397,10 +377,7 @@ const getRandomArticles = async (count: number = 3, category?: string): Promise<
     const articles = await Promise.all(pages.map(transformToArticle));
     const validArticles = articles.filter(article => article !== null) as WikipediaArticle[];
     
-    console.log(`Transformed ${validArticles.length} valid articles out of ${pages.length} pages`);
-    
     if (validArticles.length < count && category) {
-      console.log('Not enough valid articles, trying fallback...');
       const fallbackArticles = await getRandomArticles(count - validArticles.length);
       return [...validArticles, ...fallbackArticles].slice(0, count);
     }
