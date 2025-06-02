@@ -14,7 +14,10 @@ const config: ElevenLabsConfig = {
 export class ElevenLabsService {
   private audioContext: AudioContext | null = null;
   private currentSource: AudioBufferSourceNode | null = null;
+  private speechSynthesis: SpeechSynthesis | null = null;
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private isPlaying = false;
+  private isUsingFallback = false;
   private onStartCallback?: () => void;
   private onEndCallback?: () => void;
   private onErrorCallback?: (error: Error) => void;
@@ -22,6 +25,7 @@ export class ElevenLabsService {
   constructor() {
     if (typeof window !== 'undefined') {
       this.initAudioContext();
+      this.speechSynthesis = window.speechSynthesis;
     }
   }
 
@@ -46,8 +50,17 @@ export class ElevenLabsService {
         this.onStartCallback();
       }
 
-      const audioBuffer = await this.generateSpeech(text);
-      await this.playAudio(audioBuffer);
+      // Try ElevenLabs first
+      try {
+        const audioBuffer = await this.generateSpeech(text);
+        await this.playAudio(audioBuffer);
+        this.isUsingFallback = false;
+      } catch (elevenLabsError) {
+        console.warn('ElevenLabs failed, falling back to browser TTS:', elevenLabsError);
+        // Fall back to browser text-to-speech
+        await this.fallbackToWebSpeech(text);
+        this.isUsingFallback = true;
+      }
     } catch (error) {
       console.error('Speech synthesis error:', error);
       if (this.onErrorCallback) {
@@ -55,6 +68,56 @@ export class ElevenLabsService {
       }
       throw error;
     }
+  }
+
+  private async fallbackToWebSpeech(text: string): Promise<void> {
+    if (!this.speechSynthesis) {
+      throw new Error('Browser speech synthesis not available');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.currentUtterance = new SpeechSynthesisUtterance(text);
+      
+      // Configure the utterance
+      this.currentUtterance.rate = 0.9;
+      this.currentUtterance.pitch = 1;
+      this.currentUtterance.volume = 1;
+      
+      // Try to use a female voice if available
+      const voices = this.speechSynthesis!.getVoices();
+      const femaleVoice = voices.find(voice => 
+        voice.name.toLowerCase().includes('female') || 
+        voice.name.toLowerCase().includes('sarah') ||
+        voice.name.toLowerCase().includes('samantha') ||
+        voice.name.toLowerCase().includes('alice')
+      ) || voices.find(voice => voice.lang.startsWith('en'));
+      
+      if (femaleVoice) {
+        this.currentUtterance.voice = femaleVoice;
+      }
+
+      this.currentUtterance.onstart = () => {
+        this.isPlaying = true;
+        resolve();
+      };
+
+      this.currentUtterance.onend = () => {
+        this.isPlaying = false;
+        this.currentUtterance = null;
+        if (this.onEndCallback) {
+          this.onEndCallback();
+        }
+      };
+
+      this.currentUtterance.onerror = (event) => {
+        this.isPlaying = false;
+        this.currentUtterance = null;
+        reject(new Error(`Browser TTS error: ${event.error}`));
+      };
+
+      this.isPlaying = true;
+      this.speechSynthesis!.speak(this.currentUtterance);
+    });
   }
 
   private async generateSpeech(text: string): Promise<ArrayBuffer> {
@@ -118,6 +181,7 @@ export class ElevenLabsService {
   }
 
   stop(): void {
+    // Stop ElevenLabs audio
     if (this.currentSource && this.isPlaying) {
       try {
         this.currentSource.stop();
@@ -125,6 +189,15 @@ export class ElevenLabsService {
         // Ignore errors when stopping (might already be stopped)
       }
       this.currentSource = null;
+    }
+
+    // Stop browser TTS
+    if (this.speechSynthesis && this.currentUtterance) {
+      this.speechSynthesis.cancel();
+      this.currentUtterance = null;
+    }
+
+    if (this.isPlaying) {
       this.isPlaying = false;
       if (this.onEndCallback) {
         this.onEndCallback();
@@ -134,6 +207,10 @@ export class ElevenLabsService {
 
   getIsPlaying(): boolean {
     return this.isPlaying;
+  }
+
+  getIsUsingFallback(): boolean {
+    return this.isUsingFallback;
   }
 
   onStart(callback: () => void): void {
