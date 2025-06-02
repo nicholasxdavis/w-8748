@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
@@ -33,9 +32,9 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // Calculate content distribution (2 news per 10-13 posts)
-  const newsPercentage = Math.random() * 0.05 + 0.15; // 15-20%
-  const newsCount = Math.max(1, Math.min(2, Math.floor(count * newsPercentage)));
+  // Calculate content distribution - 20% news
+  const newsPercentage = 0.2; // Fixed 20%
+  const newsCount = Math.max(0, Math.min(2, Math.floor(count * newsPercentage)));
   const wikiCount = count - newsCount;
 
   console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
