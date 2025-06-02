@@ -16,7 +16,7 @@ export const markContentAsViewed = (item: ContentItem) => {
   if (isNewsArticle(item)) {
     markArticleAsViewed(item.id);
   } else {
-    viewedWikiArticles.add(item.id);
+    viewedWikiArticles.add(item.id.toString());
   }
 };
 
@@ -112,13 +112,13 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     
     // Filter and prioritize unviewed articles
     const unviewedWiki = wikiResults.filter(article => 
-      !viewedWikiArticles.has(article.id) && 
+      !viewedWikiArticles.has(article.id.toString()) && 
       article.image && 
       !article.image.includes('placeholder')
     );
     
     const viewedWiki = wikiResults.filter(article => 
-      viewedWikiArticles.has(article.id) && 
+      viewedWikiArticles.has(article.id.toString()) && 
       article.image && 
       !article.image.includes('placeholder')
     );
