@@ -1,6 +1,6 @@
 
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
-import { NewsArticle, getBreakingNews, searchNews } from './newsService';
+import { NewsArticle, getBreakingNews, searchNews } from './rssNewsService';
 import { getUserInterests } from './userInterestsService';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
@@ -22,14 +22,19 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     }
   }
 
-  // If user has interests, prioritize content based on those interests (80% of content)
-  if (userInterests.length > 0) {
-    const interestBasedCount = Math.floor(count * 0.8); // 80% based on interests
-    const randomCount = count - interestBasedCount;
-    const newsCount = Math.random() < 0.2 ? 1 : 0; // Still include some news
-    const finalInterestCount = interestBasedCount - newsCount;
+  // Determine news count (20-30% of content should be news)
+  const newsPercentage = Math.random() * 0.1 + 0.2; // 20-30%
+  const newsCount = Math.max(1, Math.floor(count * newsPercentage));
+  const wikiCount = count - newsCount;
 
-    console.log(`Fetching ${finalInterestCount} interest-based articles, ${randomCount} random articles, ${newsCount} news articles`);
+  console.log(`Fetching ${wikiCount} Wikipedia articles and ${newsCount} news articles`);
+
+  // If user has interests, prioritize content based on those interests
+  if (userInterests.length > 0) {
+    const interestBasedCount = Math.floor(wikiCount * 0.8); // 80% based on interests
+    const randomCount = wikiCount - interestBasedCount;
+
+    console.log(`Interest-based: ${interestBasedCount}, Random: ${randomCount}, News: ${newsCount}`);
 
     // Create category mappings for better Wikipedia searches
     const categoryMap: { [key: string]: string[] } = {
@@ -57,11 +62,10 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     const requests = [];
 
     // Fetch interest-based articles
-    if (finalInterestCount > 0) {
-      // Distribute articles across user interests
-      const articlesPerInterest = Math.ceil(finalInterestCount / wikiCategories.length);
+    if (interestBasedCount > 0) {
+      const articlesPerInterest = Math.ceil(interestBasedCount / Math.min(wikiCategories.length, 3));
       
-      for (let i = 0; i < wikiCategories.length && requests.length < 3; i++) {
+      for (let i = 0; i < Math.min(wikiCategories.length, 3); i++) {
         const category = wikiCategories[i];
         requests.push(
           getWikiArticles(articlesPerInterest + 1, category).catch(() => [])
@@ -74,10 +78,8 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       requests.push(getWikiArticles(randomCount + 1).catch(() => []));
     }
 
-    // Add news if needed
-    if (newsCount > 0) {
-      requests.push(getBreakingNews(newsCount).catch(() => []));
-    }
+    // Add news
+    requests.push(getBreakingNews(newsCount).catch(() => []));
 
     const results = await Promise.all(requests);
     
@@ -119,9 +121,6 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   }
 
   // Fallback: No user interests, use original random logic
-  const newsCount = Math.random() < 0.2 ? 1 : 0;
-  const wikiCount = count - newsCount;
-  
   const randomRequests = [];
   const articlesPerRequest = Math.ceil(wikiCount / 3);
   
@@ -131,7 +130,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   
   const [randomBatch1, randomBatch2, randomBatch3, newsArticles] = await Promise.all([
     ...randomRequests.map(req => req.catch(() => [])),
-    newsCount > 0 ? getBreakingNews(newsCount).catch(() => []) : Promise.resolve([])
+    getBreakingNews(newsCount).catch(() => [])
   ]);
 
   const allRandomWiki = [...randomBatch1, ...randomBatch2, ...randomBatch3]
@@ -159,7 +158,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   positions.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < count && (wikiPool.length > 0 || newsPool.length > 0); i++) {
-    const useNews = newsPool.length > 0 && Math.random() < 0.2;
+    const useNews = newsPool.length > 0 && Math.random() < newsPercentage;
     
     if (useNews) {
       const randomNewsIndex = Math.floor(Math.random() * newsPool.length);
