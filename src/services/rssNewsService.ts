@@ -44,6 +44,7 @@ const RSS_FEEDS = [
 
 // Cache to store fetched articles and prevent duplicates
 const articleCache = new Map<string, NewsArticle>();
+const usedArticleIds = new Set<string>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 // Helper function to extract image from content or use placeholder
@@ -57,7 +58,7 @@ const extractImageFromContent = (content: string, title: string): string => {
   // Generate a placeholder image based on category/title
   const categories = ['technology', 'business', 'world', 'science', 'health'];
   const category = categories[Math.floor(Math.random() * categories.length)];
-  return `https://picsum.photos/800/600?random=${title.length}&category=${category}`;
+  return `https://picsum.photos/800/600?random=${Math.abs(title.split('').reduce((a, b) => a + b.charCodeAt(0), 0))}&category=${category}`;
 };
 
 // Function to parse RSS XML
@@ -77,8 +78,10 @@ const parseRSSFeed = async (feedUrl: string, sourceName: string): Promise<NewsAr
       throw new Error('Invalid RSS feed format');
     }
     
-    return data.items.slice(0, 10).map((item: any, index: number) => {
-      const articleId = `${sourceName.toLowerCase()}-${Date.now()}-${index}`;
+    return data.items.slice(0, 15).map((item: any, index: number) => {
+      // Create unique ID based on title and source to avoid duplicates
+      const titleHash = item.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      const articleId = `${sourceName.toLowerCase()}-${titleHash}-${index}`;
       
       // Clean content and extract text
       const cleanContent = item.description 
@@ -117,18 +120,6 @@ export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]>
   try {
     console.log('Fetching breaking news from RSS feeds...');
     
-    // Check cache first
-    const cachedArticles = Array.from(articleCache.values())
-      .filter(article => {
-        const lastShown = parseInt(article.lastShown || '0');
-        return Date.now() - lastShown < CACHE_DURATION;
-      });
-    
-    if (cachedArticles.length >= count) {
-      console.log('Returning cached articles');
-      return cachedArticles.slice(0, count);
-    }
-    
     // Fetch from multiple RSS feeds
     const feedPromises = RSS_FEEDS.map(feed => 
       parseRSSFeed(feed.url, feed.name).catch(error => {
@@ -140,12 +131,29 @@ export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]>
     const allResults = await Promise.all(feedPromises);
     const allArticles = allResults.flat();
     
-    // Remove duplicates and shuffle
-    const uniqueArticles = allArticles.filter((article, index, array) => 
-      array.findIndex(a => a.title.toLowerCase() === article.title.toLowerCase()) === index
-    );
+    // Remove duplicates based on title similarity and ensure we haven't used these articles
+    const uniqueArticles = allArticles.filter((article, index, array) => {
+      const titleWords = article.title.toLowerCase().split(' ');
+      const isDuplicate = array.slice(0, index).some(prevArticle => {
+        const prevTitleWords = prevArticle.title.toLowerCase().split(' ');
+        const commonWords = titleWords.filter(word => prevTitleWords.includes(word));
+        return commonWords.length > titleWords.length * 0.6; // 60% similarity threshold
+      });
+      
+      // Also check if we've already used this article
+      const alreadyUsed = usedArticleIds.has(article.id);
+      
+      if (!isDuplicate && !alreadyUsed) {
+        usedArticleIds.add(article.id);
+        return true;
+      }
+      return false;
+    });
     
+    // Shuffle articles multiple times for better randomization
     const shuffledArticles = uniqueArticles
+      .sort(() => Math.random() - 0.5)
+      .sort(() => Math.random() - 0.5)
       .sort(() => Math.random() - 0.5)
       .slice(0, count);
     
@@ -157,7 +165,7 @@ export const getBreakingNews = async (count: number = 5): Promise<NewsArticle[]>
     // Clean old cache entries
     cleanupCache();
     
-    console.log(`Fetched ${shuffledArticles.length} articles from RSS feeds`);
+    console.log(`Fetched ${shuffledArticles.length} unique articles from RSS feeds`);
     return shuffledArticles;
   } catch (error) {
     console.error('Error fetching breaking news:', error);
@@ -209,10 +217,10 @@ const getFallbackNews = (count: number): NewsArticle[] => {
   ];
   
   return fallbackArticles.slice(0, count).map((article, index) => ({
-    id: `fallback-${index}-${Date.now()}`,
+    id: `fallback-${index}-${Date.now()}-${Math.random()}`,
     title: article.title,
     content: article.content,
-    image: `https://picsum.photos/800/600?random=${index + 100}`,
+    image: `https://picsum.photos/800/600?random=${index + Date.now()}`,
     publishedAt: new Date().toISOString(),
     source: article.source,
     url: '#',
@@ -230,6 +238,7 @@ const cleanupCache = () => {
     const lastShown = parseInt(article.lastShown || '0');
     if (now - lastShown > CACHE_DURATION) {
       articleCache.delete(articleId);
+      usedArticleIds.delete(articleId);
     }
   }
 };
