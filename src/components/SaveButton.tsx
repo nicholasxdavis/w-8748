@@ -8,7 +8,17 @@ import { ContentItem } from '@/services/contentService';
 import AuthPromptDialog from './AuthPromptDialog';
 
 interface SaveButtonProps {
-  article: ContentItem;
+  article: ContentItem | {
+    id: string | number;
+    title: string;
+    content?: string;
+    image?: string;
+    isBreakingNews?: boolean;
+    type?: 'fact' | 'quote';
+    author?: string;
+    category?: string;
+    text?: string;
+  };
   onClick?: () => void;
 }
 
