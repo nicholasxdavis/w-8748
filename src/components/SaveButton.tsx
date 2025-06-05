@@ -76,22 +76,29 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         setIsArticleSaved(false);
       } else {
         // Add to localStorage
-        const newItem = {
+        const newItem: any = {
           id: article.id,
           title: article.title,
           content: article.content,
           image: article.image,
-          type: article.type,
-          ...(isQuoteType(article) && {
-            author: article.author,
-            category: article.category,
-            text: article.text
-          }),
-          ...(isFactType(article) && {
-            category: article.category
-          }),
           savedAt: new Date().toISOString()
         };
+
+        // Safely add type-specific properties
+        if ('type' in article) {
+          newItem.type = article.type;
+        }
+        
+        if (isQuoteType(article) && 'author' in article) {
+          newItem.author = article.author;
+          newItem.text = article.text;
+          newItem.category = article.category;
+        }
+        
+        if (isFactType(article) && 'category' in article) {
+          newItem.category = article.category;
+        }
+
         savedItems.push(newItem);
         localStorage.setItem('savedFactsQuotes', JSON.stringify(savedItems));
         setIsArticleSaved(true);
