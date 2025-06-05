@@ -1,14 +1,15 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { DidYouKnowFact, getRandomFacts } from './factsService';
 import { Quote, getRandomQuotes } from './quotesService';
+import { MovieContent, getRandomMovies } from './moviesService';
+import { MusicContent, getRandomMusic } from './musicService';
 import { getUserInterests } from './userInterestsService';
 import { getWikipediaCategories } from './content/categoryMapping';
 import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
 import { createMixedContent } from './content/contentMixer';
 
-export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | Quote;
+export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | Quote | MovieContent | MusicContent;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
@@ -22,13 +23,21 @@ export const isQuoteArticle = (item: ContentItem): item is Quote => {
   return 'type' in item && item.type === 'quote';
 };
 
+export const isMovieArticle = (item: ContentItem): item is MovieContent => {
+  return 'type' in item && (item.type === 'movie' || item.type === 'tvshow');
+};
+
+export const isMusicArticle = (item: ContentItem): item is MusicContent => {
+  return 'type' in item && (item.type === 'song' || item.type === 'album');
+};
+
 export const markContentAsViewed = (item: ContentItem) => {
   if (isNewsArticle(item)) {
     markArticleAsViewed(item.id);
-  } else if (!isFactArticle(item) && !isQuoteArticle(item)) {
+  } else if (!isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item)) {
     viewedWikiArticles.add(item.id.toString());
   }
-  // Facts and quotes don't need to be marked as viewed since they're random
+  // Facts, quotes, movies, and music don't need to be marked as viewed since they're random
 };
 
 let contentPosition = 0;
@@ -49,33 +58,47 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       }
     }
 
-    // Calculate content distribution based on position - made facts and quotes much less frequent
+    // Calculate content distribution based on position - made all special content less frequent
     const shouldIncludeNews = contentPosition > 0 && (
       (contentPosition % 8 === 0) || // Every 8th post
       (contentPosition % 11 === 0)   // Or every 11th post
     );
     
     const shouldIncludeFacts = contentPosition > 0 && (
-      (contentPosition % 15 === 0) || // Every 15th post (much less frequent)
+      (contentPosition % 15 === 0) || // Every 15th post
       (contentPosition % 20 === 0)    // Or every 20th post
     );
 
     const shouldIncludeQuotes = contentPosition > 0 && (
-      (contentPosition % 18 === 0) || // Every 18th post (much less frequent)
+      (contentPosition % 18 === 0) || // Every 18th post
       (contentPosition % 25 === 0)    // Or every 25th post
+    );
+
+    const shouldIncludeMovies = contentPosition > 0 && (
+      (contentPosition % 22 === 0) || // Every 22nd post
+      (contentPosition % 30 === 0)    // Or every 30th post
+    );
+
+    const shouldIncludeMusic = contentPosition > 0 && (
+      (contentPosition % 26 === 0) || // Every 26th post
+      (contentPosition % 35 === 0)    // Or every 35th post
     );
     
     const newsCount = shouldIncludeNews ? 1 : 0;
     const factsCount = shouldIncludeFacts ? 1 : 0;
     const quotesCount = shouldIncludeQuotes ? 1 : 0;
-    const wikiCount = count - newsCount - factsCount - quotesCount;
+    const moviesCount = shouldIncludeMovies ? 1 : 0;
+    const musicCount = shouldIncludeMusic ? 1 : 0;
+    const wikiCount = count - newsCount - factsCount - quotesCount - moviesCount - musicCount;
 
-    console.log(`Position ${contentPosition}: including ${newsCount} news, ${factsCount} facts, ${quotesCount} quotes, ${wikiCount} wiki articles`);
+    console.log(`Position ${contentPosition}: including ${newsCount} news, ${factsCount} facts, ${quotesCount} quotes, ${moviesCount} movies, ${musicCount} music, ${wikiCount} wiki articles`);
 
     // Fetch content types
     let newsArticles: NewsArticle[] = [];
     let facts: DidYouKnowFact[] = [];
     let quotes: Quote[] = [];
+    let movies: MovieContent[] = [];
+    let music: MusicContent[] = [];
     
     if (newsCount > 0) {
       newsArticles = await getBreakingNews(3); // Get a few to choose from
@@ -90,6 +113,16 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     if (quotesCount > 0) {
       quotes = await getRandomQuotes(quotesCount);
       console.log(`Fetched ${quotes.length} quotes`);
+    }
+
+    if (moviesCount > 0) {
+      movies = await getRandomMovies(moviesCount);
+      console.log(`Fetched ${movies.length} movies`);
+    }
+
+    if (musicCount > 0) {
+      music = await getRandomMusic(musicCount);
+      console.log(`Fetched ${music.length} music`);
     }
 
     // Fetch Wikipedia content
@@ -113,15 +146,15 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       article.image && !article.image.includes('placeholder')
     ).slice(0, wikiCount);
 
-    console.log(`Valid content: ${validNews.length} news, ${facts.length} facts, ${quotes.length} quotes, ${validWiki.length} wiki`);
+    console.log(`Valid content: ${validNews.length} news, ${facts.length} facts, ${quotes.length} quotes, ${movies.length} movies, ${music.length} music, ${validWiki.length} wiki`);
 
-    // Create mixed content - facts and quotes are always valid since they have curated images
-    const allContent: ContentItem[] = [...validWiki, ...validNews, ...facts, ...quotes];
+    // Create mixed content - facts, quotes, movies, and music are always valid since they have curated images
+    const allContent: ContentItem[] = [...validWiki, ...validNews, ...facts, ...quotes, ...movies, ...music];
     
     // Shuffle the content to create a natural mix
     const shuffledContent = allContent.sort(() => Math.random() - 0.5).slice(0, count);
     
-    console.log(`Final mix: ${shuffledContent.filter(isNewsArticle).length} news, ${shuffledContent.filter(isFactArticle).length} facts, ${shuffledContent.filter(isQuoteArticle).length} quotes, ${shuffledContent.filter(item => !isNewsArticle(item) && !isFactArticle(item) && !isQuoteArticle(item)).length} wiki`);
+    console.log(`Final mix: ${shuffledContent.filter(isNewsArticle).length} news, ${shuffledContent.filter(isFactArticle).length} facts, ${shuffledContent.filter(isQuoteArticle).length} quotes, ${shuffledContent.filter(isMovieArticle).length} movies, ${shuffledContent.filter(isMusicArticle).length} music, ${shuffledContent.filter(item => !isNewsArticle(item) && !isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item)).length} wiki`);
     
     // Update position for next fetch
     contentPosition += count;
