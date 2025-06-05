@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
@@ -9,7 +8,7 @@ import { useTypingAnimation } from "../hooks/useTypingAnimation";
 import SwipeableArticleWithSections from "./article/SwipeableArticleWithSections";
 import SwipeableArticle from "./article/SwipeableArticle";
 import LoadingArticle from "./article/LoadingArticle";
-import { markContentAsViewed, isNewsArticle } from "../services/contentService";
+import { markContentAsViewed, isNewsArticle, isFactArticle } from "../services/contentService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const {
@@ -108,7 +107,8 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   }, [stop]);
 
   const ArticleComponent = useCallback((article: any) => {
-    return isNewsArticle(article) ? SwipeableArticle : SwipeableArticleWithSections;
+    // Facts and news use simple swipeable article, wiki uses sections
+    return (isNewsArticle(article) || isFactArticle(article)) ? SwipeableArticle : SwipeableArticleWithSections;
   }, []);
 
   return (

@@ -1,5 +1,5 @@
 
-import { isNewsArticle } from '../services/contentService';
+import { isNewsArticle, isFactArticle } from '../services/contentService';
 import { STOCK_NEWS_IMAGES } from '../constants/images';
 import { getNewsPlaceholderImage } from './newsPlaceholders';
 
@@ -11,6 +11,11 @@ export const getArticleImage = (article: any) => {
   if (isNewsArticle(article)) {
     // Use the dedicated news placeholder system for better quality images
     return getNewsPlaceholderImage(article.id);
+  }
+  
+  if (isFactArticle(article)) {
+    // Facts already have curated images
+    return article.image;
   }
   
   // Fallback to existing system for non-news articles

@@ -1,4 +1,6 @@
 
+import { WikipediaArticle } from './wikipediaService';
+
 // Facts service that fetches mind-blowing facts from external APIs
 export interface DidYouKnowFact {
   id: string;

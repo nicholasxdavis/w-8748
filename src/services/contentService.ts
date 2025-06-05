@@ -1,22 +1,29 @@
+
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
+import { DidYouKnowFact, getRandomFacts } from './factsService';
 import { getUserInterests } from './userInterestsService';
 import { getWikipediaCategories } from './content/categoryMapping';
 import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
 import { createMixedContent } from './content/contentMixer';
 
-export type ContentItem = WikipediaArticle | NewsArticle;
+export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
 };
 
+export const isFactArticle = (item: ContentItem): item is DidYouKnowFact => {
+  return 'type' in item && item.type === 'fact';
+};
+
 export const markContentAsViewed = (item: ContentItem) => {
   if (isNewsArticle(item)) {
     markArticleAsViewed(item.id);
-  } else {
+  } else if (!isFactArticle(item)) {
     viewedWikiArticles.add(item.id.toString());
   }
+  // Facts don't need to be marked as viewed since they're random
 };
 
 let contentPosition = 0;
@@ -37,23 +44,35 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       }
     }
 
-    // Calculate if we should include news in this batch based on position
-    // News should appear every 15-20 posts
+    // Calculate content distribution based on position
     const shouldIncludeNews = contentPosition > 0 && (
       (contentPosition % 17 === 0) || // Every 17th post
       (contentPosition % 19 === 0)    // Or every 19th post (creates variation)
     );
     
-    const newsCount = shouldIncludeNews ? 1 : 0; // Only 1 news article when included
-    const wikiCount = count - newsCount;
+    const shouldIncludeFacts = contentPosition > 0 && (
+      (contentPosition % 12 === 0) || // Every 12th post
+      (contentPosition % 15 === 0)    // Or every 15th post
+    );
+    
+    const newsCount = shouldIncludeNews ? 1 : 0;
+    const factsCount = shouldIncludeFacts ? 1 : 0;
+    const wikiCount = count - newsCount - factsCount;
 
-    console.log(`Position ${contentPosition}: including ${newsCount} news, ${wikiCount} wiki articles`);
+    console.log(`Position ${contentPosition}: including ${newsCount} news, ${factsCount} facts, ${wikiCount} wiki articles`);
 
-    // Fetch news articles only if needed
+    // Fetch content types
     let newsArticles: NewsArticle[] = [];
+    let facts: DidYouKnowFact[] = [];
+    
     if (newsCount > 0) {
       newsArticles = await getBreakingNews(3); // Get a few to choose from
       console.log(`Fetched ${newsArticles.length} news articles`);
+    }
+    
+    if (factsCount > 0) {
+      facts = await getRandomFacts(factsCount);
+      console.log(`Fetched ${facts.length} facts`);
     }
 
     // Fetch Wikipedia content
@@ -77,17 +96,20 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       article.image && !article.image.includes('placeholder')
     ).slice(0, wikiCount);
 
-    console.log(`Valid content: ${validNews.length} news, ${validWiki.length} wiki`);
+    console.log(`Valid content: ${validNews.length} news, ${facts.length} facts, ${validWiki.length} wiki`);
 
-    // Create mixed content
-    const mixedContent = createMixedContent(validWiki, validNews, count);
+    // Create mixed content - facts are always valid since they have curated images
+    const allContent: ContentItem[] = [...validWiki, ...validNews, ...facts];
     
-    console.log(`Final mix: ${mixedContent.filter(isNewsArticle).length} news, ${mixedContent.filter(item => !isNewsArticle(item)).length} wiki`);
+    // Shuffle the content to create a natural mix
+    const shuffledContent = allContent.sort(() => Math.random() - 0.5).slice(0, count);
+    
+    console.log(`Final mix: ${shuffledContent.filter(isNewsArticle).length} news, ${shuffledContent.filter(isFactArticle).length} facts, ${shuffledContent.filter(item => !isNewsArticle(item) && !isFactArticle(item)).length} wiki`);
     
     // Update position for next fetch
     contentPosition += count;
     
-    return mixedContent;
+    return shuffledContent;
 
   } catch (error) {
     console.error('Error in getMixedContent:', error);
