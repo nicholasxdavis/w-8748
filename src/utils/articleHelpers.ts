@@ -1,5 +1,5 @@
 
-import { isNewsArticle, isFactArticle } from '../services/contentService';
+import { isNewsArticle, isFactArticle, isQuoteArticle } from '../services/contentService';
 import { STOCK_NEWS_IMAGES } from '../constants/images';
 import { getNewsPlaceholderImage } from './newsPlaceholders';
 
@@ -13,8 +13,8 @@ export const getArticleImage = (article: any) => {
     return getNewsPlaceholderImage(article.id);
   }
   
-  if (isFactArticle(article)) {
-    // Facts already have curated images
+  if (isFactArticle(article) || isQuoteArticle(article)) {
+    // Facts and quotes already have curated images
     return article.image;
   }
   

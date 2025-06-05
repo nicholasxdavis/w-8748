@@ -8,7 +8,7 @@ import { useTypingAnimation } from "../hooks/useTypingAnimation";
 import SwipeableArticleWithSections from "./article/SwipeableArticleWithSections";
 import SwipeableArticle from "./article/SwipeableArticle";
 import LoadingArticle from "./article/LoadingArticle";
-import { markContentAsViewed, isNewsArticle, isFactArticle } from "../services/contentService";
+import { markContentAsViewed, isNewsArticle, isFactArticle, isQuoteArticle } from "../services/contentService";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const {
@@ -107,8 +107,8 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   }, [stop]);
 
   const ArticleComponent = useCallback((article: any) => {
-    // Facts and news use simple swipeable article, wiki uses sections
-    return (isNewsArticle(article) || isFactArticle(article)) ? SwipeableArticle : SwipeableArticleWithSections;
+    // Facts, quotes, and news use simple swipeable article, wiki uses sections
+    return (isNewsArticle(article) || isFactArticle(article) || isQuoteArticle(article)) ? SwipeableArticle : SwipeableArticleWithSections;
   }, []);
 
   return (
