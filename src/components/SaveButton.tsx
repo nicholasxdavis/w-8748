@@ -4,17 +4,11 @@ import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { useSaveArticle } from '@/hooks/useSaveArticle';
 import { useAuth } from '@/hooks/useAuth';
 import { isFactArticle, isQuoteArticle } from '@/services/contentService';
+import { ContentItem } from '@/services/contentService';
 import AuthPromptDialog from './AuthPromptDialog';
 
 interface SaveButtonProps {
-  article: {
-    id: string;
-    title: string;
-    content?: string;
-    image?: string;
-    isBreakingNews?: boolean;
-    type?: 'fact' | 'quote';
-  };
+  article: ContentItem;
   onClick?: () => void;
 }
 
@@ -25,7 +19,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   // Don't show save button for news articles
-  if (article.isBreakingNews) {
+  if ('isBreakingNews' in article && article.isBreakingNews) {
     return null;
   }
 
@@ -36,7 +30,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         const savedItems = JSON.parse(localStorage.getItem('savedFactsQuotes') || '[]');
         setIsArticleSaved(savedItems.some((item: any) => item.id === article.id));
       } else if (user) {
-        const saved = await checkIfSaved(article.id);
+        const saved = await checkIfSaved(article.id.toString());
         setIsArticleSaved(saved);
       }
     };
@@ -46,7 +40,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
 
   useEffect(() => {
     if (user && !isFactArticle(article) && !isQuoteArticle(article)) {
-      setIsArticleSaved(isSaved(article.id));
+      setIsArticleSaved(isSaved(article.id.toString()));
     }
   }, [article.id, isSaved, user, article]);
 
@@ -69,6 +63,14 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
           content: article.content,
           image: article.image,
           type: article.type,
+          ...(isQuoteArticle(article) && {
+            author: article.author,
+            category: article.category,
+            text: article.text
+          }),
+          ...(isFactArticle(article) && {
+            category: article.category
+          }),
           savedAt: new Date().toISOString()
         };
         savedItems.push(newItem);
@@ -85,7 +87,16 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
       return;
     }
 
-    await toggleSave(article);
+    // Convert article to the format expected by useSaveArticle
+    const articleForSave = {
+      id: article.id.toString(),
+      title: article.title,
+      content: article.content,
+      image: article.image,
+      isBreakingNews: 'isBreakingNews' in article ? article.isBreakingNews : false
+    };
+
+    await toggleSave(articleForSave);
     onClick?.();
   };
 
