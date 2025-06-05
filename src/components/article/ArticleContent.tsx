@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Calendar, Globe, ExternalLink, Lightbulb, Quote } from "lucide-react";
 import { isNewsArticle, isFactArticle, isQuoteArticle } from "../../services/contentService";

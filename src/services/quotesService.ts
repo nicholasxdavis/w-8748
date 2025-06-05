@@ -18,8 +18,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Steve Jobs",
     category: "Motivation",
     image: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=800&h=600&fit=crop",
-    title: "On Great Work",
-    content: "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle."
+    title: "Wise Words",
+    content: '"The only way to do great work is to love what you do. If you haven\'t found it yet, keep looking. Don\'t settle." — Steve Jobs'
   },
   {
     type: 'quote',
@@ -27,8 +27,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "John Lennon",
     category: "Life",
     image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=800&h=600&fit=crop",
-    title: "On Life's Surprises",
-    content: "Life is what happens to you while you're busy making other plans. Sometimes the most beautiful moments come when we least expect them."
+    title: "Wise Words",
+    content: '"Life is what happens to you while you\'re busy making other plans." — John Lennon'
   },
   {
     type: 'quote',
@@ -36,8 +36,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Eleanor Roosevelt",
     category: "Dreams",
     image: "https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop",
-    title: "On Dreams",
-    content: "The future belongs to those who believe in the beauty of their dreams. Every great achievement begins with a dream and the courage to pursue it."
+    title: "Wise Words",
+    content: '"The future belongs to those who believe in the beauty of their dreams." — Eleanor Roosevelt'
   },
   {
     type: 'quote',
@@ -45,8 +45,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Albert Einstein",
     category: "Opportunity",
     image: "https://images.unsplash.com/photo-1466442929976-97f336a657be?w=800&h=600&fit=crop",
-    title: "On Opportunity",
-    content: "In the middle of difficulty lies opportunity. Challenges are not roadblocks, but stepping stones to greater achievements."
+    title: "Wise Words",
+    content: '"In the middle of difficulty lies opportunity." — Albert Einstein'
   },
   {
     type: 'quote',
@@ -54,8 +54,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Winston Churchill",
     category: "Perseverance",
     image: "https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?w=800&h=600&fit=crop",
-    title: "On Courage",
-    content: "Success is not final, failure is not fatal: it is the courage to continue that counts. What matters most is having the strength to keep moving forward."
+    title: "Wise Words",
+    content: '"Success is not final, failure is not fatal: it is the courage to continue that counts." — Winston Churchill'
   },
   {
     type: 'quote',
@@ -63,8 +63,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Tony Robbins",
     category: "Action",
     image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=800&h=600&fit=crop",
-    title: "On Beginning",
-    content: "The only impossible journey is the one you never begin. Every expert was once a beginner, every master was once a disaster."
+    title: "Wise Words",
+    content: '"The only impossible journey is the one you never begin." — Tony Robbins'
   },
   {
     type: 'quote',
@@ -72,8 +72,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Theodore Roosevelt",
     category: "Belief",
     image: "https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop",
-    title: "On Self-Belief",
-    content: "Believe you can and you're halfway there. The power of positive thinking and self-confidence can overcome seemingly impossible obstacles."
+    title: "Wise Words",
+    content: '"Believe you can and you\'re halfway there." — Theodore Roosevelt'
   },
   {
     type: 'quote',
@@ -81,8 +81,8 @@ const CURATED_QUOTES: Omit<Quote, 'id'>[] = [
     author: "Sam Levenson",
     category: "Persistence",
     image: "https://images.unsplash.com/photo-1466442929976-97f336a657be?w=800&h=600&fit=crop",
-    title: "On Persistence",
-    content: "Don't watch the clock; do what it does. Keep going. Time never stops, and neither should your determination to achieve your goals."
+    title: "Wise Words",
+    content: '"Don\'t watch the clock; do what it does. Keep going." — Sam Levenson'
   }
 ];
 

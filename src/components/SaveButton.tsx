@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { useSaveArticle } from '@/hooks/useSaveArticle';
 import { useAuth } from '@/hooks/useAuth';
+import { isFactArticle, isQuoteArticle } from '@/services/contentService';
 import AuthPromptDialog from './AuthPromptDialog';
 
 interface SaveButtonProps {
@@ -12,6 +13,7 @@ interface SaveButtonProps {
     content?: string;
     image?: string;
     isBreakingNews?: boolean;
+    type?: 'fact' | 'quote';
   };
   onClick?: () => void;
 }
@@ -28,23 +30,56 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   }
 
   useEffect(() => {
-    if (user) {
-      const checkSaveStatus = async () => {
+    const checkSaveStatus = async () => {
+      // For facts and quotes, check localStorage
+      if (isFactArticle(article) || isQuoteArticle(article)) {
+        const savedItems = JSON.parse(localStorage.getItem('savedFactsQuotes') || '[]');
+        setIsArticleSaved(savedItems.some((item: any) => item.id === article.id));
+      } else if (user) {
         const saved = await checkIfSaved(article.id);
         setIsArticleSaved(saved);
-      };
-      
-      checkSaveStatus();
-    }
-  }, [article.id, checkIfSaved, user]);
+      }
+    };
+    
+    checkSaveStatus();
+  }, [article.id, checkIfSaved, user, article]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !isFactArticle(article) && !isQuoteArticle(article)) {
       setIsArticleSaved(isSaved(article.id));
     }
-  }, [article.id, isSaved, user]);
+  }, [article.id, isSaved, user, article]);
 
   const handleClick = async () => {
+    // For facts and quotes, save to localStorage
+    if (isFactArticle(article) || isQuoteArticle(article)) {
+      const savedItems = JSON.parse(localStorage.getItem('savedFactsQuotes') || '[]');
+      const isCurrentlySaved = savedItems.some((item: any) => item.id === article.id);
+      
+      if (isCurrentlySaved) {
+        // Remove from localStorage
+        const updatedItems = savedItems.filter((item: any) => item.id !== article.id);
+        localStorage.setItem('savedFactsQuotes', JSON.stringify(updatedItems));
+        setIsArticleSaved(false);
+      } else {
+        // Add to localStorage
+        const newItem = {
+          id: article.id,
+          title: article.title,
+          content: article.content,
+          image: article.image,
+          type: article.type,
+          savedAt: new Date().toISOString()
+        };
+        savedItems.push(newItem);
+        localStorage.setItem('savedFactsQuotes', JSON.stringify(savedItems));
+        setIsArticleSaved(true);
+      }
+      onClick?.();
+      return;
+    }
+
+    // For other articles, use the existing save system
     if (!user) {
       setShowAuthDialog(true);
       return;
@@ -72,22 +107,24 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
           onClick={handleClick}
           className="p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-all duration-200 backdrop-blur-md border border-white/20 hover:scale-110"
         >
-          {user && isArticleSaved ? (
+          {isArticleSaved ? (
             <BookmarkCheck className="w-4 h-4 text-blue-400" />
           ) : (
             <Bookmark className="w-4 h-4" />
           )}
         </button>
         <span className="text-white text-xs mt-1 font-medium">
-          {user && isArticleSaved ? 'Saved' : 'Save'}
+          {isArticleSaved ? 'Saved' : 'Save'}
         </span>
       </div>
       
-      <AuthPromptDialog 
-        open={showAuthDialog}
-        onOpenChange={setShowAuthDialog}
-        type="save"
-      />
+      {!isFactArticle(article) && !isQuoteArticle(article) && (
+        <AuthPromptDialog 
+          open={showAuthDialog}
+          onOpenChange={setShowAuthDialog}
+          type="save"
+        />
+      )}
     </>
   );
 };

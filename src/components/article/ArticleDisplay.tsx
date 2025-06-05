@@ -1,11 +1,12 @@
-
 import { motion } from "framer-motion";
 import { Progress } from "../ui/progress";
-import { isNewsArticle } from "../../services/contentService";
+import { isNewsArticle, isFactArticle, isQuoteArticle } from "../../services/contentService";
 import { getArticleImage } from "../../utils/articleHelpers";
 import BreakingNewsBadge from "./BreakingNewsBadge";
 import ArticleContent from "./ArticleContent";
 import FloatingActionButtons from "./FloatingActionButtons";
+import FactBadge from "./FactBadge";
+import QuoteBadge from "./QuoteBadge";
 
 interface ArticleDisplayProps {
   article: any;
@@ -59,6 +60,8 @@ const ArticleDisplay = ({
     </div>
 
     {isNewsArticle(article) && <BreakingNewsBadge />}
+    {isFactArticle(article) && <FactBadge />}
+    {isQuoteArticle(article) && <QuoteBadge />}
 
     <FloatingActionButtons
       currentArticle={article}

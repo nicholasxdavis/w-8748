@@ -36,42 +36,42 @@ const MAX_CACHE_SIZE = 100;
 // Enhanced fallback facts with better content
 const fallbackFacts = [
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "Octopuses have three hearts that pump blue blood through their bodies. Two hearts pump blood to the gills, while the third pumps blood to the rest of the body. The main heart stops beating when they swim, which is why they prefer crawling.",
     category: "animals"
   },
   {
-    title: "Quick Fact", 
+    title: "Did You Know", 
     content: "Due to Einstein's theory of relativity, time actually moves faster on GPS satellites than on Earth. Without accounting for this time difference, GPS would be off by about 6 miles every day.",
     category: "science"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible. Honey's low moisture content and acidic pH create an environment where bacteria cannot survive.",
     category: "nature"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "When you move your joints, the pressure changes can cause tiny nitrogen bubbles to form and collapse, creating microscopic diamond crystals that dissolve almost instantly. This is what causes the popping sound.",
     category: "science"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "Bananas contain potassium-40, a naturally occurring radioactive isotope. You'd need to eat 10 million bananas at once to die from radiation poisoning. Scientists even use 'banana equivalent dose' as an informal unit of radiation exposure.",
     category: "science"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "A single cloud can weigh more than a million pounds. Despite this massive weight, clouds float because the water droplets are so small and spread out that they're less dense than the surrounding air.",
     category: "nature"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "Your brain uses about 20% of your body's total energy, despite only making up 2% of your body weight. It's like having a 20-watt light bulb constantly running in your head.",
     category: "science"
   },
   {
-    title: "Quick Fact",
+    title: "Did You Know",
     content: "If you could fold a piece of paper in half 42 times, it would reach the moon. Each fold doubles the thickness, leading to exponential growth that quickly becomes astronomical.",
     category: "mathematics"
   }
@@ -88,7 +88,7 @@ const fetchFactsFromAPIs = async (): Promise<any[]> => {
       const uselessFact = await uselessFactsResponse.json();
       if (uselessFact.text && uselessFact.text.length > 30 && uselessFact.text.length < 500 && !uselessFact.text.includes('`')) {
         facts.push({
-          title: "Quick Fact",
+          title: "Did You Know",
           content: uselessFact.text.trim(),
           category: "general",
           source: "useless"
@@ -106,7 +106,7 @@ const fetchFactsFromAPIs = async (): Promise<any[]> => {
       const catFact = await catFactsResponse.json();
       if (catFact.fact && catFact.fact.length > 20 && catFact.fact.length < 300) {
         facts.push({
-          title: "Quick Fact",
+          title: "Did You Know",
           content: catFact.fact.trim(),
           category: "animals",
           source: "cats"
@@ -126,7 +126,7 @@ const fetchFactsFromAPIs = async (): Promise<any[]> => {
         const dogFact = dogFacts.data[0];
         if (dogFact.attributes && dogFact.attributes.body && dogFact.attributes.body.length > 20) {
           facts.push({
-            title: "Quick Fact",
+            title: "Did You Know",
             content: dogFact.attributes.body.trim(),
             category: "animals",
             source: "dogs"
@@ -151,7 +151,7 @@ const fetchFactsFromAPIs = async (): Promise<any[]> => {
         randomFacts.forEach(factObj => {
           if (factObj.fact && factObj.fact.length > 30 && factObj.fact.length < 400 && !factObj.fact.includes('`')) {
             facts.push({
-              title: "Quick Fact",
+              title: "Did You Know",
               content: factObj.fact.trim(),
               category: "general",
               source: "ninjas"
@@ -190,7 +190,7 @@ export const getRandomFacts = async (count: number = 3): Promise<DidYouKnowFact[
       
       const fact: DidYouKnowFact = {
         id: `fact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: "Quick Fact",
+        title: "Did You Know",
         content: factData.content,
         image: randomImage,
         category: factData.category,
@@ -217,7 +217,7 @@ export const getRandomFacts = async (count: number = 3): Promise<DidYouKnowFact[
       
       const fact: DidYouKnowFact = {
         id: `fact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: "Quick Fact",
+        title: "Did You Know",
         content: randomFact.content,
         image: randomImage,
         category: randomFact.category,
@@ -246,7 +246,7 @@ export const getRandomFacts = async (count: number = 3): Promise<DidYouKnowFact[
       
       facts.push({
         id: `fallback-fact-${Date.now()}-${i}`,
-        title: "Quick Fact",
+        title: "Did You Know",
         content: randomFact.content,
         image: randomImage,
         category: randomFact.category,

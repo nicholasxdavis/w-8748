@@ -49,20 +49,20 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       }
     }
 
-    // Calculate content distribution based on position - made more frequent
+    // Calculate content distribution based on position - made facts and quotes much less frequent
     const shouldIncludeNews = contentPosition > 0 && (
       (contentPosition % 8 === 0) || // Every 8th post
       (contentPosition % 11 === 0)   // Or every 11th post
     );
     
     const shouldIncludeFacts = contentPosition > 0 && (
-      (contentPosition % 6 === 0) || // Every 6th post (more frequent)
-      (contentPosition % 9 === 0)    // Or every 9th post
+      (contentPosition % 15 === 0) || // Every 15th post (much less frequent)
+      (contentPosition % 20 === 0)    // Or every 20th post
     );
 
     const shouldIncludeQuotes = contentPosition > 0 && (
-      (contentPosition % 7 === 0) || // Every 7th post
-      (contentPosition % 10 === 0)   // Or every 10th post
+      (contentPosition % 18 === 0) || // Every 18th post (much less frequent)
+      (contentPosition % 25 === 0)    // Or every 25th post
     );
     
     const newsCount = shouldIncludeNews ? 1 : 0;
