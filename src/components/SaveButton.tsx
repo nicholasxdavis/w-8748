@@ -22,6 +22,15 @@ interface SaveButtonProps {
   onClick?: () => void;
 }
 
+// Helper functions to safely check article types
+const isFactType = (article: SaveButtonProps['article']): boolean => {
+  return 'type' in article && article.type === 'fact';
+};
+
+const isQuoteType = (article: SaveButtonProps['article']): boolean => {
+  return 'type' in article && article.type === 'quote';
+};
+
 const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   const { toggleSave, isSaved, isLoading, checkIfSaved } = useSaveArticle();
   const { user } = useAuth();
@@ -36,7 +45,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   useEffect(() => {
     const checkSaveStatus = async () => {
       // For facts and quotes, check localStorage
-      if (isFactArticle(article) || isQuoteArticle(article)) {
+      if (isFactType(article) || isQuoteType(article)) {
         const savedItems = JSON.parse(localStorage.getItem('savedFactsQuotes') || '[]');
         setIsArticleSaved(savedItems.some((item: any) => item.id === article.id));
       } else if (user) {
@@ -49,14 +58,14 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
   }, [article.id, checkIfSaved, user, article]);
 
   useEffect(() => {
-    if (user && !isFactArticle(article) && !isQuoteArticle(article)) {
+    if (user && !isFactType(article) && !isQuoteType(article)) {
       setIsArticleSaved(isSaved(article.id.toString()));
     }
   }, [article.id, isSaved, user, article]);
 
   const handleClick = async () => {
     // For facts and quotes, save to localStorage
-    if (isFactArticle(article) || isQuoteArticle(article)) {
+    if (isFactType(article) || isQuoteType(article)) {
       const savedItems = JSON.parse(localStorage.getItem('savedFactsQuotes') || '[]');
       const isCurrentlySaved = savedItems.some((item: any) => item.id === article.id);
       
@@ -73,12 +82,12 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
           content: article.content,
           image: article.image,
           type: article.type,
-          ...(isQuoteArticle(article) && {
+          ...(isQuoteType(article) && {
             author: article.author,
             category: article.category,
             text: article.text
           }),
-          ...(isFactArticle(article) && {
+          ...(isFactType(article) && {
             category: article.category
           }),
           savedAt: new Date().toISOString()
@@ -139,7 +148,7 @@ const SaveButton = ({ article, onClick }: SaveButtonProps) => {
         </span>
       </div>
       
-      {!isFactArticle(article) && !isQuoteArticle(article) && (
+      {!isFactType(article) && !isQuoteType(article) && (
         <AuthPromptDialog 
           open={showAuthDialog}
           onOpenChange={setShowAuthDialog}
