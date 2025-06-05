@@ -1,4 +1,3 @@
-
 import { WikipediaResponse, WikipediaPage } from './types';
 import { getRandomPlaceholder } from './placeholders';
 
@@ -71,9 +70,5 @@ export const getArticleImage = async (page: WikipediaPage): Promise<string> => {
   }
 
   // Fallback to placeholder
-  return getRandomPlaceholder();
-};
-
-export const getPlaceholderImage = (): string => {
   return getRandomPlaceholder();
 };

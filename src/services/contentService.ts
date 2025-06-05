@@ -4,7 +4,6 @@ import { getUserInterests } from './userInterestsService';
 import { getWikipediaCategories } from './content/categoryMapping';
 import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
 import { createMixedContent } from './content/contentMixer';
-import { getCurrentLanguage } from './languageService';
 
 export type ContentItem = WikipediaArticle | NewsArticle;
 
@@ -24,8 +23,7 @@ let contentPosition = 0;
 
 export const getMixedContent = async (count: number = 8, userId?: string): Promise<ContentItem[]> => {
   try {
-    const currentLanguage = getCurrentLanguage();
-    console.log(`Getting mixed content: count=${count}, userId=${userId}, language=${currentLanguage.name}, position=${contentPosition}`);
+    console.log(`Getting mixed content: count=${count}, userId=${userId}, position=${contentPosition}`);
     
     // Get user interests if userId is provided
     let userInterests: string[] = [];
@@ -58,7 +56,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       console.log(`Fetched ${newsArticles.length} news articles`);
     }
 
-    // Fetch Wikipedia content with language preference
+    // Fetch Wikipedia content
     let wikiArticles;
     if (userInterests.length > 0) {
       const wikiCategories = getWikipediaCategories(userInterests);
@@ -68,7 +66,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       wikiArticles = await getWikiArticles(wikiCount + 2);
     }
 
-    console.log(`Fetched ${wikiArticles.length} wiki articles in ${currentLanguage.name}`);
+    console.log(`Fetched ${wikiArticles.length} wiki articles`);
     
     // Filter valid content
     const validNews = newsArticles.filter(article => 
@@ -102,9 +100,6 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
 
 export const searchMixedContent = async (query: string): Promise<ContentItem[]> => {
   if (!query || query.length < 3) return [];
-
-  const currentLanguage = getCurrentLanguage();
-  console.log(`Searching mixed content in ${currentLanguage.name} for:`, query);
 
   const [wikiResults, newsResults] = await Promise.all([
     searchWikiArticles(query).catch(() => []),

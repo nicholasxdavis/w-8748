@@ -178,7 +178,7 @@ const Discover = () => {
                   <div className="flex justify-between items-start">
                     <div className="bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10 flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
-                        {article.readTime || article.readingTime || '5'}m read
+                        {article.readTime || '5'}m read
                       </span>
                     </div>
                   </div>

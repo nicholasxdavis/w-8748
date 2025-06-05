@@ -1,16 +1,14 @@
 
-import { User, Settings, Globe } from "lucide-react";
+import { User, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import LanguageSelector from "../LanguageSelector";
 
 const UserMenu = () => {
   const { user } = useAuth();
@@ -45,15 +43,9 @@ const UserMenu = () => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="w-64 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl z-[60]"
+        className="w-48 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl z-[60]"
         align="end"
       >
-        <div className="p-3">
-          <LanguageSelector isCompact />
-        </div>
-        
-        <DropdownMenuSeparator className="bg-gray-700/50" />
-        
         <DropdownMenuItem 
           onClick={() => navigate('/settings')}
           className="text-gray-300 hover:text-blue-400 hover:bg-gray-800/60 focus:bg-gray-800/60 focus:text-blue-400 cursor-pointer px-3 py-2 rounded-lg"
