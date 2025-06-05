@@ -1,3 +1,4 @@
+
 import { getPlaceholderImage } from './imageService';
 import { Language } from './languageService';
 
@@ -10,7 +11,9 @@ export interface WikipediaArticle {
   category: string;
   wordCount: number;
   readingTime: number;
+  readTime: number; // Alternative property name used in some components
   sections: WikipediaSection[];
+  tags: string[]; // Add tags property
 }
 
 export interface WikipediaSection {
@@ -37,6 +40,28 @@ const cleanWikipediaExtract = (extract: string): string => {
     .trim();
 };
 
+const generateTagsFromContent = (title: string, content: string, category: string): string[] => {
+  const tags = [];
+  
+  // Add category as a tag
+  if (category && category !== 'General') {
+    tags.push(category.toLowerCase());
+  }
+  
+  // Extract key terms from title
+  const titleWords = title.toLowerCase().split(' ').filter(word => word.length > 3);
+  tags.push(...titleWords.slice(0, 2));
+  
+  // Add some common topic tags based on content keywords
+  const keywords = content.toLowerCase();
+  if (keywords.includes('science') || keywords.includes('research')) tags.push('science');
+  if (keywords.includes('history') || keywords.includes('ancient')) tags.push('history');
+  if (keywords.includes('technology') || keywords.includes('computer')) tags.push('tech');
+  if (keywords.includes('nature') || keywords.includes('animal')) tags.push('nature');
+  
+  return [...new Set(tags)].slice(0, 3); // Remove duplicates and limit to 3 tags
+};
+
 const processWikipediaArticle = (page: any, category?: string): WikipediaArticle => {
   const language = getCurrentLanguage();
   
@@ -51,17 +76,88 @@ const processWikipediaArticle = (page: any, category?: string): WikipediaArticle
     });
   }
 
+  const cleanContent = cleanWikipediaExtract(page.extract || '');
+  const wordCount = cleanContent.split(' ').length;
+  const readingTime = Math.ceil(wordCount / 200);
+  const tags = generateTagsFromContent(page.title, cleanContent, category || 'General');
+
   return {
     id: page.pageid,
     title: page.title,
-    content: cleanWikipediaExtract(page.extract || ''),
+    content: cleanContent,
     image: page.thumbnail?.source || getPlaceholderImage(),
     url: `https://${language.wikipediaPrefix}.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
     category: category || 'General',
-    wordCount: (page.extract || '').split(' ').length,
-    readingTime: Math.ceil((page.extract || '').split(' ').length / 200),
-    sections: sections
+    wordCount: wordCount,
+    readingTime: readingTime,
+    readTime: readingTime, // Alternative property name
+    sections: sections,
+    tags: tags
   };
+};
+
+export const getFullSections = async (articleId: number, title: string, signal?: AbortSignal): Promise<WikipediaSection[]> => {
+  const language = getCurrentLanguage();
+  
+  try {
+    const response = await fetch(
+      `https://${language.wikipediaPrefix}.wikipedia.org/w/api.php?` +
+      `action=parse&format=json&origin=*&page=${encodeURIComponent(title)}&prop=sections|text&section=0`,
+      { signal }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      console.warn('Wikipedia API error:', data.error);
+      return [];
+    }
+    
+    const sections: WikipediaSection[] = [];
+    
+    if (data.parse?.sections) {
+      // Get first few sections content
+      for (let i = 1; i <= Math.min(3, data.parse.sections.length); i++) {
+        const sectionResponse = await fetch(
+          `https://${language.wikipediaPrefix}.wikipedia.org/w/api.php?` +
+          `action=parse&format=json&origin=*&page=${encodeURIComponent(title)}&prop=text&section=${i}`,
+          { signal }
+        );
+        
+        if (sectionResponse.ok) {
+          const sectionData = await sectionResponse.json();
+          if (sectionData.parse?.text) {
+            const textContent = sectionData.parse.text['*'];
+            const cleanText = textContent
+              .replace(/<[^>]*>/g, '') // Remove HTML tags
+              .replace(/\[[^\]]*\]/g, '') // Remove references
+              .trim()
+              .substring(0, 500); // Limit length
+            
+            if (cleanText.length > 50) {
+              sections.push({
+                title: data.parse.sections[i - 1]?.line || `Section ${i}`,
+                content: cleanText,
+                level: data.parse.sections[i - 1]?.toclevel || 1
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    return sections;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+    console.error('Error fetching full sections:', error);
+    return [];
+  }
 };
 
 export const getRandomArticles = async (count: number = 8, category?: string): Promise<WikipediaArticle[]> => {
