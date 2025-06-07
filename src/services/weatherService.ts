@@ -14,11 +14,6 @@ export interface WeatherData {
     windSpeed: number;
     feels_like: number;
   }>;
-  chartData: Array<{
-    city: string;
-    temp: number;
-    humidity: number;
-  }>;
 }
 
 // Major world cities for weather data
@@ -44,7 +39,6 @@ const WEATHER_IMAGES = [
 export const getRandomWeather = async (count: number = 1): Promise<WeatherData[]> => {
   console.log('Generating weather data...');
   
-  // Generate realistic weather data for multiple cities
   const weatherCards: WeatherData[] = [];
   
   for (let i = 0; i < count; i++) {
@@ -58,13 +52,6 @@ export const getRandomWeather = async (count: number = 1): Promise<WeatherData[]
       feels_like: Math.floor(Math.random() * 30) + 5
     }));
 
-    // Simplified chart data with clearer naming
-    const chartData = selectedCities.map(city => ({
-      city: city.name,
-      temp: city.temperature,
-      humidity: city.humidity
-    }));
-
     const minTemp = Math.min(...selectedCities.map(c => c.temperature));
     const maxTemp = Math.max(...selectedCities.map(c => c.temperature));
 
@@ -74,8 +61,7 @@ export const getRandomWeather = async (count: number = 1): Promise<WeatherData[]
       title: 'Global Weather Report',
       content: `Current weather conditions across major world cities. Today's temperatures range from ${minTemp}°C to ${maxTemp}°C. Most cities are experiencing ${selectedCities.filter(c => c.condition === 'Sunny').length > 0 ? 'clear' : 'mixed'} weather conditions.`,
       image: WEATHER_IMAGES[Math.floor(Math.random() * WEATHER_IMAGES.length)],
-      cities: selectedCities,
-      chartData
+      cities: selectedCities
     });
   }
 

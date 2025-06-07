@@ -1,9 +1,8 @@
+
 import { motion } from "framer-motion";
-import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign, History } from "lucide-react";
-import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle, isHistoryArticle } from "../../services/contentService";
+import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign, History, Camera } from "lucide-react";
+import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle, isHistoryArticle, isFeaturedPictureArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 
 interface ArticleContentProps {
   article: any;
@@ -36,40 +35,43 @@ const ArticleContent = ({
         </h1>
       </div>
       
-      {/* Charts for stocks and weather */}
-      {article && isStockArticle(article) && article.chartData && (
-        <div className="w-full h-48 mb-4">
-          <ChartContainer config={{
-            price: { label: "Price ($)", color: "#3b82f6" },
-            change: { label: "Change (%)", color: "#10b981" }
-          }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={article.chartData}>
-                <XAxis dataKey="symbol" stroke="#ffffff80" fontSize={12} />
-                <YAxis stroke="#ffffff80" fontSize={12} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="price" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+      {/* Stock cards */}
+      {article && isStockArticle(article) && article.stocks && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {article.stocks.slice(0, 6).map((stock: any, idx: number) => (
+            <div key={idx} className="bg-black/30 rounded-lg p-3 border border-white/10">
+              <div className="flex justify-between items-start mb-1">
+                <span className="font-bold text-sm">{stock.symbol}</span>
+                <span className={`text-xs px-2 py-1 rounded ${stock.change >= 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                  {stock.change >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                </span>
+              </div>
+              <p className="text-xs text-white/70 mb-1">{stock.name}</p>
+              <div className="flex justify-between items-end">
+                <span className="text-lg font-bold">${stock.price}</span>
+                <span className="text-xs text-white/60">{stock.marketCap}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {article && isWeatherArticle(article) && article.chartData && (
-        <div className="w-full h-48 mb-4">
-          <ChartContainer config={{
-            temp: { label: "Temperature (°C)", color: "#f59e0b" },
-            humidity: { label: "Humidity (%)", color: "#06b6d4" }
-          }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={article.chartData}>
-                <XAxis dataKey="city" stroke="#ffffff80" fontSize={12} />
-                <YAxis stroke="#ffffff80" fontSize={12} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="temp" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+      {/* Weather cards */}
+      {article && isWeatherArticle(article) && article.cities && (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {article.cities.slice(0, 6).map((city: any, idx: number) => (
+            <div key={idx} className="bg-black/30 rounded-lg p-3 border border-white/10">
+              <div className="flex justify-between items-start mb-1">
+                <span className="font-bold text-sm">{city.name}</span>
+                <span className="text-lg font-bold text-blue-300">{city.temperature}°C</span>
+              </div>
+              <p className="text-xs text-white/70 mb-1">{city.country}</p>
+              <div className="flex justify-between items-end text-xs">
+                <span className="text-white/80">{city.condition}</span>
+                <span className="text-white/60">{city.humidity}% humidity</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -182,6 +184,17 @@ const ArticleContent = ({
             <span className="truncate">{article.date}</span>
             <span>•</span>
             <span className="truncate">{article.events?.length || 0} Events</span>
+          </>
+        ) : article && isFeaturedPictureArticle(article) ? (
+          <>
+            <div className="flex items-center gap-1">
+              <Camera className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">Featured Picture</span>
+            </div>
+            <span>•</span>
+            <span className="truncate">{article.photographer || 'Unknown'}</span>
+            <span>•</span>
+            <span className="truncate">{article.date}</span>
           </>
         ) : article ? (
           <>

@@ -13,11 +13,6 @@ export interface StockData {
     changePercent: number;
     marketCap?: string;
   }>;
-  chartData: Array<{
-    symbol: string;
-    price: number;
-    change: number;
-  }>;
 }
 
 // Top tech and major stocks
@@ -42,7 +37,6 @@ const STOCK_IMAGES = [
 export const getRandomStocks = async (count: number = 1): Promise<StockData[]> => {
   console.log('Generating stock data...');
   
-  // Generate realistic stock data for display
   const stockCards: StockData[] = [];
   
   for (let i = 0; i < count; i++) {
@@ -61,12 +55,6 @@ export const getRandomStocks = async (count: number = 1): Promise<StockData[]> =
       };
     });
 
-    const chartData = selectedStocks.map(stock => ({
-      symbol: stock.symbol,
-      price: stock.price,
-      change: stock.changePercent
-    }));
-
     const gainers = selectedStocks.filter(s => s.change > 0).length;
     const losers = selectedStocks.filter(s => s.change < 0).length;
 
@@ -76,8 +64,7 @@ export const getRandomStocks = async (count: number = 1): Promise<StockData[]> =
       title: 'Market Overview',
       content: `Current stock prices for major technology companies. Today's market shows ${gainers} gainers and ${losers} losers among top tech stocks. Average price movement is ${selectedStocks.reduce((acc, s) => acc + Math.abs(s.changePercent), 0) / selectedStocks.length}%.`,
       image: STOCK_IMAGES[Math.floor(Math.random() * STOCK_IMAGES.length)],
-      stocks: selectedStocks,
-      chartData
+      stocks: selectedStocks
     });
   }
 

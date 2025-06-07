@@ -1,4 +1,3 @@
-
 export interface DidYouKnowFact {
   id: string;
   title: string;
@@ -61,97 +60,64 @@ const PREMIUM_FACTS = [
 const factsCache = new Set<string>();
 const MAX_CACHE_SIZE = 50;
 
-export const getRandomFacts = async (count: number = 3): Promise<DidYouKnowFact[]> => {
-  const facts: DidYouKnowFact[] = [];
+export const getRandomFacts = async (count: number = 1): Promise<DidYouKnowFact[]> => {
+  console.log('Generating facts...');
   
   try {
-    // Try to get facts from reputable science APIs
-    const apiFacts = await fetchFactsFromPremiumAPIs();
-    
-    // Filter high-quality facts
-    const qualityApiFacts = apiFacts.filter(fact => 
-      !factsCache.has(fact.content) && 
-      fact.content.length > 50 && 
-      fact.content.length < 400 &&
-      !fact.content.toLowerCase().includes('unknown') &&
-      !fact.content.toLowerCase().includes('approximately') // Remove vague facts
-    );
-    
-    // Add premium API facts first
-    for (let i = 0; i < Math.min(qualityApiFacts.length, count); i++) {
-      const factData = qualityApiFacts[i];
-      const randomImage = factImages[Math.floor(Math.random() * factImages.length)];
-      
-      const fact: DidYouKnowFact = {
-        id: `fact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: "Did You Know",
-        content: factData.content,
-        image: randomImage,
-        category: factData.category,
-        type: 'fact',
-        source: factData.source || 'Scientific Research'
-      };
-      
-      facts.push(fact);
-      factsCache.add(fact.content);
-    }
-    
-    // Fill remaining with premium curated facts
-    while (facts.length < count) {
-      const availableFacts = PREMIUM_FACTS.filter(fact => !factsCache.has(fact.content));
-      
-      if (availableFacts.length === 0) {
-        factsCache.clear();
-        console.log('Cleared facts cache - starting fresh cycle');
+    // Try to fetch from Numbers API for more interesting mathematical facts
+    const numbersApiPromises = Array.from({ length: count }, async (_, i) => {
+      try {
+        const randomNumber = Math.floor(Math.random() * 1000) + 1;
+        const response = await fetch(`http://numbersapi.com/${randomNumber}/math?json`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            id: `numbers-fact-${Date.now()}-${i}`,
+            type: 'fact' as const,
+            title: 'Mathematical Marvel',
+            content: data.text,
+            image: 'https://fastly.picsum.photos/id/120/4928/3264.jpg?hmac=i-8mkfKj_gRyQt9ZJVhbIBXbtIBNcsbI_gwNe_39vus',
+            category: 'Mathematics',
+            source: 'Numbers API'
+          };
+        }
+        throw new Error('Numbers API failed');
+      } catch (error) {
+        // Fallback to curated facts
+        const fact = CURATED_FACTS[Math.floor(Math.random() * CURATED_FACTS.length)];
+        return {
+          id: `curated-fact-${Date.now()}-${i}`,
+          type: 'fact' as const,
+          title: 'Scientific Discovery',
+          content: fact.content,
+          image: 'https://fastly.picsum.photos/id/120/4928/3264.jpg?hmac=i-8mkfKj_gRyQt9ZJVhbIBXbtIBNcsbI_gwNe_39vus',
+          category: fact.category,
+          source: fact.source
+        };
       }
-      
-      const factsToUse = availableFacts.length > 0 ? availableFacts : PREMIUM_FACTS;
-      const randomFact = factsToUse[Math.floor(Math.random() * factsToUse.length)];
-      const randomImage = factImages[Math.floor(Math.random() * factImages.length)];
-      
-      const fact: DidYouKnowFact = {
-        id: `fact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: "Did You Know",
-        content: randomFact.content,
-        image: randomImage,
-        category: randomFact.category,
-        type: 'fact',
-        source: randomFact.source
-      };
-      
-      facts.push(fact);
-      factsCache.add(fact.content);
-    }
-    
-    // Manage cache size
-    if (factsCache.size > MAX_CACHE_SIZE) {
-      const cacheArray = Array.from(factsCache);
-      factsCache.clear();
-      cacheArray.slice(-MAX_CACHE_SIZE / 2).forEach(fact => factsCache.add(fact));
-    }
-    
+    });
+
+    const facts = await Promise.all(numbersApiPromises);
+    console.log(`Generated ${facts.length} facts`);
+    return facts;
   } catch (error) {
-    console.error('Error fetching premium facts:', error);
+    console.error('Error generating facts:', error);
     
-    // Fallback to curated premium facts
-    for (let i = 0; i < count; i++) {
-      const randomFact = PREMIUM_FACTS[Math.floor(Math.random() * PREMIUM_FACTS.length)];
-      const randomImage = factImages[Math.floor(Math.random() * factImages.length)];
-      
-      facts.push({
-        id: `premium-fact-${Date.now()}-${i}`,
-        title: "Did You Know",
-        content: randomFact.content,
-        image: randomImage,
-        category: randomFact.category,
-        type: 'fact',
-        source: randomFact.source
-      });
-    }
+    // Final fallback to curated content
+    return Array.from({ length: count }, (_, i) => {
+      const fact = CURATED_FACTS[Math.floor(Math.random() * CURATED_FACTS.length)];
+      return {
+        id: `fallback-fact-${Date.now()}-${i}`,
+        type: 'fact' as const,
+        title: 'Scientific Discovery',
+        content: fact.content,
+        image: 'https://fastly.picsum.photos/id/120/4928/3264.jpg?hmac=i-8mkfKj_gRyQt9ZJVhbIBXbtIBNcsbI_gwNe_39vus',
+        category: fact.category,
+        source: fact.source
+      };
+    });
   }
-  
-  console.log(`Generated ${facts.length} premium facts from scientific sources`);
-  return facts;
 };
 
 const fetchFactsFromPremiumAPIs = async (): Promise<any[]> => {
