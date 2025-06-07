@@ -1,6 +1,5 @@
-
 import { motion } from "framer-motion";
-import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign, history } from "lucide-react";
+import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign, History } from "lucide-react";
 import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle, isHistoryArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
@@ -177,7 +176,7 @@ const ArticleContent = ({
         ) : article && isHistoryArticle(article) ? (
           <>
             <div className="flex items-center gap-1">
-              <history className="w-3 h-3 lg:w-4 lg:h-4" />
+              <History className="w-3 h-3 lg:w-4 lg:h-4" />
               <span className="truncate">This Day in History</span>
             </div>
             <span>•</span>
