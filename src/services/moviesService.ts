@@ -124,27 +124,91 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
 
 export const getRandomMovies = async (count: number = 1): Promise<MovieContent[]> => {
   try {
-    // Try to fetch from TMDB API first (you can replace this with your preferred movie API)
+    // Try TMDB API for movie posters first
     const apiMovies = await fetchMoviesFromAPI(count);
     if (apiMovies.length > 0) {
       return apiMovies;
     }
   } catch (error) {
-    console.log('Movie API fetch failed, using curated movies:', error);
+    console.log('Movie API fetch failed, using curated movies with better images:', error);
   }
 
-  // Fallback to curated content
+  // Fallback to curated content with better poster images
   const allContent = [...CURATED_MOVIES, ...CURATED_TVSHOWS];
   const shuffled = [...allContent].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((movie, index) => ({
     ...movie,
-    id: `movie-${Date.now()}-${index}`
+    id: `movie-${Date.now()}-${index}`,
+    // Use higher quality movie/TV poster images
+    image: movie.type === 'movie' 
+      ? getMoviePosterImage(movie.title)
+      : getTVShowPosterImage(movie.title)
   }));
 };
 
 const fetchMoviesFromAPI = async (count: number): Promise<MovieContent[]> => {
-  // This is a placeholder for API integration
-  // You can integrate with TMDB API, OMDB API, etc.
-  // Example: https://api.themoviedb.org/3/movie/top_rated
-  throw new Error('Movie API not configured');
+  try {
+    // Use TMDB API for high-quality movie posters
+    const API_KEY = 'demo'; // Replace with actual TMDB API key
+    
+    const response = await fetch(
+      `https://api.themoviedb.org/3/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`
+    );
+    
+    if (!response.ok) {
+      throw new Error('TMDB API request failed');
+    }
+    
+    const data = await response.json();
+    const movies: MovieContent[] = [];
+    
+    if (data.results && data.results.length > 0) {
+      const selectedMovies = data.results.slice(0, count);
+      
+      for (const movie of selectedMovies) {
+        movies.push({
+          id: `tmdb-movie-${movie.id}`,
+          type: 'movie',
+          title: movie.title,
+          content: `${movie.title} (${new Date(movie.release_date).getFullYear()}) - ${movie.overview.slice(0, 200)}...`,
+          image: movie.poster_path 
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : getMoviePosterImage(movie.title),
+          rating: movie.vote_average,
+          year: new Date(movie.release_date).getFullYear(),
+          genre: 'Drama', // You could fetch genres separately
+          plot: movie.overview
+        });
+      }
+    }
+    
+    return movies;
+  } catch (error) {
+    console.error('TMDB API error:', error);
+    throw error;
+  }
+};
+
+const getMoviePosterImage = (title: string): string => {
+  // High-quality movie poster style images from Unsplash
+  const movieImages = [
+    'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800&h=1200&fit=crop'
+  ];
+  
+  return movieImages[Math.floor(Math.random() * movieImages.length)];
+};
+
+const getTVShowPosterImage = (title: string): string => {
+  // High-quality TV show poster style images
+  const tvImages = [
+    'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1595769816263-9b910be24d5f?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=800&h=1200&fit=crop',
+    'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=1200&fit=crop'
+  ];
+  
+  return tvImages[Math.floor(Math.random() * tvImages.length)];
 };

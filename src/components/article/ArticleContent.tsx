@@ -1,8 +1,10 @@
 
 import { motion } from "framer-motion";
-import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign } from "lucide-react";
-import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle } from "../../services/contentService";
+import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign, history } from "lucide-react";
+import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle, isHistoryArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 
 interface ArticleContentProps {
   article: any;
@@ -34,6 +36,63 @@ const ArticleContent = ({
           {article?.title || 'Loading...'}
         </h1>
       </div>
+      
+      {/* Charts for stocks and weather */}
+      {article && isStockArticle(article) && article.chartData && (
+        <div className="w-full h-48 mb-4">
+          <ChartContainer config={{
+            price: { label: "Price", color: "#3b82f6" },
+            change: { label: "Change %", color: "#10b981" }
+          }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={article.chartData}>
+                <XAxis dataKey="symbol" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="price" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </div>
+      )}
+
+      {article && isWeatherArticle(article) && article.chartData && (
+        <div className="w-full h-48 mb-4">
+          <ChartContainer config={{
+            temperature: { label: "Temperature °C", color: "#f59e0b" },
+            humidity: { label: "Humidity %", color: "#06b6d4" }
+          }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={article.chartData}>
+                <XAxis dataKey="city" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line type="monotone" dataKey="temperature" stroke="#f59e0b" strokeWidth={2} />
+                <Line type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </div>
+      )}
+
+      {/* Historical events list */}
+      {article && isHistoryArticle(article) && article.events && (
+        <div className="max-h-64 overflow-y-auto scrollbar-hide space-y-2 mb-4">
+          {article.events.slice(0, 5).map((event: any, idx: number) => (
+            <div key={idx} className="bg-black/30 rounded-lg p-3 border border-white/10">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-amber-400 font-bold">{event.year}</span>
+                {event.category && (
+                  <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-1 rounded">
+                    {event.category}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-white/90">{event.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
       
       <div className="max-h-48 sm:max-h-64 lg:max-h-96 xl:max-h-[500px] overflow-y-auto scrollbar-hide">
         <p className="text-xs sm:text-sm lg:text-base xl:text-lg leading-relaxed opacity-95 break-words hyphens-auto text-center max-w-full">
@@ -71,12 +130,16 @@ const ArticleContent = ({
           <>
             <div className="flex items-center gap-1">
               <Lightbulb className="w-3 h-3 lg:w-4 lg:h-4" />
-              <span className="truncate">Did You Know</span>
+              <span className="truncate">Scientific Fact</span>
             </div>
             <span>•</span>
-            <span className="truncate capitalize">{article.category || 'General'}</span>
-            <span>•</span>
-            <span className="truncate">Quick Fact</span>
+            <span className="truncate capitalize">{article.category || 'Science'}</span>
+            {article.source && (
+              <>
+                <span>•</span>
+                <span className="truncate text-blue-300">{article.source}</span>
+              </>
+            )}
           </>
         ) : article && isQuoteArticle(article) ? (
           <>
@@ -93,31 +156,34 @@ const ArticleContent = ({
           <>
             <div className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4" />
-              <span className="truncate">{article.symbol}</span>
+              <span className="truncate">Market Data</span>
             </div>
             <span>•</span>
-            <div className="flex items-center gap-1">
-              <DollarSign className="w-3 h-3 lg:w-4 lg:h-4" />
-              <span className="truncate">${article.price.toFixed(2)}</span>
-            </div>
+            <span className="truncate">Live Prices</span>
             <span>•</span>
-            <span className={`truncate ${article.changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {article.changePercent >= 0 ? '+' : ''}{article.changePercent.toFixed(2)}%
-            </span>
+            <span className="truncate">Real-time Updates</span>
           </>
         ) : article && isWeatherArticle(article) ? (
           <>
             <div className="flex items-center gap-1">
               <Cloud className="w-3 h-3 lg:w-4 lg:h-4" />
-              <span className="truncate">{article.city}</span>
+              <span className="truncate">Global Weather</span>
             </div>
             <span>•</span>
+            <span className="truncate">Live Data</span>
+            <span>•</span>
+            <span className="truncate">Multiple Cities</span>
+          </>
+        ) : article && isHistoryArticle(article) ? (
+          <>
             <div className="flex items-center gap-1">
-              <Thermometer className="w-3 h-3 lg:w-4 lg:h-4" />
-              <span className="truncate">{article.temperature}°C</span>
+              <history className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">This Day in History</span>
             </div>
             <span>•</span>
-            <span className="truncate">{article.condition}</span>
+            <span className="truncate">{article.date}</span>
+            <span>•</span>
+            <span className="truncate">{article.events?.length || 0} Events</span>
           </>
         ) : article ? (
           <>

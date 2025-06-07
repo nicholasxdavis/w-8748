@@ -1,4 +1,3 @@
-
 import { WikipediaArticle, getRandomArticles as getWikiArticles, searchArticles as searchWikiArticles } from './wikipediaService';
 import { NewsArticle, getBreakingNews, searchNews, markArticleAsViewed } from './rssNewsService';
 import { DidYouKnowFact, getRandomFacts } from './factsService';
@@ -7,12 +6,13 @@ import { MovieContent, getRandomMovies } from './moviesService';
 import { MusicContent, getRandomMusic } from './musicService';
 import { StockData, getRandomStocks } from './stockService';
 import { WeatherData, getRandomWeather } from './weatherService';
+import { HistoricalEvent, getTodayInHistory } from './historyService';
 import { getUserInterests } from './userInterestsService';
 import { getWikipediaCategories } from './content/categoryMapping';
 import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
 import { createMixedContent } from './content/contentMixer';
 
-export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | Quote | MovieContent | MusicContent | StockData | WeatherData;
+export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | Quote | MovieContent | MusicContent | StockData | WeatherData | HistoricalEvent;
 
 export const isNewsArticle = (item: ContentItem): item is NewsArticle => {
   return 'isBreakingNews' in item;
@@ -42,13 +42,17 @@ export const isWeatherArticle = (item: ContentItem): item is WeatherData => {
   return 'type' in item && item.type === 'weather';
 };
 
+export const isHistoryArticle = (item: ContentItem): item is HistoricalEvent => {
+  return 'type' in item && item.type === 'history';
+};
+
 export const markContentAsViewed = (item: ContentItem) => {
   if (isNewsArticle(item)) {
     markArticleAsViewed(item.id);
-  } else if (!isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item) && !isStockArticle(item) && !isWeatherArticle(item)) {
+  } else if (!isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item) && !isStockArticle(item) && !isWeatherArticle(item) && !isHistoryArticle(item)) {
     viewedWikiArticles.add(item.id.toString());
   }
-  // Facts, quotes, movies, music, stocks, and weather don't need to be marked as viewed since they're random
+  // Special content types don't need to be marked as viewed since they're random/time-based
 };
 
 let contentPosition = 0;
@@ -69,41 +73,15 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       }
     }
 
-    // Calculate content distribution based on position - made all special content less frequent
-    const shouldIncludeNews = contentPosition > 0 && (
-      (contentPosition % 8 === 0) || // Every 8th post
-      (contentPosition % 11 === 0)   // Or every 11th post
-    );
-    
-    const shouldIncludeFacts = contentPosition > 0 && (
-      (contentPosition % 15 === 0) || // Every 15th post
-      (contentPosition % 20 === 0)    // Or every 20th post
-    );
-
-    const shouldIncludeQuotes = contentPosition > 0 && (
-      (contentPosition % 18 === 0) || // Every 18th post
-      (contentPosition % 25 === 0)    // Or every 25th post
-    );
-
-    const shouldIncludeMovies = contentPosition > 0 && (
-      (contentPosition % 22 === 0) || // Every 22nd post
-      (contentPosition % 30 === 0)    // Or every 30th post
-    );
-
-    const shouldIncludeMusic = contentPosition > 0 && (
-      (contentPosition % 26 === 0) || // Every 26th post
-      (contentPosition % 35 === 0)    // Or every 35th post
-    );
-
-    const shouldIncludeStocks = contentPosition > 0 && (
-      (contentPosition % 28 === 0) || // Every 28th post
-      (contentPosition % 40 === 0)    // Or every 40th post
-    );
-
-    const shouldIncludeWeather = contentPosition > 0 && (
-      (contentPosition % 32 === 0) || // Every 32nd post
-      (contentPosition % 45 === 0)    // Or every 45th post
-    );
+    // Calculate content distribution - made special content even less frequent
+    const shouldIncludeNews = contentPosition > 0 && (contentPosition % 10 === 0);
+    const shouldIncludeFacts = contentPosition > 0 && (contentPosition % 18 === 0);
+    const shouldIncludeQuotes = contentPosition > 0 && (contentPosition % 22 === 0);
+    const shouldIncludeMovies = contentPosition > 0 && (contentPosition % 25 === 0);
+    const shouldIncludeMusic = contentPosition > 0 && (contentPosition % 28 === 0);
+    const shouldIncludeStocks = contentPosition > 0 && (contentPosition % 30 === 0);
+    const shouldIncludeWeather = contentPosition > 0 && (contentPosition % 35 === 0);
+    const shouldIncludeHistory = contentPosition > 0 && (contentPosition % 40 === 0);
     
     const newsCount = shouldIncludeNews ? 1 : 0;
     const factsCount = shouldIncludeFacts ? 1 : 0;
@@ -112,65 +90,27 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
     const musicCount = shouldIncludeMusic ? 1 : 0;
     const stocksCount = shouldIncludeStocks ? 1 : 0;
     const weatherCount = shouldIncludeWeather ? 1 : 0;
-    const wikiCount = count - newsCount - factsCount - quotesCount - moviesCount - musicCount - stocksCount - weatherCount;
+    const historyCount = shouldIncludeHistory ? 1 : 0;
+    const wikiCount = count - newsCount - factsCount - quotesCount - moviesCount - musicCount - stocksCount - weatherCount - historyCount;
 
-    console.log(`Position ${contentPosition}: including ${newsCount} news, ${factsCount} facts, ${quotesCount} quotes, ${moviesCount} movies, ${musicCount} music, ${stocksCount} stocks, ${weatherCount} weather, ${wikiCount} wiki articles`);
+    console.log(`Position ${contentPosition}: including ${newsCount} news, ${factsCount} facts, ${quotesCount} quotes, ${moviesCount} movies, ${musicCount} music, ${stocksCount} stocks, ${weatherCount} weather, ${historyCount} history, ${wikiCount} wiki articles`);
 
-    // Fetch content types
-    let newsArticles: NewsArticle[] = [];
-    let facts: DidYouKnowFact[] = [];
-    let quotes: Quote[] = [];
-    let movies: MovieContent[] = [];
-    let music: MusicContent[] = [];
-    let stocks: StockData[] = [];
-    let weather: WeatherData[] = [];
-    
-    if (newsCount > 0) {
-      newsArticles = await getBreakingNews(3); // Get a few to choose from
-      console.log(`Fetched ${newsArticles.length} news articles`);
-    }
-    
-    if (factsCount > 0) {
-      facts = await getRandomFacts(factsCount);
-      console.log(`Fetched ${facts.length} facts`);
-    }
+    // Fetch content types in parallel
+    const [newsArticles, facts, quotes, movies, music, stocks, weather, history, wikiArticles] = await Promise.all([
+      newsCount > 0 ? getBreakingNews(3) : Promise.resolve([]),
+      factsCount > 0 ? getRandomFacts(factsCount) : Promise.resolve([]),
+      quotesCount > 0 ? getRandomQuotes(quotesCount) : Promise.resolve([]),
+      moviesCount > 0 ? getRandomMovies(moviesCount) : Promise.resolve([]),
+      musicCount > 0 ? getRandomMusic(musicCount) : Promise.resolve([]),
+      stocksCount > 0 ? getRandomStocks(stocksCount) : Promise.resolve([]),
+      weatherCount > 0 ? getRandomWeather(weatherCount) : Promise.resolve([]),
+      historyCount > 0 ? getTodayInHistory(historyCount) : Promise.resolve([]),
+      userInterests.length > 0 
+        ? getWikiArticles(wikiCount + 2, getWikipediaCategories(userInterests)[Math.floor(Math.random() * getWikipediaCategories(userInterests).length)])
+        : getWikiArticles(wikiCount + 2)
+    ]);
 
-    if (quotesCount > 0) {
-      quotes = await getRandomQuotes(quotesCount);
-      console.log(`Fetched ${quotes.length} quotes`);
-    }
-
-    if (moviesCount > 0) {
-      movies = await getRandomMovies(moviesCount);
-      console.log(`Fetched ${movies.length} movies`);
-    }
-
-    if (musicCount > 0) {
-      music = await getRandomMusic(musicCount);
-      console.log(`Fetched ${music.length} music`);
-    }
-
-    if (stocksCount > 0) {
-      stocks = await getRandomStocks(stocksCount);
-      console.log(`Fetched ${stocks.length} stocks`);
-    }
-
-    if (weatherCount > 0) {
-      weather = await getRandomWeather(weatherCount);
-      console.log(`Fetched ${weather.length} weather`);
-    }
-
-    // Fetch Wikipedia content
-    let wikiArticles;
-    if (userInterests.length > 0) {
-      const wikiCategories = getWikipediaCategories(userInterests);
-      const selectedCategory = wikiCategories[Math.floor(Math.random() * wikiCategories.length)];
-      wikiArticles = await getWikiArticles(wikiCount + 2, selectedCategory);
-    } else {
-      wikiArticles = await getWikiArticles(wikiCount + 2);
-    }
-
-    console.log(`Fetched ${wikiArticles.length} wiki articles`);
+    console.log(`Fetched content: ${newsArticles.length} news, ${facts.length} facts, ${quotes.length} quotes, ${movies.length} movies, ${music.length} music, ${stocks.length} stocks, ${weather.length} weather, ${history.length} history, ${wikiArticles.length} wiki`);
     
     // Filter valid content
     const validNews = newsArticles.filter(article => 
@@ -181,15 +121,13 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       article.image && !article.image.includes('placeholder')
     ).slice(0, wikiCount);
 
-    console.log(`Valid content: ${validNews.length} news, ${facts.length} facts, ${quotes.length} quotes, ${movies.length} movies, ${music.length} music, ${stocks.length} stocks, ${weather.length} weather, ${validWiki.length} wiki`);
-
-    // Create mixed content - facts, quotes, movies, music, stocks, and weather are always valid since they have curated images
-    const allContent: ContentItem[] = [...validWiki, ...validNews, ...facts, ...quotes, ...movies, ...music, ...stocks, ...weather];
+    // Create mixed content - special content types have curated images so they're always valid
+    const allContent: ContentItem[] = [...validWiki, ...validNews, ...facts, ...quotes, ...movies, ...music, ...stocks, ...weather, ...history];
     
-    // Shuffle the content to create a natural mix
+    // Shuffle content for natural distribution
     const shuffledContent = allContent.sort(() => Math.random() - 0.5).slice(0, count);
     
-    console.log(`Final mix: ${shuffledContent.filter(isNewsArticle).length} news, ${shuffledContent.filter(isFactArticle).length} facts, ${shuffledContent.filter(isQuoteArticle).length} quotes, ${shuffledContent.filter(isMovieArticle).length} movies, ${shuffledContent.filter(isMusicArticle).length} music, ${shuffledContent.filter(isStockArticle).length} stocks, ${shuffledContent.filter(isWeatherArticle).length} weather, ${shuffledContent.filter(item => !isNewsArticle(item) && !isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item) && !isStockArticle(item) && !isWeatherArticle(item)).length} wiki`);
+    console.log(`Final mix: ${shuffledContent.filter(isNewsArticle).length} news, ${shuffledContent.filter(isFactArticle).length} facts, ${shuffledContent.filter(isQuoteArticle).length} quotes, ${shuffledContent.filter(isMovieArticle).length} movies, ${shuffledContent.filter(isMusicArticle).length} music, ${shuffledContent.filter(isStockArticle).length} stocks, ${shuffledContent.filter(isWeatherArticle).length} weather, ${shuffledContent.filter(isHistoryArticle).length} history, ${shuffledContent.filter(item => !isNewsArticle(item) && !isFactArticle(item) && !isQuoteArticle(item) && !isMovieArticle(item) && !isMusicArticle(item) && !isStockArticle(item) && !isWeatherArticle(item) && !isHistoryArticle(item)).length} wiki`);
     
     // Update position for next fetch
     contentPosition += count;

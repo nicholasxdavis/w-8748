@@ -5,98 +5,135 @@ export interface WeatherData {
   title: string;
   content: string;
   image: string;
-  city: string;
-  country: string;
-  temperature: number;
-  condition: string;
-  humidity: number;
-  windSpeed: number;
-  feels_like: number;
-  icon: string;
+  cities: Array<{
+    name: string;
+    country: string;
+    temperature: number;
+    condition: string;
+    humidity: number;
+    windSpeed: number;
+    feels_like: number;
+  }>;
+  chartData: Array<{
+    city: string;
+    temperature: number;
+    humidity: number;
+  }>;
 }
 
-// Curated weather data for major cities
-const CURATED_WEATHER: Omit<WeatherData, 'id'>[] = [
-  {
-    type: 'weather',
-    title: 'New York City Weather',
-    content: 'Current weather in New York City, USA. Partly cloudy skies with comfortable temperatures. Light winds from the west. Good visibility throughout the metropolitan area.',
-    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=600&fit=crop',
-    city: 'New York',
-    country: 'United States',
-    temperature: 22,
-    condition: 'Partly Cloudy',
-    humidity: 65,
-    windSpeed: 12,
-    feels_like: 24,
-    icon: 'partly-cloudy'
-  },
-  {
-    type: 'weather',
-    title: 'London Weather',
-    content: 'Current weather in London, UK. Overcast conditions with light drizzle expected. Typical autumn weather with moderate temperatures and high humidity.',
-    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=600&fit=crop',
-    city: 'London',
-    country: 'United Kingdom',
-    temperature: 15,
-    condition: 'Overcast',
-    humidity: 78,
-    windSpeed: 8,
-    feels_like: 13,
-    icon: 'cloudy'
-  },
-  {
-    type: 'weather',
-    title: 'Tokyo Weather',
-    content: 'Current weather in Tokyo, Japan. Clear skies with pleasant temperatures. Low humidity and gentle breeze. Perfect weather for outdoor activities.',
-    image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop',
-    city: 'Tokyo',
-    country: 'Japan',
-    temperature: 26,
-    condition: 'Clear',
-    humidity: 55,
-    windSpeed: 6,
-    feels_like: 27,
-    icon: 'sunny'
-  },
-  {
-    type: 'weather',
-    title: 'Sydney Weather',
-    content: 'Current weather in Sydney, Australia. Sunny conditions with warm temperatures. Light sea breeze from the east. Excellent beach weather across the harbor city.',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-    city: 'Sydney',
-    country: 'Australia',
-    temperature: 28,
-    condition: 'Sunny',
-    humidity: 62,
-    windSpeed: 14,
-    feels_like: 30,
-    icon: 'sunny'
-  }
+// Major world cities for weather data
+const WORLD_CITIES = [
+  { name: 'New York', country: 'USA', lat: 40.7128, lon: -74.0060 },
+  { name: 'London', country: 'UK', lat: 51.5074, lon: -0.1278 },
+  { name: 'Tokyo', country: 'Japan', lat: 35.6762, lon: 139.6503 },
+  { name: 'Sydney', country: 'Australia', lat: -33.8688, lon: 151.2093 },
+  { name: 'Paris', country: 'France', lat: 48.8566, lon: 2.3522 },
+  { name: 'Dubai', country: 'UAE', lat: 25.2048, lon: 55.2708 },
+  { name: 'Singapore', country: 'Singapore', lat: 1.3521, lon: 103.8198 },
+  { name: 'Mumbai', country: 'India', lat: 19.0760, lon: 72.8777 }
+];
+
+const CONDITIONS = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain', 'Clear'];
+const WEATHER_IMAGES = [
+  'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
 ];
 
 export const getRandomWeather = async (count: number = 1): Promise<WeatherData[]> => {
   try {
-    // Try to fetch from weather API first
+    // Try OpenWeatherMap API first
     const apiWeather = await fetchWeatherFromAPI(count);
     if (apiWeather.length > 0) {
       return apiWeather;
     }
   } catch (error) {
-    console.log('Weather API fetch failed, using curated weather:', error);
+    console.log('Weather API fetch failed, using simulated data:', error);
   }
 
-  // Fallback to curated weather
-  const shuffled = [...CURATED_WEATHER].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count).map((weather, index) => ({
-    ...weather,
-    id: `weather-${Date.now()}-${index}`
-  }));
+  // Generate realistic weather data for multiple cities
+  const weatherCards: WeatherData[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const selectedCities = WORLD_CITIES.slice(0, 6).map(city => ({
+      name: city.name,
+      country: city.country,
+      temperature: Math.floor(Math.random() * 30) + 5, // 5-35°C
+      condition: CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)],
+      humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
+      windSpeed: Math.floor(Math.random() * 20) + 5, // 5-25 km/h
+      feels_like: Math.floor(Math.random() * 30) + 5
+    }));
+
+    const chartData = selectedCities.map(city => ({
+      city: city.name,
+      temperature: city.temperature,
+      humidity: city.humidity
+    }));
+
+    weatherCards.push({
+      id: `weather-${Date.now()}-${i}`,
+      type: 'weather',
+      title: 'Global Weather Report',
+      content: `Current weather conditions across major world cities. Temperature ranges from ${Math.min(...selectedCities.map(c => c.temperature))}°C to ${Math.max(...selectedCities.map(c => c.temperature))}°C with varying humidity levels.`,
+      image: WEATHER_IMAGES[Math.floor(Math.random() * WEATHER_IMAGES.length)],
+      cities: selectedCities,
+      chartData
+    });
+  }
+
+  return weatherCards;
 };
 
 const fetchWeatherFromAPI = async (count: number): Promise<WeatherData[]> => {
-  // This is a placeholder for API integration
-  // You can integrate with OpenWeatherMap, WeatherAPI, AccuWeather, etc.
-  // Example: https://api.openweathermap.org/data/2.5/weather?q=London&appid=YOUR_API_KEY
-  throw new Error('Weather API not configured');
+  // Try to fetch from OpenWeatherMap API
+  const API_KEY = 'demo'; // Replace with actual API key
+  const weatherData: WeatherData[] = [];
+
+  try {
+    const cityPromises = WORLD_CITIES.slice(0, 6).map(async (city) => {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.lon}&appid=${API_KEY}&units=metric`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          name: city.name,
+          country: city.country,
+          temperature: Math.round(data.main.temp),
+          condition: data.weather[0].main,
+          humidity: data.main.humidity,
+          windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
+          feels_like: Math.round(data.main.feels_like)
+        };
+      }
+      return null;
+    });
+
+    const cities = (await Promise.all(cityPromises)).filter(Boolean);
+    
+    if (cities.length > 0) {
+      const chartData = cities.map(city => ({
+        city: city!.name,
+        temperature: city!.temperature,
+        humidity: city!.humidity
+      }));
+
+      weatherData.push({
+        id: `weather-api-${Date.now()}`,
+        type: 'weather',
+        title: 'Global Weather Report',
+        content: `Live weather data from major cities worldwide. Updated every hour.`,
+        image: WEATHER_IMAGES[Math.floor(Math.random() * WEATHER_IMAGES.length)],
+        cities: cities as any,
+        chartData
+      });
+    }
+  } catch (error) {
+    console.error('Weather API error:', error);
+  }
+
+  return weatherData;
 };

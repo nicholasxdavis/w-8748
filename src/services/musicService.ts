@@ -124,27 +124,94 @@ const CURATED_ALBUMS: Omit<Album, 'id'>[] = [
 
 export const getRandomMusic = async (count: number = 1): Promise<MusicContent[]> => {
   try {
-    // Try to fetch from Spotify API or Billboard API first
+    // Try Spotify API or Last.fm API for album covers first
     const apiMusic = await fetchMusicFromAPI(count);
     if (apiMusic.length > 0) {
       return apiMusic;
     }
   } catch (error) {
-    console.log('Music API fetch failed, using curated music:', error);
+    console.log('Music API fetch failed, using curated music with better covers:', error);
   }
 
-  // Fallback to curated content
+  // Fallback to curated content with better album cover images
   const allContent = [...CURATED_SONGS, ...CURATED_ALBUMS];
   const shuffled = [...allContent].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((music, index) => ({
     ...music,
-    id: `music-${Date.now()}-${index}`
+    id: `music-${Date.now()}-${index}`,
+    // Use higher quality album cover style images
+    image: music.type === 'song' 
+      ? getSongCoverImage(music.title)
+      : getAlbumCoverImage(music.title)
   }));
 };
 
 const fetchMusicFromAPI = async (count: number): Promise<MusicContent[]> => {
-  // This is a placeholder for API integration
-  // You can integrate with Spotify API, Last.fm API, Billboard API, etc.
-  // Example: https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-  throw new Error('Music API not configured');
+  try {
+    // Try Last.fm API for album covers and music data
+    const API_KEY = 'demo'; // Replace with actual Last.fm API key
+    
+    const response = await fetch(
+      `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=${API_KEY}&format=json&limit=${count * 2}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Last.fm API request failed');
+    }
+    
+    const data = await response.json();
+    const music: MusicContent[] = [];
+    
+    if (data.tracks && data.tracks.track && data.tracks.track.length > 0) {
+      const selectedTracks = data.tracks.track.slice(0, count);
+      
+      for (const track of selectedTracks) {
+        const albumCover = track.image && track.image.length > 0 
+          ? track.image[track.image.length - 1]['#text'] 
+          : getSongCoverImage(track.name);
+          
+        music.push({
+          id: `lastfm-song-${track.mbid || Date.now()}`,
+          type: 'song',
+          title: track.name,
+          content: `${track.name} by ${track.artist.name} - Currently trending on the charts. This track has gained ${track.playcount} plays and continues to resonate with listeners worldwide.`,
+          image: albumCover || getSongCoverImage(track.name),
+          artist: track.artist.name,
+          album: 'Unknown Album',
+          year: new Date().getFullYear(),
+          genre: 'Popular',
+          chartPosition: parseInt(track['@attr'].rank)
+        });
+      }
+    }
+    
+    return music;
+  } catch (error) {
+    console.error('Music API error:', error);
+    throw error;
+  }
+};
+
+const getSongCoverImage = (title: string): string => {
+  // High-quality music/vinyl style images from Unsplash
+  const musicImages = [
+    'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&h=800&fit=crop'
+  ];
+  
+  return musicImages[Math.floor(Math.random() * musicImages.length)];
+};
+
+const getAlbumCoverImage = (title: string): string => {
+  // High-quality album cover style images
+  const albumImages = [
+    'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1618609378039-b572f64c5b42?w=800&h=800&fit=crop'
+  ];
+  
+  return albumImages[Math.floor(Math.random() * albumImages.length)];
 };
