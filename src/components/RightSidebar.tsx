@@ -1,9 +1,8 @@
 
 import { Share2, Edit, BookOpen } from "lucide-react";
 import SaveButton from "./SaveButton";
-import NeverShowAgainButton from "./article/NeverShowAgainButton";
 
-const RightSidebar = ({ article, onNeverShow }) => {
+const RightSidebar = ({ article }) => {
   const handleWikipediaRedirect = () => {
     const baseUrl = "https://en.wikipedia.org/wiki/";
     const articleTitle = encodeURIComponent(article.title);
@@ -45,11 +44,6 @@ const RightSidebar = ({ article, onNeverShow }) => {
           content: article?.content,
           image: article?.image
         }}
-      />
-      
-      <NeverShowAgainButton
-        article={article}
-        onNeverShow={onNeverShow}
       />
       
       <div className="flex flex-col items-center">
