@@ -1,6 +1,7 @@
+
 import { motion } from "framer-motion";
-import { Calendar, Globe, ExternalLink, Lightbulb, Quote } from "lucide-react";
-import { isNewsArticle, isFactArticle, isQuoteArticle } from "../../services/contentService";
+import { Calendar, Globe, ExternalLink, Lightbulb, Quote, TrendingUp, Cloud, Thermometer, DollarSign } from "lucide-react";
+import { isNewsArticle, isFactArticle, isQuoteArticle, isStockArticle, isWeatherArticle } from "../../services/contentService";
 import { formatNewsDate } from "../../utils/articleHelpers";
 
 interface ArticleContentProps {
@@ -87,6 +88,36 @@ const ArticleContent = ({
             <span className="truncate">{article.author}</span>
             <span>•</span>
             <span className="truncate capitalize">{article.category || 'Wisdom'}</span>
+          </>
+        ) : article && isStockArticle(article) ? (
+          <>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">{article.symbol}</span>
+            </div>
+            <span>•</span>
+            <div className="flex items-center gap-1">
+              <DollarSign className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">${article.price.toFixed(2)}</span>
+            </div>
+            <span>•</span>
+            <span className={`truncate ${article.changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {article.changePercent >= 0 ? '+' : ''}{article.changePercent.toFixed(2)}%
+            </span>
+          </>
+        ) : article && isWeatherArticle(article) ? (
+          <>
+            <div className="flex items-center gap-1">
+              <Cloud className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">{article.city}</span>
+            </div>
+            <span>•</span>
+            <div className="flex items-center gap-1">
+              <Thermometer className="w-3 h-3 lg:w-4 lg:h-4" />
+              <span className="truncate">{article.temperature}°C</span>
+            </div>
+            <span>•</span>
+            <span className="truncate">{article.condition}</span>
           </>
         ) : article ? (
           <>

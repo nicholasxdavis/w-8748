@@ -1,7 +1,6 @@
-
 import { motion } from "framer-motion";
 import { Progress } from "../ui/progress";
-import { isNewsArticle, isFactArticle, isQuoteArticle, isMovieArticle, isMusicArticle } from "../../services/contentService";
+import { isNewsArticle, isFactArticle, isQuoteArticle, isMovieArticle, isMusicArticle, isStockArticle, isWeatherArticle } from "../../services/contentService";
 import { getArticleImage } from "../../utils/articleHelpers";
 import BreakingNewsBadge from "./BreakingNewsBadge";
 import ArticleContent from "./ArticleContent";
@@ -11,6 +10,8 @@ import QuoteBadge from "./QuoteBadge";
 import MovieBadge from "./MovieBadge";
 import TVShowBadge from "./TVShowBadge";
 import MusicBadge from "./MusicBadge";
+import StockBadge from "./StockBadge";
+import WeatherBadge from "./WeatherBadge";
 
 interface ArticleDisplayProps {
   article: any;
@@ -69,6 +70,8 @@ const ArticleDisplay = ({
     {isMovieArticle(article) && article.type === 'movie' && <MovieBadge />}
     {isMovieArticle(article) && article.type === 'tvshow' && <TVShowBadge />}
     {isMusicArticle(article) && <MusicBadge type={article.type} />}
+    {isStockArticle(article) && <StockBadge />}
+    {isWeatherArticle(article) && <WeatherBadge />}
 
     <FloatingActionButtons
       currentArticle={article}
