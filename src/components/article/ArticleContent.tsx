@@ -40,15 +40,15 @@ const ArticleContent = ({
       {article && isStockArticle(article) && article.chartData && (
         <div className="w-full h-48 mb-4">
           <ChartContainer config={{
-            price: { label: "Price", color: "#3b82f6" },
-            change: { label: "Change %", color: "#10b981" }
+            price: { label: "Price ($)", color: "#3b82f6" },
+            change: { label: "Change (%)", color: "#10b981" }
           }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={article.chartData}>
-                <XAxis dataKey="symbol" />
-                <YAxis />
+                <XAxis dataKey="symbol" stroke="#ffffff80" fontSize={12} />
+                <YAxis stroke="#ffffff80" fontSize={12} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="price" fill="#3b82f6" />
+                <Bar dataKey="price" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -58,17 +58,16 @@ const ArticleContent = ({
       {article && isWeatherArticle(article) && article.chartData && (
         <div className="w-full h-48 mb-4">
           <ChartContainer config={{
-            temperature: { label: "Temperature °C", color: "#f59e0b" },
-            humidity: { label: "Humidity %", color: "#06b6d4" }
+            temp: { label: "Temperature (°C)", color: "#f59e0b" },
+            humidity: { label: "Humidity (%)", color: "#06b6d4" }
           }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={article.chartData}>
-                <XAxis dataKey="city" />
-                <YAxis />
+              <BarChart data={article.chartData}>
+                <XAxis dataKey="city" stroke="#ffffff80" fontSize={12} />
+                <YAxis stroke="#ffffff80" fontSize={12} />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Line type="monotone" dataKey="temperature" stroke="#f59e0b" strokeWidth={2} />
-                <Line type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={2} />
-              </LineChart>
+                <Bar dataKey="temp" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
         </div>

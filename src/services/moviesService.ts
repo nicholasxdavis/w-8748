@@ -27,13 +27,13 @@ export interface TVShow {
 
 export type MovieContent = Movie | TVShow;
 
-// Curated highly rated movies and shows with high-quality images
+// Curated highly rated movies and shows with TMDB poster URLs
 const CURATED_MOVIES: Omit<Movie, 'id'>[] = [
   {
     type: 'movie',
     title: 'The Shawshank Redemption',
     content: 'The Shawshank Redemption (1994) - Rated 9.3/10 on IMDb. A banker convicted of uxoricide forms a friendship over a quarter century with a hardened convict, while maintaining his innocence and trying to remain hopeful through simple compassion.',
-    image: 'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/9cqNxx0GxF0bflyCy3FpPiy3BXg.jpg',
     rating: 9.3,
     year: 1994,
     genre: 'Drama',
@@ -44,7 +44,7 @@ const CURATED_MOVIES: Omit<Movie, 'id'>[] = [
     type: 'movie',
     title: 'The Godfather',
     content: 'The Godfather (1972) - Rated 9.2/10 on IMDb. The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.',
-    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg',
     rating: 9.2,
     year: 1972,
     genre: 'Crime',
@@ -55,7 +55,7 @@ const CURATED_MOVIES: Omit<Movie, 'id'>[] = [
     type: 'movie',
     title: 'Pulp Fiction',
     content: 'Pulp Fiction (1994) - Rated 8.9/10 on IMDb. The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.',
-    image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/dM2w364MScsjFf8pfMbaWUcWrR.jpg',
     rating: 8.9,
     year: 1994,
     genre: 'Crime',
@@ -66,7 +66,7 @@ const CURATED_MOVIES: Omit<Movie, 'id'>[] = [
     type: 'movie',
     title: 'Inception',
     content: 'Inception (2010) - Rated 8.8/10 on IMDb. A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-    image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg',
     rating: 8.8,
     year: 2010,
     genre: 'Sci-Fi',
@@ -80,7 +80,7 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
     type: 'tvshow',
     title: 'Breaking Bad',
     content: 'Breaking Bad (2008-2013) - Rated 9.5/10 on IMDb. A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine with a former student.',
-    image: 'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
     rating: 9.5,
     year: 2008,
     genre: 'Crime Drama',
@@ -91,7 +91,7 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
     type: 'tvshow',
     title: 'The Sopranos',
     content: 'The Sopranos (1999-2007) - Rated 9.2/10 on IMDb. New Jersey mob boss Tony Soprano deals with personal and professional issues in his home and business life.',
-    image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg',
     rating: 9.2,
     year: 1999,
     genre: 'Crime Drama',
@@ -102,7 +102,7 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
     type: 'tvshow',
     title: 'The Wire',
     content: 'The Wire (2002-2008) - Rated 9.3/10 on IMDb. Baltimore drug scene, as seen through the eyes of drug dealers and law enforcement.',
-    image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/dg7NuKDjmS6OzuNy33qt8kSkPF9.jpg',
     rating: 9.3,
     year: 2002,
     genre: 'Crime Drama',
@@ -113,7 +113,7 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
     type: 'tvshow',
     title: 'Game of Thrones',
     content: 'Game of Thrones (2011-2019) - Rated 9.2/10 on IMDb. Nine noble families fight for control over the lands of Westeros, while an ancient enemy returns after being dormant for millennia.',
-    image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800&h=600&fit=crop',
+    image: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
     rating: 9.2,
     year: 2011,
     genre: 'Fantasy Drama',
@@ -124,91 +124,57 @@ const CURATED_TVSHOWS: Omit<TVShow, 'id'>[] = [
 
 export const getRandomMovies = async (count: number = 1): Promise<MovieContent[]> => {
   try {
-    // Try TMDB API for movie posters first
-    const apiMovies = await fetchMoviesFromAPI(count);
+    // Try OMDB API for movie posters first
+    const apiMovies = await fetchMoviesFromOMDB(count);
     if (apiMovies.length > 0) {
       return apiMovies;
     }
   } catch (error) {
-    console.log('Movie API fetch failed, using curated movies with better images:', error);
+    console.log('OMDB API fetch failed, using curated movies with TMDB covers:', error);
   }
 
-  // Fallback to curated content with better poster images
+  // Fallback to curated content with TMDB poster images
   const allContent = [...CURATED_MOVIES, ...CURATED_TVSHOWS];
   const shuffled = [...allContent].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((movie, index) => ({
     ...movie,
-    id: `movie-${Date.now()}-${index}`,
-    // Use higher quality movie/TV poster images
-    image: movie.type === 'movie' 
-      ? getMoviePosterImage(movie.title)
-      : getTVShowPosterImage(movie.title)
+    id: `movie-${Date.now()}-${index}`
   }));
 };
 
-const fetchMoviesFromAPI = async (count: number): Promise<MovieContent[]> => {
+const fetchMoviesFromOMDB = async (count: number): Promise<MovieContent[]> => {
   try {
-    // Use TMDB API for high-quality movie posters
-    const API_KEY = 'demo'; // Replace with actual TMDB API key
-    
-    const response = await fetch(
-      `https://api.themoviedb.org/3/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`
-    );
-    
-    if (!response.ok) {
-      throw new Error('TMDB API request failed');
-    }
-    
-    const data = await response.json();
+    // Use OMDB API for high-quality movie posters
+    const popularMovies = ['Inception', 'The Matrix', 'Interstellar', 'The Dark Knight', 'Avengers', 'Titanic'];
     const movies: MovieContent[] = [];
     
-    if (data.results && data.results.length > 0) {
-      const selectedMovies = data.results.slice(0, count);
+    for (let i = 0; i < Math.min(count, popularMovies.length); i++) {
+      const response = await fetch(
+        `https://www.omdbapi.com/?t=${encodeURIComponent(popularMovies[i])}&apikey=demo`
+      );
       
-      for (const movie of selectedMovies) {
-        movies.push({
-          id: `tmdb-movie-${movie.id}`,
-          type: 'movie',
-          title: movie.title,
-          content: `${movie.title} (${new Date(movie.release_date).getFullYear()}) - ${movie.overview.slice(0, 200)}...`,
-          image: movie.poster_path 
-            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-            : getMoviePosterImage(movie.title),
-          rating: movie.vote_average,
-          year: new Date(movie.release_date).getFullYear(),
-          genre: 'Drama', // You could fetch genres separately
-          plot: movie.overview
-        });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.Response === 'True' && data.Poster !== 'N/A') {
+          movies.push({
+            id: `omdb-movie-${data.imdbID}`,
+            type: 'movie',
+            title: data.Title,
+            content: `${data.Title} (${data.Year}) - ${data.Plot}`,
+            image: data.Poster,
+            rating: parseFloat(data.imdbRating) || 8.0,
+            year: parseInt(data.Year),
+            genre: data.Genre?.split(',')[0] || 'Drama',
+            director: data.Director,
+            plot: data.Plot
+          });
+        }
       }
     }
     
     return movies;
   } catch (error) {
-    console.error('TMDB API error:', error);
+    console.error('OMDB API error:', error);
     throw error;
   }
-};
-
-const getMoviePosterImage = (title: string): string => {
-  // High-quality movie poster style images from Unsplash
-  const movieImages = [
-    'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800&h=1200&fit=crop'
-  ];
-  
-  return movieImages[Math.floor(Math.random() * movieImages.length)];
-};
-
-const getTVShowPosterImage = (title: string): string => {
-  // High-quality TV show poster style images
-  const tvImages = [
-    'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1595769816263-9b910be24d5f?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1574267432553-4b4628081c31?w=800&h=1200&fit=crop',
-    'https://images.unsplash.com/photo-1489599510041-0635c917c42e?w=800&h=1200&fit=crop'
-  ];
-  
-  return tvImages[Math.floor(Math.random() * tvImages.length)];
 };
