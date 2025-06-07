@@ -1,3 +1,4 @@
+
 export interface DidYouKnowFact {
   id: string;
   title: string;
@@ -84,10 +85,10 @@ export const getRandomFacts = async (count: number = 1): Promise<DidYouKnowFact[
         }
         throw new Error('Numbers API failed');
       } catch (error) {
-        // Fallback to curated facts
-        const fact = CURATED_FACTS[Math.floor(Math.random() * CURATED_FACTS.length)];
+        // Fallback to premium facts
+        const fact = PREMIUM_FACTS[Math.floor(Math.random() * PREMIUM_FACTS.length)];
         return {
-          id: `curated-fact-${Date.now()}-${i}`,
+          id: `premium-fact-${Date.now()}-${i}`,
           type: 'fact' as const,
           title: 'Scientific Discovery',
           content: fact.content,
@@ -104,9 +105,9 @@ export const getRandomFacts = async (count: number = 1): Promise<DidYouKnowFact[
   } catch (error) {
     console.error('Error generating facts:', error);
     
-    // Final fallback to curated content
+    // Final fallback to premium content
     return Array.from({ length: count }, (_, i) => {
-      const fact = CURATED_FACTS[Math.floor(Math.random() * CURATED_FACTS.length)];
+      const fact = PREMIUM_FACTS[Math.floor(Math.random() * PREMIUM_FACTS.length)];
       return {
         id: `fallback-fact-${Date.now()}-${i}`,
         type: 'fact' as const,
