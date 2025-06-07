@@ -8,10 +8,7 @@ import { StockData, getRandomStocks } from './stockService';
 import { WeatherData, getRandomWeather } from './weatherService';
 import { HistoricalEvent, getTodayInHistory } from './historyService';
 import { FeaturedPicture, getTodaysFeaturedPicture } from './featuredPictureService';
-import { getUserInterests } from './userInterestsService';
-import { getWikipediaCategories } from './content/categoryMapping';
-import { viewedWikiArticles, filterArticlesByViewed, selectRandomWikiArticles } from './content/articleFilter';
-import { createMixedContent } from './content/contentMixer';
+import { getAlgorithmicFeed } from './algorithmicContentService';
 
 export type ContentItem = WikipediaArticle | NewsArticle | DidYouKnowFact | Quote | MovieContent | MusicContent | StockData | WeatherData | HistoricalEvent | FeaturedPicture;
 
@@ -66,18 +63,23 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
   try {
     console.log(`Getting mixed content: count=${count}, userId=${userId}, position=${contentPosition}`);
     
-    // Get user interests if userId is provided
-    let userInterests: string[] = [];
+    // Use algorithmic feed if user is logged in
     if (userId) {
-      try {
-        const interests = await getUserInterests(userId);
-        userInterests = interests.map(interest => interest.topic?.name || '').filter(Boolean);
-        console.log('User interests found:', userInterests);
-      } catch (error) {
-        console.error('Error fetching user interests:', error);
+      const algorithmicContent = await getAlgorithmicFeed({
+        userId,
+        count,
+        includePopular: contentPosition % 20 === 0, // Include popular content every 20 items
+        includeRelated: true,
+        respectFilters: true
+      });
+      
+      if (algorithmicContent.length > 0) {
+        contentPosition += count;
+        return algorithmicContent;
       }
     }
-
+    
+    // Fallback to original mixed content logic for non-logged-in users
     // Calculate content distribution - made special content even less frequent
     const shouldIncludeNews = contentPosition > 0 && (contentPosition % 10 === 0);
     const shouldIncludeFacts = contentPosition > 0 && (contentPosition % 18 === 0);
@@ -113,9 +115,7 @@ export const getMixedContent = async (count: number = 8, userId?: string): Promi
       weatherCount > 0 ? getRandomWeather(weatherCount) : Promise.resolve([]),
       historyCount > 0 ? getTodayInHistory(historyCount) : Promise.resolve([]),
       featuredPictureCount > 0 ? getTodaysFeaturedPicture(featuredPictureCount) : Promise.resolve([]),
-      userInterests.length > 0 
-        ? getWikiArticles(wikiCount + 2, getWikipediaCategories(userInterests)[Math.floor(Math.random() * getWikipediaCategories(userInterests).length)])
-        : getWikiArticles(wikiCount + 2)
+      getWikiArticles(wikiCount + 2)
     ]);
 
     console.log(`Fetched content: ${newsArticles.length} news, ${facts.length} facts, ${quotes.length} quotes, ${movies.length} movies, ${music.length} music, ${stocks.length} stocks, ${weather.length} weather, ${history.length} history, ${featuredPictures.length} featured pictures, ${wikiArticles.length} wiki`);

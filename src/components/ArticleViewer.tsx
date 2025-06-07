@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ShareModal from "./ShareModal";
@@ -9,10 +10,13 @@ import SwipeableArticleWithSections from "./article/SwipeableArticleWithSections
 import SwipeableArticle from "./article/SwipeableArticle";
 import LoadingArticle from "./article/LoadingArticle";
 import { markContentAsViewed, isNewsArticle, isFactArticle, isQuoteArticle } from "../services/contentService";
+import { trackUserInteraction } from "../services/algorithmicContentService";
+import { useAuth } from "@/hooks/useAuth";
 
 const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   const {
     articles,
+    setArticles,
     currentIndex,
     setCurrentIndex,
     isVisible,
@@ -38,6 +42,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
   } = useArticleViewer(initialArticles);
 
   const [showShare, setShowShare] = useState(false);
+  const { user } = useAuth();
 
   useArticleNavigation(articles, currentIndex, setCurrentIndex, setIsVisible, containerRef);
   
@@ -64,6 +69,21 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     baseHandleContentClick(clickCountRef, doubleClickTimeoutRef);
   }, [baseHandleContentClick]);
 
+  const handleNeverShow = useCallback((articleToHide: any) => {
+    console.log('Hiding article type:', articleToHide);
+    // Remove the current article from the feed
+    const updatedArticles = articles.filter((_, index) => index !== currentIndex);
+    setArticles(updatedArticles);
+    
+    // Adjust current index if needed
+    if (currentIndex >= updatedArticles.length && updatedArticles.length > 0) {
+      setCurrentIndex(updatedArticles.length - 1);
+    }
+    
+    // Load more content to replace the hidden article
+    loadMoreArticles();
+  }, [articles, currentIndex, setArticles, setCurrentIndex, loadMoreArticles]);
+
   useEffect(() => {
     const timer = setTimeout(() => setShowDoubleTapHint(false), 3000);
     return () => clearTimeout(timer);
@@ -74,6 +94,11 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     
     if (currentArticle) {
       markContentAsViewed(currentArticle);
+      
+      // Track view in algorithmic system
+      if (user) {
+        trackUserInteraction(user.id, currentArticle, 'view');
+      }
     }
     
     if (currentArticle?.content) {
@@ -96,7 +121,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
     }
     if (isReading) stop();
     if (currentIndex >= articles.length - 2) loadMoreArticles();
-  }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop, setIsVisible, setDisplayedText, setProgress, setIsTextFullyLoaded, setIsTypingPaused]);
+  }, [currentIndex, currentArticle, onArticleChange, articles.length, loadMoreArticles, isReading, stop, setIsVisible, setDisplayedText, setProgress, setIsTextFullyLoaded, setIsTypingPaused, user]);
 
   useEffect(() => {
     return () => {
@@ -133,6 +158,7 @@ const ArticleViewer = ({ articles: initialArticles, onArticleChange }) => {
                 isReading={isReading}
                 speechLoading={speechLoading}
                 setShowShare={setShowShare}
+                onNeverShow={() => handleNeverShow(article)}
               />
             );
           })}
